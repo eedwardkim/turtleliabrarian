@@ -1,0 +1,230 @@
+{
+  "id": "ch10-vary-2",
+  "chapter": 10,
+  "kind": "vary",
+  "title": "The Tiles Under the Rope",
+  "patron": "Dr. Newt",
+  "request": "Lay out the residuals of the least squares line, one for every row in shelf order: the observed loans minus what the rope predicts.",
+  "objective": "Compute residuals in row order and keep their sign.",
+  "concepts": [
+    "residuals",
+    "regression_diagnostics",
+    "row_order"
+  ],
+  "requiredApi": [
+    "column",
+    "np.mean",
+    "np.std",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize"
+  ],
+  "starter": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\ndeliver(loans - np.mean(loans))",
+  "hints": [
+    "A residual is what the rope missed, measured straight up and down from the rope.",
+    "Fit the line first, then build the predicted loans for every height in the column.",
+    "Deliver loans minus predicted, in the order the rows already sit in; do not sort anything."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(5, 10)\ntilt = random.choice([-2, 1, 2, 5])\nnoise = random.choice([0, 2, 5])\nheights = [random.randint(1, 10) for _ in range(count)]\nif max(heights) == min(heights):\n    heights[0] = heights[0] + 3\nloans = [28 + tilt * height + random.randint(-noise, noise) for height in heights]\nscatter_cart = Table().with_columns('height', make_array(*heights), 'loans', make_array(*loans))\ndel count, tilt, noise, heights, loans",
+  "visibleSeed": 71,
+  "visibleInputs": {
+    "scatter_cart": {
+      "kind": "table",
+      "labels": [
+        "height",
+        "loans"
+      ],
+      "rows": [
+        [
+          1,
+          30
+        ],
+        [
+          2,
+          32
+        ],
+        [
+          3,
+          34
+        ],
+        [
+          4,
+          36
+        ]
+      ],
+      "totalRows": 4
+    }
+  },
+  "fixtures": [
+    {
+      "name": "the_scatter_bends",
+      "predicate": "scatter_cart.num_rows >= 5 and np.std(scatter_cart.column('loans')) > 0",
+      "inputs": {
+        "scatter_cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              1,
+              40
+            ],
+            [
+              2,
+              25
+            ],
+            [
+              3,
+              18
+            ],
+            [
+              4,
+              17
+            ],
+            [
+              5,
+              24
+            ],
+            [
+              6,
+              39
+            ]
+          ],
+          "totalRows": 6
+        }
+      }
+    },
+    {
+      "name": "one_row_sits_far_above_the_rope",
+      "predicate": "max(scatter_cart.column('loans')) > 3 * np.mean(scatter_cart.column('loans'))",
+      "inputs": {
+        "scatter_cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              1,
+              12
+            ],
+            [
+              2,
+              14
+            ],
+            [
+              3,
+              16
+            ],
+            [
+              4,
+              120
+            ],
+            [
+              5,
+              20
+            ]
+          ],
+          "totalRows": 5
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nr = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\nslope = r * np.std(loans) / np.std(heights)\nintercept = np.mean(loans) - slope * np.mean(heights)\ndeliver(loans - (slope * heights + intercept))",
+  "naive": [
+    {
+      "code": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nr = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\nslope = r * np.std(loans) / np.std(heights)\nintercept = np.mean(loans) - slope * np.mean(heights)\ndeliver((slope * heights + intercept) - loans)",
+      "fails": "silent",
+      "hazard": "the_scatter_bends"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "residuals"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 14,
+    "oil": 1
+  },
+  "setPiece": "residual-tiles",
+  "hazards": [
+    "the_scatter_bends",
+    "one_row_sits_far_above_the_rope"
+  ],
+  "stochastic": false
+}

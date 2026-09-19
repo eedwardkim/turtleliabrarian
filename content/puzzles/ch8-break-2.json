@@ -1,0 +1,270 @@
+{
+  "id": "ch8-break-2",
+  "chapter": 8,
+  "kind": "break",
+  "title": "Two Wings, One Interval",
+  "patron": "Dr. Newt",
+  "request": "Give me a ninety percent interval for how much longer the Sealed Archive waits than the Display Hall. Re-grab each wing's own slips, never mixing the two piles, and report the difference archive minus hall.",
+  "objective": "Bootstrap a difference between two groups by resampling within each group.",
+  "concepts": [
+    "bootstrap",
+    "two_group_difference",
+    "stratified_resampling"
+  ],
+  "requiredApi": [
+    "where",
+    "are.equal_to",
+    "sample",
+    "num_rows",
+    "column",
+    "np.mean",
+    "np.append",
+    "percentile",
+    "make_array",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median"
+  ],
+  "starter": "import numpy as np\narchive = cart.where('wing', are.equal_to('Sealed Archive')).column('days')\nhall = cart.where('wing', are.equal_to('Display Hall')).column('days')\ndeliver(np.mean(archive) - np.mean(hall))",
+  "hints": [
+    "Two piles of slips, two separate re-grabs; the wings never share a slip.",
+    "Split the cart with where first, then resample each wing to its own row count.",
+    "Keep each pass's archive-minus-hall difference, then deliver percentile(5, ...) and percentile(95, ...) as a two-number array."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\narchive_rows = random.randint(5, 9)\nhall_rows = random.randint(5, 9)\nspread = random.choice([0, 4, 9])\ngap = random.choice([0, 2, 5])\nwings = ['Sealed Archive'] * archive_rows + ['Display Hall'] * hall_rows\ndays = [random.randint(5, 5 + spread) + (gap if wing == 'Sealed Archive' else 0) for wing in wings]\ncart = Table().with_columns('wing', make_array(*wings), 'days', make_array(*days))\ndel archive_rows, hall_rows, spread, gap, wings, days",
+  "visibleSeed": 27,
+  "visibleInputs": {
+    "cart": {
+      "kind": "table",
+      "labels": [
+        "wing",
+        "days"
+      ],
+      "rows": [
+        [
+          "Sealed Archive",
+          11
+        ],
+        [
+          "Sealed Archive",
+          11
+        ],
+        [
+          "Sealed Archive",
+          11
+        ],
+        [
+          "Sealed Archive",
+          11
+        ],
+        [
+          "Display Hall",
+          6
+        ],
+        [
+          "Display Hall",
+          6
+        ],
+        [
+          "Display Hall",
+          6
+        ],
+        [
+          "Display Hall",
+          6
+        ]
+      ],
+      "totalRows": 8
+    }
+  },
+  "fixtures": [
+    {
+      "name": "wings_differ_in_size_and_spread",
+      "predicate": "cart.where('wing', are.equal_to('Sealed Archive')).num_rows != cart.where('wing', are.equal_to('Display Hall')).num_rows and max(cart.column('days')) > min(cart.column('days')) + 5",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "wing",
+            "days"
+          ],
+          "rows": [
+            [
+              "Sealed Archive",
+              14
+            ],
+            [
+              "Sealed Archive",
+              3
+            ],
+            [
+              "Sealed Archive",
+              22
+            ],
+            [
+              "Sealed Archive",
+              9
+            ],
+            [
+              "Sealed Archive",
+              17
+            ],
+            [
+              "Sealed Archive",
+              6
+            ],
+            [
+              "Display Hall",
+              5
+            ],
+            [
+              "Display Hall",
+              8
+            ],
+            [
+              "Display Hall",
+              2
+            ]
+          ],
+          "totalRows": 9
+        }
+      }
+    },
+    {
+      "name": "archive_is_quicker_than_the_hall",
+      "predicate": "np.mean(cart.where('wing', are.equal_to('Sealed Archive')).column('days')) < np.mean(cart.where('wing', are.equal_to('Display Hall')).column('days'))",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "wing",
+            "days"
+          ],
+          "rows": [
+            [
+              "Sealed Archive",
+              3
+            ],
+            [
+              "Sealed Archive",
+              3
+            ],
+            [
+              "Sealed Archive",
+              3
+            ],
+            [
+              "Sealed Archive",
+              3
+            ],
+            [
+              "Display Hall",
+              12
+            ],
+            [
+              "Display Hall",
+              12
+            ],
+            [
+              "Display Hall",
+              12
+            ],
+            [
+              "Display Hall",
+              12
+            ]
+          ],
+          "totalRows": 8
+        }
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "import numpy as np\nfrom datascience import make_array\narchive = cart.where('wing', are.equal_to('Sealed Archive'))\nhall = cart.where('wing', are.equal_to('Display Hall'))\ngaps = make_array()\nfor repetition in range(200):\n    one = np.mean(archive.sample(archive.num_rows).column('days'))\n    two = np.mean(hall.sample(hall.num_rows).column('days'))\n    gaps = np.append(gaps, one - two)\ndeliver(make_array(percentile(5, gaps), percentile(95, gaps)))",
+  "naive": [
+    {
+      "code": "import numpy as np\nfrom datascience import make_array\ngaps = make_array()\nfor repetition in range(200):\n    resample = cart.sample(cart.num_rows)\n    one = np.mean(resample.where('wing', are.equal_to('Sealed Archive')).column('days'))\n    two = np.mean(resample.where('wing', are.equal_to('Display Hall')).column('days'))\n    gaps = np.append(gaps, one - two)\ndeliver(make_array(percentile(5, gaps), percentile(95, gaps)))",
+      "fails": "silent",
+      "hazard": "wings_differ_in_size_and_spread"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "two-group-bootstrap"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 16,
+    "oil": 1
+  },
+  "setPiece": "bookends",
+  "hazards": [
+    "wings_differ_in_size_and_spread"
+  ],
+  "stochastic": true
+}

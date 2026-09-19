@@ -1,0 +1,218 @@
+{
+  "id": "ch12-vary-2",
+  "chapter": 12,
+  "kind": "vary",
+  "title": "The Chute Board",
+  "patron": "Wren the night clerk",
+  "request": "The chute board lists every chute, the share of returns it swallows and how often it damages a slip. A damaged slip is on my desk. Give me the chance it came from each chute, in board order.",
+  "objective": "Update a whole table of priors at once and normalise the posterior.",
+  "concepts": [
+    "bayes_rule",
+    "posterior",
+    "prior",
+    "normalisation"
+  ],
+  "requiredApi": [
+    "column",
+    "sum",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize"
+  ],
+  "starter": "deliver(chutes.column('damage_chance'))",
+  "hints": [
+    "Every chute on the board is a branch, and the damaged slip came down exactly one of them.",
+    "Weigh each row by its share times its damage chance with chutes.column('share') * chutes.column('damage_chance').",
+    "Divide that array of weights by sum of the weights and deliver it in board order."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nnames = ['north', 'south', 'east', 'west']\ncount = random.randint(2, 4)\npicked = names[:count]\nraw = [random.randint(1, 9) for _ in range(count)]\ntotal = sum(raw)\nshares = [value / total for value in raw]\ndamage = [random.choice([0.05, 0.1, 0.25, 0.5, 0.8]) for _ in range(count)]\ndamage[0] = 0.5\nchutes = Table().with_columns(\n    'chute', make_array(*picked),\n    'share', make_array(*shares),\n    'damage_chance', make_array(*damage),\n)\ndel names, count, picked, raw, total, shares, damage",
+  "visibleSeed": 44,
+  "visibleInputs": {
+    "chutes": {
+      "kind": "table",
+      "labels": [
+        "chute",
+        "share",
+        "damage_chance"
+      ],
+      "rows": [
+        [
+          "north",
+          0.3333333333333333,
+          0.1
+        ],
+        [
+          "south",
+          0.3333333333333333,
+          0.4
+        ],
+        [
+          "east",
+          0.3333333333333333,
+          0.4
+        ]
+      ],
+      "totalRows": 3
+    }
+  },
+  "fixtures": [
+    {
+      "name": "one_chute_carries_most_of_the_returns",
+      "predicate": "max(chutes.column('share')) > 0.6",
+      "inputs": {
+        "chutes": {
+          "kind": "table",
+          "labels": [
+            "chute",
+            "share",
+            "damage_chance"
+          ],
+          "rows": [
+            [
+              "north",
+              0.8,
+              0.05
+            ],
+            [
+              "south",
+              0.1,
+              0.5
+            ],
+            [
+              "east",
+              0.1,
+              0.5
+            ]
+          ],
+          "totalRows": 3
+        }
+      }
+    },
+    {
+      "name": "two_chutes_wear_the_same_name",
+      "predicate": "len(set(chutes.column('chute'))) < chutes.num_rows",
+      "inputs": {
+        "chutes": {
+          "kind": "table",
+          "labels": [
+            "chute",
+            "share",
+            "damage_chance"
+          ],
+          "rows": [
+            [
+              "north",
+              0.25,
+              0.2
+            ],
+            [
+              "north",
+              0.25,
+              0.6
+            ],
+            [
+              "south",
+              0.5,
+              0.1
+            ]
+          ],
+          "totalRows": 3
+        }
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "weights = chutes.column('share') * chutes.column('damage_chance')\ndeliver(weights / sum(weights))",
+  "naive": [
+    {
+      "code": "shares_ignored = chutes.column('damage_chance')\ndeliver(shares_ignored / sum(shares_ignored))",
+      "fails": "silent",
+      "hazard": "one_chute_carries_most_of_the_returns"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-12,
+    "relativeTolerance": 1e-12
+  },
+  "unlocks": [
+    "chute-board"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 15,
+    "oil": 1
+  },
+  "setPiece": "branching-chutes",
+  "hazards": [
+    "one_chute_carries_most_of_the_returns",
+    "two_chutes_wear_the_same_name"
+  ],
+  "stochastic": false
+}

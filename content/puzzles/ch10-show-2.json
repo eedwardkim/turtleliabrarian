@@ -1,0 +1,232 @@
+{
+  "id": "ch10-show-2",
+  "chapter": 10,
+  "kind": "show",
+  "title": "Slope and Anchor",
+  "patron": "Mx. Wren",
+  "request": "Pin the rope across the scatter: give me the slope and the intercept of the least squares line predicting loans from shelf height, in that order, in the original units.",
+  "objective": "Turn correlation and spreads into a regression line in original units.",
+  "concepts": [
+    "regression_line",
+    "slope",
+    "intercept",
+    "least_squares"
+  ],
+  "requiredApi": [
+    "column",
+    "np.mean",
+    "np.std",
+    "make_array",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize"
+  ],
+  "starter": "import numpy as np\nfrom datascience import make_array\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\ndeliver(make_array(np.std(loans) / np.std(heights), np.mean(loans)))",
+  "hints": [
+    "The rope's tilt is the correlation stretched by the two spreads, not the spreads alone.",
+    "slope = r * sd(loans) / sd(heights), and the line must pass through the point of averages.",
+    "Compute r from standard units, then the intercept as mean(loans) minus slope times mean(heights), and deliver both in an array."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(5, 10)\ntilt = random.choice([-3, -1, 2, 4])\nnoise = random.choice([0, 2, 6])\nheights = [random.randint(1, 9) for _ in range(count)]\nif max(heights) == min(heights):\n    heights[0] = heights[0] + 2\nloans = [30 + tilt * height + random.randint(-noise, noise) for height in heights]\nscatter_cart = Table().with_columns('height', make_array(*heights), 'loans', make_array(*loans))\ndel count, tilt, noise, heights, loans",
+  "visibleSeed": 29,
+  "visibleInputs": {
+    "scatter_cart": {
+      "kind": "table",
+      "labels": [
+        "height",
+        "loans"
+      ],
+      "rows": [
+        [
+          1,
+          12
+        ],
+        [
+          2,
+          14
+        ],
+        [
+          3,
+          16
+        ],
+        [
+          4,
+          18
+        ],
+        [
+          5,
+          20
+        ]
+      ],
+      "totalRows": 5
+    }
+  },
+  "fixtures": [
+    {
+      "name": "scatter_is_not_a_perfect_line",
+      "predicate": "np.std(scatter_cart.column('loans')) > 0 and abs(np.mean(((scatter_cart.column('height') - np.mean(scatter_cart.column('height'))) / np.std(scatter_cart.column('height'))) * ((scatter_cart.column('loans') - np.mean(scatter_cart.column('loans'))) / np.std(scatter_cart.column('loans'))))) < 0.95",
+      "inputs": {
+        "scatter_cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              1,
+              14
+            ],
+            [
+              2,
+              11
+            ],
+            [
+              3,
+              19
+            ],
+            [
+              4,
+              13
+            ],
+            [
+              5,
+              22
+            ],
+            [
+              6,
+              16
+            ]
+          ],
+          "totalRows": 6
+        }
+      }
+    },
+    {
+      "name": "the_rope_tilts_downward",
+      "predicate": "np.mean((scatter_cart.column('height') - np.mean(scatter_cart.column('height'))) * (scatter_cart.column('loans') - np.mean(scatter_cart.column('loans')))) < 0",
+      "inputs": {
+        "scatter_cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              2,
+              40
+            ],
+            [
+              4,
+              34
+            ],
+            [
+              6,
+              28
+            ],
+            [
+              8,
+              22
+            ]
+          ],
+          "totalRows": 4
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nfrom datascience import make_array\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nr = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\nslope = r * np.std(loans) / np.std(heights)\ndeliver(make_array(slope, np.mean(loans) - slope * np.mean(heights)))",
+  "naive": [
+    {
+      "code": "import numpy as np\nfrom datascience import make_array\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nslope = np.std(loans) / np.std(heights)\ndeliver(make_array(slope, np.mean(loans) - slope * np.mean(heights)))",
+      "fails": "silent",
+      "hazard": "scatter_is_not_a_perfect_line"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "regression-line"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 13,
+    "oil": 0
+  },
+  "setPiece": "rope-line",
+  "hazards": [
+    "scatter_is_not_a_perfect_line",
+    "the_rope_tilts_downward"
+  ],
+  "stochastic": false
+}

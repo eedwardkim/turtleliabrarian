@@ -1,0 +1,217 @@
+{
+  "id": "ch8-show-2",
+  "chapter": 8,
+  "kind": "show",
+  "title": "One Honest Re-Grab",
+  "patron": "Shelby",
+  "request": "Show the apprentices what a resample looks like: grab the same number of slips as the cart holds, putting each slip back after you read it, and deliver the average wait of that one re-grab.",
+  "objective": "Draw a single bootstrap resample of the same size, with replacement.",
+  "concepts": [
+    "resampling",
+    "with_replacement",
+    "sample_size"
+  ],
+  "requiredApi": [
+    "sample",
+    "num_rows",
+    "column",
+    "np.mean",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median"
+  ],
+  "starter": "deliver(cart.sample(cart.num_rows))",
+  "hints": [
+    "A re-grab is not a reshuffle: the same slip may come up twice.",
+    "cart.sample(cart.num_rows) draws a new cart of the same size with replacement.",
+    "Take the days column of that resampled cart and deliver its mean."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(6, 12)\nspread = random.choice([0, 2, 6, 11])\ndays = [random.randint(5, 5 + spread) for _ in range(count)]\npatrons = [random.choice(['Wren', 'Otter', 'Hazel', 'Newt']) for _ in range(count)]\ncart = Table().with_columns('patron', make_array(*patrons), 'days', make_array(*days))\ndel count, spread, days, patrons",
+  "visibleSeed": 5,
+  "visibleInputs": {
+    "cart": {
+      "kind": "table",
+      "labels": [
+        "patron",
+        "days"
+      ],
+      "rows": [
+        [
+          "Wren",
+          7
+        ],
+        [
+          "Otter",
+          7
+        ],
+        [
+          "Hazel",
+          7
+        ],
+        [
+          "Newt",
+          7
+        ],
+        [
+          "Wren",
+          7
+        ],
+        [
+          "Otter",
+          7
+        ]
+      ],
+      "totalRows": 6
+    }
+  },
+  "fixtures": [
+    {
+      "name": "waits_are_not_all_equal",
+      "predicate": "max(cart.column('days')) > min(cart.column('days'))",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "patron",
+            "days"
+          ],
+          "rows": [
+            [
+              "Wren",
+              2
+            ],
+            [
+              "Otter",
+              19
+            ],
+            [
+              "Hazel",
+              4
+            ],
+            [
+              "Newt",
+              16
+            ],
+            [
+              "Wren",
+              8
+            ],
+            [
+              "Otter",
+              11
+            ]
+          ],
+          "totalRows": 6
+        }
+      }
+    },
+    {
+      "name": "one_slip_only",
+      "predicate": "cart.num_rows == 1",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "patron",
+            "days"
+          ],
+          "rows": [
+            [
+              "Hazel",
+              13
+            ]
+          ],
+          "totalRows": 1
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nresample = cart.sample(cart.num_rows)\ndeliver(np.mean(resample.column('days')))",
+  "naive": [
+    {
+      "code": "import numpy as np\nresample = cart.sample(cart.num_rows, with_replacement=False)\ndeliver(np.mean(resample.column('days')))",
+      "fails": "silent",
+      "hazard": "waits_are_not_all_equal"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "resample"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 11,
+    "oil": 0
+  },
+  "setPiece": "blind-grab",
+  "hazards": [
+    "waits_are_not_all_equal"
+  ],
+  "stochastic": true
+}

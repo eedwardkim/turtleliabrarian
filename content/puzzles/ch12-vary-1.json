@@ -1,0 +1,147 @@
+{
+  "id": "ch12-vary-1",
+  "chapter": 12,
+  "kind": "vary",
+  "title": "Which Chute Damaged It",
+  "patron": "Dr. Newt",
+  "request": "A damaged slip has landed in the bin. Given how often each chute is used and how often each one damages a slip, tell me the chance this one came down the left chute.",
+  "objective": "Invert a chance tree with Bayes' rule to get a posterior.",
+  "concepts": [
+    "bayes_rule",
+    "posterior",
+    "conditional_probability"
+  ],
+  "requiredApi": [
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize"
+  ],
+  "starter": "deliver(goes_left * damaged_if_left)",
+  "hints": [
+    "You are walking back up the chutes, not down them.",
+    "Weigh each branch by how often it is used: goes_left * damaged_if_left against the right branch's product.",
+    "Deliver the left branch's weight divided by the total weight of both branches."
+  ],
+  "inputCode": "import random\ngoes_left = random.choice([0.2, 0.35, 0.5, 0.65, 0.9])\ndamaged_if_left = random.choice([0.05, 0.2, 0.5, 1.0])\ndamaged_if_right = random.choice([0.0, 0.05, 0.2, 0.5])",
+  "visibleSeed": 26,
+  "visibleInputs": {
+    "goes_left": 0.5,
+    "damaged_if_left": 1.0,
+    "damaged_if_right": 0.0
+  },
+  "fixtures": [
+    {
+      "name": "both_chutes_damage_slips",
+      "predicate": "damaged_if_left > 0 and damaged_if_right > 0",
+      "inputs": {
+        "goes_left": 0.5,
+        "damaged_if_left": 0.2,
+        "damaged_if_right": 0.5
+      }
+    },
+    {
+      "name": "the_left_chute_is_rarely_used",
+      "predicate": "goes_left < 0.25 and damaged_if_right > 0",
+      "inputs": {
+        "goes_left": 0.2,
+        "damaged_if_left": 0.5,
+        "damaged_if_right": 0.2
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "left_branch = goes_left * damaged_if_left\nright_branch = (1 - goes_left) * damaged_if_right\ndeliver(left_branch / (left_branch + right_branch))",
+  "naive": [
+    {
+      "code": "deliver(damaged_if_left)",
+      "fails": "silent",
+      "hazard": "both_chutes_damage_slips"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-12,
+    "relativeTolerance": 1e-12
+  },
+  "unlocks": [
+    "bayes-rule",
+    "posterior"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 14,
+    "oil": 1
+  },
+  "setPiece": "branching-chutes",
+  "hazards": [
+    "both_chutes_damage_slips",
+    "the_left_chute_is_rarely_used"
+  ],
+  "stochastic": false
+}

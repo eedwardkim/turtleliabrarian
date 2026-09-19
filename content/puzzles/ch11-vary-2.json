@@ -1,0 +1,294 @@
+{
+  "id": "ch11-vary-2",
+  "chapter": 11,
+  "kind": "vary",
+  "title": "The Sealed Test Crate",
+  "patron": "the Trustees",
+  "request": "The test crate has been sealed away from the training shelf. Classify every slip in the crate by its nearest training neighbour and report the fraction you get right.",
+  "objective": "Score a classifier on held-out rows without letting them train it.",
+  "concepts": [
+    "train_test_split",
+    "accuracy",
+    "leakage"
+  ],
+  "requiredApi": [
+    "column",
+    "num_rows",
+    "np.sqrt",
+    "item",
+    "row",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize"
+  ],
+  "starter": "deliver(crate.num_rows)",
+  "hints": [
+    "The crate is sealed for a reason: it may not help decide its own labels.",
+    "Walk the crate one row at a time, measuring that row against the training shelf only.",
+    "Count the rows whose nearest training genre matches the crate's own genre and divide by crate.num_rows."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ndef build(size, start):\n    levels = random.sample(range(start, start + 40), size)\n    borrows = random.sample(range(start, start + 40), size)\n    kinds = ['picture' if level % 2 == 0 else 'history' for level in levels]\n    return Table().with_columns('level', make_array(*levels), 'borrows', make_array(*borrows), 'genre', make_array(*kinds))\nshelf = build(random.randint(6, 10), 1)\ncrate = build(random.randint(3, 5), 60)",
+  "visibleSeed": 58,
+  "visibleInputs": {
+    "shelf": {
+      "kind": "table",
+      "labels": [
+        "level",
+        "borrows",
+        "genre"
+      ],
+      "rows": [
+        [
+          2,
+          2,
+          "picture"
+        ],
+        [
+          4,
+          4,
+          "picture"
+        ],
+        [
+          9,
+          9,
+          "history"
+        ],
+        [
+          11,
+          11,
+          "history"
+        ]
+      ],
+      "totalRows": 4
+    },
+    "crate": {
+      "kind": "table",
+      "labels": [
+        "level",
+        "borrows",
+        "genre"
+      ],
+      "rows": [
+        [
+          3,
+          3,
+          "picture"
+        ],
+        [
+          10,
+          10,
+          "history"
+        ]
+      ],
+      "totalRows": 2
+    }
+  },
+  "fixtures": [
+    {
+      "name": "crate_slips_also_sit_on_the_training_shelf",
+      "predicate": "crate.column('level').item(0) in shelf.column('level')",
+      "inputs": {
+        "shelf": {
+          "kind": "table",
+          "labels": [
+            "level",
+            "borrows",
+            "genre"
+          ],
+          "rows": [
+            [
+              5,
+              5,
+              "picture"
+            ],
+            [
+              6,
+              6,
+              "history"
+            ],
+            [
+              7,
+              7,
+              "history"
+            ],
+            [
+              8,
+              8,
+              "history"
+            ]
+          ],
+          "totalRows": 4
+        },
+        "crate": {
+          "kind": "table",
+          "labels": [
+            "level",
+            "borrows",
+            "genre"
+          ],
+          "rows": [
+            [
+              5,
+              5,
+              "history"
+            ],
+            [
+              8,
+              8,
+              "picture"
+            ]
+          ],
+          "totalRows": 2
+        }
+      }
+    },
+    {
+      "name": "every_crate_slip_is_misfiled",
+      "predicate": "crate.num_rows > 0 and crate.column('genre').item(0) != shelf.column('genre').item(0)",
+      "inputs": {
+        "shelf": {
+          "kind": "table",
+          "labels": [
+            "level",
+            "borrows",
+            "genre"
+          ],
+          "rows": [
+            [
+              1,
+              1,
+              "picture"
+            ],
+            [
+              2,
+              2,
+              "picture"
+            ],
+            [
+              3,
+              3,
+              "picture"
+            ]
+          ],
+          "totalRows": 3
+        },
+        "crate": {
+          "kind": "table",
+          "labels": [
+            "level",
+            "borrows",
+            "genre"
+          ],
+          "rows": [
+            [
+              2,
+              2,
+              "history"
+            ],
+            [
+              3,
+              3,
+              "history"
+            ]
+          ],
+          "totalRows": 2
+        }
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "import numpy as np\nright = 0\nfor index in range(crate.num_rows):\n    slip = crate.row(index)\n    gaps = np.sqrt((shelf.column('level') - slip.item(0)) ** 2 + (shelf.column('borrows') - slip.item(1)) ** 2)\n    guess = shelf.with_column('gap', gaps).sort('gap').column('genre').item(0)\n    if guess == slip.item(2):\n        right = right + 1\ndeliver(right / crate.num_rows)",
+  "naive": [
+    {
+      "code": "import numpy as np\nright = 0\nfor index in range(crate.num_rows):\n    slip = crate.row(index)\n    gaps = np.sqrt((crate.column('level') - slip.item(0)) ** 2 + (crate.column('borrows') - slip.item(1)) ** 2)\n    guess = crate.with_column('gap', gaps).sort('gap').column('genre').item(0)\n    if guess == slip.item(2):\n        right = right + 1\ndeliver(right / crate.num_rows)",
+      "fails": "silent",
+      "hazard": "every_crate_slip_is_misfiled"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "train-test-split",
+    "accuracy"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 15,
+    "oil": 1
+  },
+  "setPiece": "sealed-crate",
+  "hazards": [
+    "crate_slips_also_sit_on_the_training_shelf",
+    "every_crate_slip_is_misfiled"
+  ],
+  "stochastic": false
+}

@@ -1,0 +1,147 @@
+{
+  "id": "ch12-break-2",
+  "chapter": 12,
+  "kind": "break",
+  "title": "The Lamp Shone Twice",
+  "patron": "the Trustees",
+  "request": "We shone the forgery lamp over the same book on two separate nights and it flagged the book both times. Give me the chance it is a forgery after the second flag, not the first.",
+  "objective": "Carry a posterior forward as the prior for the next piece of evidence.",
+  "concepts": [
+    "bayes_rule",
+    "posterior",
+    "sequential_updating",
+    "base_rate"
+  ],
+  "requiredApi": [
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize"
+  ],
+  "starter": "deliver(rarity * lamp_catches * lamp_catches)",
+  "hints": [
+    "After the first night you no longer believe what you believed before it.",
+    "Work out the posterior from the first flag, then feed that number back in where rarity used to sit.",
+    "Deliver second_flag = first * lamp_catches / (first * lamp_catches + (1 - first) * false_flag)."
+  ],
+  "inputCode": "import random\nrarity = random.choice([0.005, 0.02, 0.1, 0.3])\nlamp_catches = random.choice([0.4, 0.6, 0.8, 0.95])\nfalse_flag = random.choice([0.02, 0.1, 0.4])\nif lamp_catches == 0.4:\n    false_flag = 0.4",
+  "visibleSeed": 55,
+  "visibleInputs": {
+    "rarity": 0.3,
+    "lamp_catches": 0.4,
+    "false_flag": 0.4
+  },
+  "fixtures": [
+    {
+      "name": "a_sharp_lamp_over_a_rare_forgery",
+      "predicate": "lamp_catches > false_flag and rarity < 0.05",
+      "inputs": {
+        "rarity": 0.01,
+        "lamp_catches": 0.9,
+        "false_flag": 0.1
+      }
+    },
+    {
+      "name": "the_lamp_never_misses_a_forgery",
+      "predicate": "lamp_catches == 1",
+      "inputs": {
+        "rarity": 0.2,
+        "lamp_catches": 1.0,
+        "false_flag": 0.05
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "first = rarity * lamp_catches / (rarity * lamp_catches + (1 - rarity) * false_flag)\nsecond = first * lamp_catches / (first * lamp_catches + (1 - first) * false_flag)\ndeliver(second)",
+  "naive": [
+    {
+      "code": "deliver(rarity * lamp_catches / (rarity * lamp_catches + (1 - rarity) * false_flag))",
+      "fails": "silent",
+      "hazard": "a_sharp_lamp_over_a_rare_forgery"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-12,
+    "relativeTolerance": 1e-12
+  },
+  "unlocks": [
+    "sequential-update"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 18,
+    "oil": 2
+  },
+  "setPiece": "branching-chutes",
+  "hazards": [
+    "a_sharp_lamp_over_a_rare_forgery",
+    "the_lamp_never_misses_a_forgery"
+  ],
+  "stochastic": false
+}
