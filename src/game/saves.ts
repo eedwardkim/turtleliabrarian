@@ -24,7 +24,7 @@ export const defaultSettings: Settings = {
 
 export function freshSave(name = 'Shelby', now = Date.now()): GameSave {
   return {
-    version: 1, name: name.trim().slice(0, 40) || 'Shelby', puzzleId: puzzles[0].id, completed: [],
+    version: 1, started: false, name: name.trim().slice(0, 40) || 'Shelby', puzzleId: puzzles[0].id, completed: [],
     files: { 'main.py': puzzles[0].starter }, activeFile: 'main.py', progress: {}, orderFiles: {},
     resources: { ink: 0, stars: 0, oil: 0, eggs: 0, served: 0 }, settings: { ...defaultSettings },
     layouts: {}, seenTutorials: [], standingOrders: [], lastSavedAt: now, ownedItems: [], hat: '', hatchlings: 0,
@@ -167,7 +167,8 @@ export function parseSave(input: unknown): GameSave {
     throw new Error('Standing orders must be unique completed requests.');
   }
   return {
-    version: 1, name: value.name, puzzleId: value.puzzleId, completed: value.completed, files, activeFile,
+    version: 1, started: value.started === undefined ? true : boolean(value.started),
+    name: value.name, puzzleId: value.puzzleId, completed: value.completed, files, activeFile,
     progress: readProgress(value.progress),
     orderFiles: Object.fromEntries(Object.entries(orderFiles).map(([id, entries]) => { getPuzzle(id); return [id, readFiles(entries)]; })),
     resources: {

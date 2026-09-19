@@ -137,6 +137,7 @@ export interface StandingOrder {
 }
 export interface SaveData {
   version: 1;
+  started?: boolean;
   name: string;
   puzzleId: string;
   completed: string[];

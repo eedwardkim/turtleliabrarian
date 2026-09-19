@@ -7,7 +7,7 @@ let solving = false;
 
 export async function unlockAll(): Promise<void> {
   const game = useGame.getState();
-  const save = { ...game.save, ownedItems: [...new Set([...game.save.ownedItems, ...puzzles.map(puzzle => `wing-${puzzle.chapter}`)])],
+  const save = { ...game.save, started: true, ownedItems: [...new Set([...game.save.ownedItems, ...puzzles.map(puzzle => `wing-${puzzle.chapter}`)])],
     settings: { ...game.save.settings, openStacks: true } };
   await game.importSave(JSON.stringify(save));
 }

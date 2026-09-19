@@ -6,7 +6,7 @@ import type { DialogName, GameStateForUI } from './types';
 export function TitleScreen({ game, openDialog, onNew, error, retry }: {
   game: Pick<GameStateForUI, 'save' | 'ready' | 'loading' | 'loadingMessage' | 'setScreen'>; openDialog: (dialog: DialogName) => void; onNew: () => void; error: string; retry: () => void;
 }) {
-  const hasSave = game.save.lastSavedAt > 0 && game.save.name.trim().length > 0;
+  const hasSave = game.save.started !== false && game.save.lastSavedAt > 0 && game.save.name.trim().length > 0;
   return <main className="title-screen" aria-label={text.brand.title}>
     <div className="title-package">
       <div className="title-kicker">{text.brand.eyebrow}</div>

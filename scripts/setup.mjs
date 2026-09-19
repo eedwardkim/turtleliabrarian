@@ -9,7 +9,7 @@ function run(command, args) {
 }
 
 if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('Use Node 24.');
-run('npm', ['ci']);
+run('npm', [process.argv.includes('--incremental') ? 'install' : 'ci']);
 run('uv', ['python', 'install', '3.14.2']);
 if (!existsSync('.venv')) run('uv', ['venv', '--python', '3.14.2', '.venv']);
 run('uv', ['pip', 'sync', '--python', '.venv/bin/python', '--require-hashes', 'engine-requirements.txt']);

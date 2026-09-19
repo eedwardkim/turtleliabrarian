@@ -274,13 +274,14 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           } catch (error) {
             set({ ready: false, status: errorMessage(error), loadingMessage: 'The reading lamp could not start. Try loading again.' });
             initializing = undefined;
+            throw error;
           }
         })();
         return initializing;
       },
       newGame(name) {
         stop();
-        installSave(freshSave(name));
+        installSave({ ...freshSave(name), started: true });
         persist(get().save);
         set({ screen: 'intro', status: 'Mrs. Quill has left you the keys.' });
         tutorial('new-game');
@@ -467,7 +468,13 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           tutorial('save');
         } catch (error) { set({ status: errorMessage(error) }); }
       },
-      reset() { get().newGame('Shelby'); set({ screen: 'title' }); },
+      reset() {
+        stop();
+        installSave(freshSave());
+        persist(get().save);
+        set({ screen: 'title' });
+        if (get().ready) void get().refreshExpected();
+      },
       fileStandingOrder() {
         const { save, puzzle } = get();
         const { solvedCode, solvedFiles } = progressFor(save, puzzle);
