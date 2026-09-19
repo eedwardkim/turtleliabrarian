@@ -1,0 +1,6 @@
+# CPython oracle and development tools only; production installs NumPy via Pyodide.
+numpy==2.4.6
+datascience==0.18.1
+pytest==8.4.2
+hypothesis==6.168.0
+ruff==0.13.1

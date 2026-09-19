@@ -1,0 +1,22 @@
+{
+  "id": "ch1-break-1", "chapter": 1, "kind": "break",
+  "title": "The Spare Stamp", "patron": "Bramble",
+  "request": "The first book owes one day, the next two, and so on. Multiply each book's rate by its days and deliver the fee tray.",
+  "objective": "Construct an array whose length matches its partner before element-wise multiplication.",
+  "concepts": ["array_length", "broadcasting", "length_mismatch"],
+  "requiredApi": ["np.arange", "len", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero"],
+  "starter": "import numpy as np\nfees = rates\ndeliver(fees)",
+  "hints": ["A stamp for three books cannot cover every possible cart.", "Build the day numbers with np.arange and the length of rates.", "The day numbers begin at 1 and need exactly len(rates) entries; multiply the matching trays."],
+  "inputCode": "import random\nfrom datascience import make_array\nrates = make_array(*[random.randint(1, 6) for _ in range(random.randint(2, 8))])",
+  "visibleSeed": 25, "visibleInputs": {"rates": {"kind": "array", "values": [2, 3, 4]}},
+  "fixtures": [
+    {"name": "length_mismatch", "inputs": {"rates": {"kind": "array", "values": [2, 5]}}, "predicate": "len(rates) == 2"},
+    {"name": "five_rates", "inputs": {"rates": {"kind": "array", "values": [1, 3, 2, 4, 1]}}, "predicate": "len(rates) == 5"}
+  ],
+  "queueSize": 7, "reference": "import numpy as np\ndays = np.arange(1, len(rates) + 1)\nfees = rates * days\ndeliver(fees)",
+  "naive": [{"code": "import numpy as np\ndeliver(rates * np.arange(1, 4))", "fails": "loud", "hazard": "length_mismatch"}],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["matching-lengths"], "standingOrder": {"eligible": true, "ink": 3, "oil": 0},
+  "setPiece": "array-stamp", "hazards": ["length_mismatch"], "stochastic": false
+}

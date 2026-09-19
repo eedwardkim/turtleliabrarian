@@ -1,0 +1,21 @@
+{
+  "id": "p0-01-stamp", "chapter": 0, "kind": "show",
+  "title": "A Small Matter of Ink", "patron": "Mr. Heron",
+  "request": "Please calculate the fee for my late books: days late multiplied by the daily rate. I have brought exact change, provisionally.",
+  "objective": "Use named numbers and multiplication, then deliver the result.",
+  "concepts": ["expressions", "names", "multiplication", "deliver"],
+  "requiredApi": ["deliver"], "learnedApi": ["deliver", "print"],
+  "starter": "# days and rate are already on the request slip.\nfee = 0\nprint(fee)\ndeliver(fee)",
+  "hints": ["The fee grows once for every late day.", "Python uses * to multiply two numbers; deliver sends your result to the patron.", "Replace the zero in fee = 0 with an expression using both input names."],
+  "inputCode": "import random\ndays = random.randint(1, 12)\nrate = random.randint(1, 5)",
+  "visibleSeed": 11, "visibleInputs": {"days": 2, "rate": 2},
+  "fixtures": [
+    {"name": "addition_is_not_multiplication", "inputs": {"days": 3, "rate": 2}, "predicate": "days + rate != days * rate"},
+    {"name": "single_late_day", "inputs": {"days": 1, "rate": 5}, "predicate": "days == 1 and rate > 1"}
+  ],
+  "queueSize": 6, "reference": "fee = days * rate\ndeliver(fee)",
+  "naive": [{"code": "deliver(days + rate)", "fails": "silent", "hazard": "addition_is_not_multiplication"}],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["expressions", "print", "deliver"], "standingOrder": {"eligible": true, "ink": 1, "oil": 0},
+  "setPiece": "fee-stamp", "hazards": ["addition_is_not_multiplication"], "stochastic": false
+}

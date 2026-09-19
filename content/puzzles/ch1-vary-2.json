@@ -1,0 +1,22 @@
+{
+  "id": "ch1-vary-2", "chapter": 1, "kind": "vary",
+  "title": "An Average Afternoon", "patron": "Dr. Newt",
+  "request": "Count the reading times that are at least the mean of this tray. An exactly average afternoon still counts.",
+  "objective": "Reduce an array, compare element-wise, and count True values.",
+  "concepts": ["mean", "sum", "boolean_arrays", "count_nonzero", "inclusive_comparison"],
+  "requiredApi": ["np.mean", "np.count_nonzero", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero"],
+  "starter": "import numpy as np\ncount = 0\ndeliver(count)",
+  "hints": ["First find the mean; then ask the same yes-or-no question of every tile.", "np.mean finds the center, and np.count_nonzero counts the True values in a comparison array.", "Name the mean, form an inclusive comparison with the original times, and count that comparison."],
+  "inputCode": "import random\nfrom datascience import make_array\ntimes = make_array(*[random.randint(1, 30) for _ in range(random.randint(2, 8))])",
+  "visibleSeed": 24, "visibleInputs": {"times": {"kind": "array", "values": [2, 4]}},
+  "fixtures": [
+    {"name": "all_at_mean", "inputs": {"times": {"kind": "array", "values": [3, 3, 3]}}, "predicate": "len(times) > 1 and bool((times == times.item(0)).all())"},
+    {"name": "one_at_mean", "inputs": {"times": {"kind": "array", "values": [1, 2, 3]}}, "predicate": "int((times == np.mean(times)).sum()) == 1"}
+  ],
+  "queueSize": 7, "reference": "import numpy as np\naverage = np.mean(times)\ncount = np.count_nonzero(times >= average)\ndeliver(count)",
+  "naive": [{"code": "import numpy as np\ndeliver(np.count_nonzero(times > np.mean(times)))", "fails": "silent", "hazard": "all_at_mean"}],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["sum", "np.mean", "np.count_nonzero"], "standingOrder": {"eligible": true, "ink": 3, "oil": 0},
+  "setPiece": "array-stamp", "hazards": ["all_at_mean"], "stochastic": false
+}
