@@ -358,10 +358,12 @@ class Table:
             columns = [self._columns[self._argument_label(label)] for label in labels]
             result = np.array([fn(*row) for row in zip(*columns)])
         else:
-            result = np.array([
-                fn(Row(row, tuple(self._columns)))
-                for row in zip(*self._columns.values())
-            ])
+            result = np.array(
+                [
+                    fn(Row(row, tuple(self._columns)))
+                    for row in zip(*self._columns.values())
+                ]
+            )
         emit("apply", (self,), result, columns=labels)
         return result
 
@@ -398,17 +400,28 @@ class Table:
         else:
             for label, column in self._columns.items():
                 if label not in labels:
-                    output[unique_label(collected_label(label, collect), output)] = aggregation_array([
-                        collected(collect, column[order[start:end]])
-                        for start, end in zip(offsets[:-1], offsets[1:])
-                    ])
+                    output[unique_label(collected_label(label, collect), output)] = (
+                        aggregation_array(
+                            [
+                                collected(collect, column[order[start:end]])
+                                for start, end in zip(offsets[:-1], offsets[1:])
+                            ]
+                        )
+                    )
         result = self._from_columns(output.items())
         emit(
-            "group", (self,), result, labels=labels,
+            "group",
+            (self,),
+            result,
+            labels=labels,
             keys=[column[first] for column in columns],
-            bucketIndices=order, bucketOffsets=offsets,
+            bucketIndices=order,
+            bucketOffsets=offsets,
             buckets=[
-                {"key": [column[index] for column in columns], "indices": order[start:end]}
+                {
+                    "key": [column[index] for column in columns],
+                    "indices": order[start:end],
+                }
                 for index, start, end in zip(first[:100], offsets[:-1], offsets[1:])
             ],
             bucketCount=len(first),
@@ -420,7 +433,9 @@ class Table:
         if (values is None) != (collect is None):
             raise TypeError("values and collect must be specified together")
         column_label = self._argument_label(columns)
-        row_labels = [self._argument_label(label) for label in self._labels_args((rows,))]
+        row_labels = [
+            self._argument_label(label) for label in self._labels_args((rows,))
+        ]
         if column_label in row_labels:
             raise TypeError("Pivot row and column labels must differ")
         if not row_labels:
@@ -441,8 +456,10 @@ class Table:
         value_column = None if values is None else self._columns[value_label]
         cell_values = {
             cell: (
-                len(indices) if collect is None
-                else "" if value_label in [column_label, *row_labels]
+                len(indices)
+                if collect is None
+                else ""
+                if value_label in [column_label, *row_labels]
                 else collected(collect, value_column[indices])
             )
             for cell, indices in cells.items()
@@ -460,7 +477,11 @@ class Table:
             output[unique_label(str(category[index]), output)] = np.array(entries)
         result = self._from_columns(output.items())
         emit(
-            "pivot", (self,), result, rowLabels=row_labels, columnLabel=column_label,
+            "pivot",
+            (self,),
+            result,
+            rowLabels=row_labels,
+            columnLabel=column_label,
             cells=[
                 {"row": row, "column": column, "indices": indices}
                 for (row, column), indices in cells.items()
@@ -473,7 +494,9 @@ class Table:
     def join(self, column_label, other, other_label=None):
         check_api("join")
         left_labels = list(self._labels_args((column_label,)))
-        right_labels = list(self._labels_args((column_label if other_label is None else other_label,)))
+        right_labels = list(
+            self._labels_args((column_label if other_label is None else other_label,))
+        )
         left_columns = [self._column(label) for label in left_labels]
         right_columns = [other._column(label) for label in right_labels]
         if len(left_labels) != len(right_labels):
@@ -483,16 +506,23 @@ class Table:
         if len(left_indices):
             if any(not isinstance(label, str) for label in left_labels + right_labels):
                 raise KeyError(column_label)
-            output = {label: self._columns[label][left_indices] for label in left_labels}
-            output.update({
-                label: column[left_indices] for label, column in self._columns.items()
-                if label not in left_labels
-            })
+            output = {
+                label: self._columns[label][left_indices] for label in left_labels
+            }
+            output.update(
+                {
+                    label: column[left_indices]
+                    for label, column in self._columns.items()
+                    if label not in left_labels
+                }
+            )
             for label, column in other._columns.items():
                 if label not in right_labels:
                     output[unique_label(label, output)] = column[right_indices]
             output = {
-                label: np.array(column.tolist()) if column.dtype.kind in "US" else column
+                label: np.array(column.tolist())
+                if column.dtype.kind in "US"
+                else column
                 for label, column in output.items()
             }
             result = self._from_columns(output.items())
@@ -501,52 +531,124 @@ class Table:
         left_used[left_indices] = True
         right_used[right_indices] = True
         emit(
-            "join", (self, other), result,
-            matchedPairs=np.column_stack((left_indices[:100], right_indices[:100])).tolist(),
+            "join",
+            (self, other),
+            result,
+            matchedPairs=np.column_stack(
+                (left_indices[:100], right_indices[:100])
+            ).tolist(),
             matchedPairCount=len(left_indices),
             leftIndices=left_indices,
             rightIndices=right_indices,
             unmatchedLeftIndices=np.flatnonzero(~left_used),
             unmatchedRightIndices=np.flatnonzero(~right_used),
-            leftLabels=left_labels, rightLabels=right_labels,
+            leftLabels=left_labels,
+            rightLabels=right_labels,
         )
         return result
 
     def sample(self, k=None, with_replacement=True, weights=None):
         check_api("sample")
         k = self._num_rows if k is None else k
-        indices = np.random.choice(self._num_rows, k, replace=with_replacement, p=weights)
+        indices = np.random.choice(
+            self._num_rows, k, replace=with_replacement, p=weights
+        )
         result = self._from_columns(
             (label, np.array(column[indices].tolist()))
             for label, column in self._columns.items()
         )
-        emit("sample", (self,), result, indices=indices, withReplacement=with_replacement)
+        emit(
+            "sample", (self,), result, indices=indices, withReplacement=with_replacement
+        )
         return result
 
-    def barh(self, column_for_categories=None, select=None, overlay=True, width=None, **vargs):
+    def barh(
+        self, column_for_categories=None, select=None, overlay=True, width=None, **vargs
+    ):
         check_api("barh")
-        return table_charts.barh(self, column_for_categories, select, overlay, width, vargs)
+        return table_charts.barh(
+            self, column_for_categories, select, overlay, width, vargs
+        )
 
-    def hist(self, *columns, overlay=True, bins=None, bin_column=None, unit=None,
-             counts=None, group=None, rug=False, side_by_side=False, left_end=None,
-             right_end=None, width=None, height=None, **vargs):
+    def hist(
+        self,
+        *columns,
+        overlay=True,
+        bins=None,
+        bin_column=None,
+        unit=None,
+        counts=None,
+        group=None,
+        rug=False,
+        side_by_side=False,
+        left_end=None,
+        right_end=None,
+        width=None,
+        height=None,
+        **vargs,
+    ):
         check_api("hist")
         return table_charts.histogram(
-            self, columns, overlay, bins, bin_column, unit, counts, group, rug,
-            side_by_side, left_end, right_end, width, height, vargs,
+            self,
+            columns,
+            overlay,
+            bins,
+            bin_column,
+            unit,
+            counts,
+            group,
+            rug,
+            side_by_side,
+            left_end,
+            right_end,
+            width,
+            height,
+            vargs,
         )
 
-    def scatter(self, column_for_x, select=None, overlay=True, fit_line=False,
-                group=None, labels=None, sizes=None, width=None, height=None, s=20, **vargs):
+    def scatter(
+        self,
+        column_for_x,
+        select=None,
+        overlay=True,
+        fit_line=False,
+        group=None,
+        labels=None,
+        sizes=None,
+        width=None,
+        height=None,
+        s=20,
+        **vargs,
+    ):
         check_api("scatter")
         return table_charts.scatter(
-            self, column_for_x, select, overlay, fit_line, group, labels, sizes,
-            width, height, s, vargs,
+            self,
+            column_for_x,
+            select,
+            overlay,
+            fit_line,
+            group,
+            labels,
+            sizes,
+            width,
+            height,
+            s,
+            vargs,
         )
 
-    def plot(self, column_for_xticks=None, select=None, overlay=True, width=None, height=None, **vargs):
+    def plot(
+        self,
+        column_for_xticks=None,
+        select=None,
+        overlay=True,
+        width=None,
+        height=None,
+        **vargs,
+    ):
         check_api("plot")
-        return table_charts.plot(self, column_for_xticks, select, overlay, width, height, vargs)
+        return table_charts.plot(
+            self, column_for_xticks, select, overlay, width, height, vargs
+        )
 
     def show(self, max_rows=None):
         check_api("show")

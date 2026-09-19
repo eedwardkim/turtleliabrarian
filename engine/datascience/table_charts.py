@@ -1,5 +1,7 @@
 """Computed chart data, independent of any plotting backend."""
 
+import math
+
 import numpy as np
 
 from shelf_events import emit
@@ -7,9 +9,24 @@ from shelf_events import emit
 from .table_helpers import buckets
 
 STYLE_OPTIONS = {
-    "alpha", "color", "colors", "label", "linewidth", "linestyle", "marker",
-    "edgecolor", "facecolor", "zorder", "xlim", "ylim", "title", "xlabel",
-    "ylabel", "log", "clip_on", "hatch",
+    "alpha",
+    "color",
+    "colors",
+    "label",
+    "linewidth",
+    "linestyle",
+    "marker",
+    "edgecolor",
+    "facecolor",
+    "zorder",
+    "xlim",
+    "ylim",
+    "title",
+    "xlabel",
+    "ylabel",
+    "log",
+    "clip_on",
+    "hatch",
 }
 
 
@@ -17,6 +34,28 @@ def numeric(values):
     if values.dtype.kind not in "iuf":
         raise ValueError("The selected columns must contain numerical values")
     return values
+
+
+def linear_fit(x, y):
+    if len(x) == 0:
+        raise TypeError("expected non-empty vector for x")
+    x_values = [float(value) for value in x]
+    y_values = [float(value) for value in y]
+    if not all(math.isfinite(value) for value in x_values) or not any(x_values):
+        raise np.linalg.LinAlgError("SVD did not converge in Linear Least Squares")
+    if not all(math.isfinite(value) for value in y_values):
+        return np.array([np.nan, np.nan])
+    x_mean = math.fsum(x_values) / len(x_values)
+    y_mean = math.fsum(y_values) / len(y_values)
+    centered = [value - x_mean for value in x_values]
+    variance = math.fsum(value * value for value in centered)
+    if variance == 0:
+        return np.array([y_mean / (2 * x_mean), y_mean / 2])
+    slope = (
+        math.fsum(dx * (value - y_mean) for dx, value in zip(centered, y_values))
+        / variance
+    )
+    return np.array([slope, y_mean - slope * x_mean])
 
 
 def select_columns(table, select, excluded):
@@ -37,9 +76,16 @@ def publish(table, kind, series, axes, options):
         item["pointCount"] = len(item["y"])
     first = series[0] if series else {}
     emit(
-        kind, (table,), None, series=series, axes=axes, settings=options,
-        x=first.get("x", []), y=first.get("y", []),
-        labels=first.get("labels", []), label=first.get("label", kind),
+        kind,
+        (table,),
+        None,
+        series=series,
+        axes=axes,
+        settings=options,
+        x=first.get("x", []),
+        y=first.get("y", []),
+        labels=first.get("labels", []),
+        label=first.get("label", kind),
     )
 
 
@@ -49,14 +95,25 @@ def barh(table, categories, select, overlay, width, options):
     indices = np.arange(table._num_rows - 1, -1, -1)
     series = [
         {
-            "label": name, "x": np.arange(table._num_rows),
+            "label": name,
+            "x": np.arange(table._num_rows),
             "y": numeric(table._columns[name])[indices],
-            "labels": table._columns[label][indices].astype(str), "indices": indices,
+            "labels": table._columns[label][indices].astype(str),
+            "indices": indices,
         }
         for name in selected
     ]
-    publish(table, "barh", series, {"x": "", "y": label},
-            {**settings(options, ("left", "height", "align", "xerr")), "overlay": overlay, "width": width})
+    publish(
+        table,
+        "barh",
+        series,
+        {"x": "", "y": label},
+        {
+            **settings(options, ("left", "height", "align", "xerr")),
+            "overlay": overlay,
+            "width": width,
+        },
+    )
 
 
 def plot(table, column, select, overlay, width, height, options):
@@ -73,18 +130,42 @@ def plot(table, column, select, overlay, width, height, options):
     indices = np.argsort(x, kind="stable")
     series = [
         {
-            "label": name, "x": x[indices],
+            "label": name,
+            "x": x[indices],
             "y": numeric(table._columns[name])[indices],
             "indices": indices,
             "labels": x[indices].astype(str),
         }
         for name in selected
     ]
-    publish(table, "plot", series, {"x": label, "y": selected[0] if len(selected) == 1 else ""},
-            {**settings(options, ("markersize", "drawstyle")), "overlay": overlay, "width": width, "height": height})
+    publish(
+        table,
+        "plot",
+        series,
+        {"x": label, "y": selected[0] if len(selected) == 1 else ""},
+        {
+            **settings(options, ("markersize", "drawstyle")),
+            "overlay": overlay,
+            "width": width,
+            "height": height,
+        },
+    )
 
 
-def scatter(table, column, select, overlay, fit_line, group, labels, sizes, width, height, s, options):
+def scatter(
+    table,
+    column,
+    select,
+    overlay,
+    fit_line,
+    group,
+    labels,
+    sizes,
+    width,
+    height,
+    s,
+    options,
+):
     if "colors" in options:
         group = options.pop("colors")
     x_label = table._label(column)
@@ -97,7 +178,10 @@ def scatter(table, column, select, overlay, fit_line, group, labels, sizes, widt
             excluded.add(label)
             auxiliary[name] = table._columns[label]
     selected = select_columns(table, select, excluded)
-    if any(value is not None and table._label(value) == x_label for value in (group, labels, sizes)):
+    if any(
+        value is not None and table._label(value) == x_label
+        for value in (group, labels, sizes)
+    ):
         raise ValueError("The x column cannot also be an annotation column")
     if group is None:
         groups = [("", np.arange(table._num_rows))]
@@ -116,34 +200,95 @@ def scatter(table, column, select, overlay, fit_line, group, labels, sizes, widt
         y = numeric(table._columns[name])
         for category, indices in groups:
             item = {
-                "label": f"{table._label(group)}={category}" if group is not None else name,
-                "x": x[indices], "y": y[indices], "indices": indices,
-                "sizes": point_sizes if np.isscalar(point_sizes) else point_sizes[indices],
+                "label": f"{table._label(group)}={category}"
+                if group is not None
+                else name,
+                "x": x[indices],
+                "y": y[indices],
+                "indices": indices,
+                "sizes": point_sizes
+                if np.isscalar(point_sizes)
+                else point_sizes[indices],
             }
             if labels is not None:
                 item["labels"] = auxiliary["labels"][indices]
             if fit_line:
-                coefficients = np.polyfit(x[indices], y[indices], 1)
+                coefficients = linear_fit(x[indices], y[indices])
                 ends = np.array([np.min(x[indices]), np.max(x[indices])])
-                item["fitLine"] = {"x": ends, "y": np.polyval(coefficients, ends), "coefficients": coefficients}
+                item["fitLine"] = {
+                    "x": ends,
+                    "y": np.polyval(coefficients, ends),
+                    "coefficients": coefficients,
+                }
             series.append(item)
-    publish(table, "scatter", series, {"x": x_label, "y": selected[0] if len(selected) == 1 else ""},
-            {**settings(options, ("c", "cmap", "vmin", "vmax", "norm", "marker", "linewidths", "edgecolors")), "overlay": overlay,
-             "fitLine": fit_line, "width": width, "height": height})
+    publish(
+        table,
+        "scatter",
+        series,
+        {"x": x_label, "y": selected[0] if len(selected) == 1 else ""},
+        {
+            **settings(
+                options,
+                (
+                    "c",
+                    "cmap",
+                    "vmin",
+                    "vmax",
+                    "norm",
+                    "marker",
+                    "linewidths",
+                    "edgecolors",
+                ),
+            ),
+            "overlay": overlay,
+            "fitLine": fit_line,
+            "width": width,
+            "height": height,
+        },
+    )
 
 
-def histogram(table, columns, overlay, bins, bin_column, unit, counts, group, rug,
-              side_by_side, left_end, right_end, width, height, options):
-    options = settings(options, (
-        "density", "cumulative", "range", "weights", "orientation", "histtype",
-        "stacked", "rwidth", "align", "bottom", "shade_split",
-    ))
+def histogram(
+    table,
+    columns,
+    overlay,
+    bins,
+    bin_column,
+    unit,
+    counts,
+    group,
+    rug,
+    side_by_side,
+    left_end,
+    right_end,
+    width,
+    height,
+    options,
+):
+    options = settings(
+        options,
+        (
+            "density",
+            "cumulative",
+            "range",
+            "weights",
+            "orientation",
+            "histtype",
+            "stacked",
+            "rwidth",
+            "align",
+            "bottom",
+            "shade_split",
+        ),
+    )
     if counts is not None:
         bin_column = counts
     excluded = {table._label(c) for c in (bin_column, group) if c is not None}
-    selected = [table._argument_label(c) for c in table._labels_args(columns)] if columns else [
-        name for name in table._columns if name not in excluded
-    ]
+    selected = (
+        [table._argument_label(c) for c in table._labels_args(columns)]
+        if columns
+        else [name for name in table._columns if name not in excluded]
+    )
     if any(table._columns[name].dtype.kind == "b" for name in selected):
         raise TypeError("Boolean histogram bin subtraction is undefined")
     if group is not None and (bin_column is not None or len(selected) != 1):
@@ -153,18 +298,31 @@ def histogram(table, columns, overlay, bins, bin_column, unit, counts, group, ru
         data = numeric(table._column(bin_column))
         if bins is None:
             bins = np.sort(data)
-        datasets = [(label, data, numeric(table._columns[label]), np.arange(len(data))) for label in selected]
+        datasets = [
+            (label, data, numeric(table._columns[label]), np.arange(len(data)))
+            for label in selected
+        ]
     elif group is not None:
         data = numeric(table._columns[selected[0]])
         categories = table._column(group)
         first, order, offsets = buckets([categories])
         datasets = [
-            (f"{table._label(group)}={categories[i]}", data[order[start:end]], None, order[start:end])
+            (
+                f"{table._label(group)}={categories[i]}",
+                data[order[start:end]],
+                None,
+                order[start:end],
+            )
             for i, start, end in zip(first, offsets[:-1], offsets[1:])
         ]
     else:
         datasets = [
-            (label, numeric(table._columns[label]), options.get("weights"), np.arange(table._num_rows))
+            (
+                label,
+                numeric(table._columns[label]),
+                options.get("weights"),
+                np.arange(table._num_rows),
+            )
             for label in selected
         ]
     bins = 10 if bins is None else bins
@@ -177,7 +335,11 @@ def histogram(table, columns, overlay, bins, bin_column, unit, counts, group, ru
         datasets.reverse()
     series = []
     for label, data, weights, indices in datasets:
-        edges = shared_bins if shared_bins is not None else histogram_edges(data, bins, options.get("range"))
+        edges = (
+            shared_bins
+            if shared_bins is not None
+            else histogram_edges(data, bins, options.get("range"))
+        )
         frequencies, _ = np.histogram(data, edges, weights=weights)
         heights = frequencies.astype(float)
         if density:
@@ -186,10 +348,17 @@ def histogram(table, columns, overlay, bins, bin_column, unit, counts, group, ru
         if cumulative:
             if density:
                 heights = heights * np.diff(edges)
-            heights = np.cumsum(heights) if cumulative > 0 else np.cumsum(heights[::-1])[::-1]
+            heights = (
+                np.cumsum(heights) if cumulative > 0 else np.cumsum(heights[::-1])[::-1]
+            )
         item = {
-            "label": label, "x": edges[:-1], "y": heights, "binEdges": edges,
-            "counts": frequencies, "density": density, "indices": indices,
+            "label": label,
+            "x": edges[:-1],
+            "y": heights,
+            "binEdges": edges,
+            "counts": frequencies,
+            "density": density,
+            "indices": indices,
         }
         if rug:
             item["rug"] = data
@@ -204,9 +373,21 @@ def histogram(table, columns, overlay, bins, bin_column, unit, counts, group, ru
     x_label = selected[0] if len(selected) == 1 else ""
     if unit is not None and x_label:
         x_label += f" ({unit})"
-    publish(table, "hist", series, {"x": x_label, "y": y_label},
-            {**options, "overlay": overlay, "sideBySide": side_by_side, "unit": unit,
-             "width": width, "height": height, "rug": rug})
+    publish(
+        table,
+        "hist",
+        series,
+        {"x": x_label, "y": y_label},
+        {
+            **options,
+            "overlay": overlay,
+            "sideBySide": side_by_side,
+            "unit": unit,
+            "width": width,
+            "height": height,
+            "rug": rug,
+        },
+    )
 
 
 def histogram_edges(data, bins, value_range):

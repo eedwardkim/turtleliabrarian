@@ -74,7 +74,9 @@ def buckets(columns):
             groups.setdefault(normalized, []).append(index)
         representatives = {
             k: tuple(
-                np.nan if isinstance(value, (float, np.floating)) and np.isnan(value) else value
+                np.nan
+                if isinstance(value, (float, np.floating)) and np.isnan(value)
+                else value
                 for value in (c[v[0]] for c in columns)
             )
             for k, v in groups.items()
@@ -83,8 +85,11 @@ def buckets(columns):
             groups,
             key=cmp_to_key(
                 lambda a, b: (
-                    -1 if representatives[a] < representatives[b]
-                    else 1 if representatives[a] > representatives[b] else 0
+                    -1
+                    if representatives[a] < representatives[b]
+                    else 1
+                    if representatives[a] > representatives[b]
+                    else 0
                 )
             ),
         )
@@ -117,7 +122,9 @@ def collected_label(label, function):
 
 
 def aggregation_array(values):
-    if any(isinstance(value, Iterable) and not isinstance(value, str) for value in values):
+    if any(
+        isinstance(value, Iterable) and not isinstance(value, str) for value in values
+    ):
         return np.array(values, dtype=object)
     return np.array(values)
 
@@ -143,7 +150,9 @@ def join_indices(left_columns, right_columns):
         counts = ends - starts
         left_indices = np.repeat(left_order, counts)
         group_starts = np.repeat(np.cumsum(counts) - counts, counts)
-        positions = np.repeat(starts, counts) + np.arange(len(left_indices)) - group_starts
+        positions = (
+            np.repeat(starts, counts) + np.arange(len(left_indices)) - group_starts
+        )
         return left_indices, right_order[positions]
     matches = {}
     for i, row in enumerate(zip(*right_columns)):

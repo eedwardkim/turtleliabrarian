@@ -67,7 +67,9 @@ def chart_oracle(process, expression, x, y, z):
     process.stdin.flush()
     return json.loads(
         process.stdout.readline(),
-        object_hook=lambda value: float(value["special"]) if "special" in value else value,
+        object_hook=lambda value: float(value["special"])
+        if "special" in value
+        else value,
     )
 
 
@@ -101,13 +103,17 @@ def test_500_chart_artist_comparisons(advanced_oracle, method, case):
     elif method == "scatter":
         for series, points in zip(payload["series"], expected["scatter"], strict=True):
             actual = np.column_stack((series["x"], series["y"]))
-            np.testing.assert_allclose(actual, np.asarray(points).reshape((-1, 2)), equal_nan=True)
+            np.testing.assert_allclose(
+                actual, np.asarray(points).reshape((-1, 2)), equal_nan=True
+            )
     elif method == "barh":
         actual = np.concatenate([s["y"] for s in payload["series"]])
         np.testing.assert_allclose(actual, [bar[1] for bar in expected["bars"]])
     else:
         actual = np.concatenate([s["y"] for s in payload["series"]])
-        np.testing.assert_allclose(actual, np.array([bar[2] for bar in expected["bars"]]) * 100, equal_nan=True)
+        np.testing.assert_allclose(
+            actual, np.array([bar[2] for bar in expected["bars"]]) * 100, equal_nan=True
+        )
 
 
 @pytest.mark.parametrize("density", [True, False])
@@ -125,11 +131,11 @@ def test_histogram_units_unequal_bins_and_weights(density, cumulative):
     if cumulative:
         if density:
             expected *= np.array([1, 3, 6])
-        expected = np.cumsum(expected) if cumulative > 0 else np.cumsum(expected[::-1])[::-1]
+        expected = (
+            np.cumsum(expected) if cumulative > 0 else np.cumsum(expected[::-1])[::-1]
+        )
     np.testing.assert_allclose(series["y"], expected)
-    assert payload["axes"]["y"] == (
-        "Percent per kg" if density else "Count"
-    )
+    assert payload["axes"]["y"] == ("Percent per kg" if density else "Count")
 
 
 def test_histogram_grouping_overlay_and_rug():
@@ -143,14 +149,72 @@ def test_histogram_grouping_overlay_and_rug():
 
 def test_scatter_annotations_sizes_and_fit():
     table = Table().with_columns(
-        "x", [0, 1, 2], "y", [1, 3, 5], "name", ["a", "b", "c"],
-        "size", [0, 1, 4],
+        "x",
+        [0, 1, 2],
+        "y",
+        [1, 3, 5],
+        "name",
+        ["a", "b", "c"],
+        "size",
+        [0, 1, 4],
     )
-    _, payload = chart_event(table, "t.scatter('x', labels='name', sizes='size', fit_line=True)")
+    _, payload = chart_event(
+        table, "t.scatter('x', labels='name', sizes='size', fit_line=True)"
+    )
     series = payload["series"][0]
     np.testing.assert_allclose(series["sizes"], [0, 20, 40])
     np.testing.assert_allclose(series["fitLine"]["coefficients"], [2, 1])
     assert list(series["labels"]) == ["a", "b", "c"]
+
+
+@EXAMPLES
+@given(
+    points=st.lists(
+        st.tuples(st.integers(-1000, 1000), st.integers(-1000, 1000)),
+        min_size=2,
+        max_size=24,
+        unique_by=lambda point: point[0],
+    )
+)
+def test_500_fit_line_artist_comparisons(advanced_oracle, points):
+    x, y = map(list, zip(*points))
+    expression = "t.scatter('x', 'y', fit_line=True)"
+    expected = chart_oracle(advanced_oracle, expression, x, y, y)["result"]
+    _, payload = chart_event(Table().with_columns("x", x, "y", y), expression)
+    fitted = payload["series"][0]["fitLine"]
+    np.testing.assert_allclose(fitted["x"], expected["lines"][0][0], equal_nan=True)
+    np.testing.assert_allclose(
+        fitted["y"], expected["lines"][0][1], atol=1e-9, rtol=1e-9, equal_nan=True
+    )
+
+
+@pytest.mark.parametrize(
+    "x,y",
+    [
+        ([], []),
+        ([1], [2]),
+        ([2, 2], [1, 3]),
+        ([0, 0], [1, 3]),
+        ([1, 2], [np.nan, 3]),
+        ([1, 2], [np.inf, 3]),
+        ([np.nan, 2], [1, 3]),
+        ([np.inf, 2], [1, 3]),
+    ],
+)
+def test_fit_line_degenerate_inputs(advanced_oracle, x, y):
+    expression = "t.scatter('x', 'y', fit_line=True)"
+    expected = chart_oracle(advanced_oracle, expression, x, y, y)
+    table = Table().with_columns("x", x, "y", y)
+    if "error" in expected:
+        with pytest.raises(Exception) as raised:
+            chart_event(table, expression)
+        assert type(raised.value).__name__ == expected["error"]
+    else:
+        _, payload = chart_event(table, expression)
+        fitted = payload["series"][0]["fitLine"]
+        np.testing.assert_allclose(
+            fitted["y"], expected["result"]["lines"][0][1], equal_nan=True
+        )
 
 
 @pytest.mark.parametrize(
@@ -174,10 +238,18 @@ def test_chart_errors(advanced_oracle, expression):
 
 
 @pytest.mark.parametrize("method", ["barh", "hist", "scatter", "plot"])
-@pytest.mark.parametrize("values", [
-    [], [1], [True, False], ["1", "2"], [" A", "a "],
-    [np.nan, 1], [np.nan, np.nan],
-])
+@pytest.mark.parametrize(
+    "values",
+    [
+        [],
+        [1],
+        [True, False],
+        ["1", "2"],
+        [" A", "a "],
+        [np.nan, 1],
+        [np.nan, np.nan],
+    ],
+)
 def test_chart_type_and_empty_regressions(advanced_oracle, method, values):
     expression = f"t.{method}('x')"
     expected = chart_oracle(advanced_oracle, expression, values, values, values)
