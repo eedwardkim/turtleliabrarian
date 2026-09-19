@@ -1,0 +1,47 @@
+[
+  {
+    "name": "notebook",
+    "request": {"code": "print('Hello, Shelby!')\n2 ** 5"},
+    "expected": {"stdout": "Hello, Shelby!\n", "value": 32, "delivered": null, "error": null}
+  },
+  {
+    "name": "arrays",
+    "request": {"code": "pages = make_array(100, 200, 300)\ndeliver(np.append(pages * 2, 800))\nnp.mean(pages)"},
+    "expected": {"value": 200, "delivered": {"kind": "array", "values": [200, 400, 600, 800]}, "error": null}
+  },
+  {
+    "name": "filter-and-stable-sort",
+    "request": {"code": "shelf = Table().with_columns('title', ['A', 'B', 'C', 'D'], 'pages', [200, 50, 200, 300])\ndeliver(shelf.where('pages', are.above(100)).sort('pages', descending=True))"},
+    "expected": {"delivered": {"kind": "table", "labels": ["title", "pages"], "rows": [["D", 300], ["A", 200], ["C", 200]], "totalRows": 3}, "error": null}
+  },
+  {
+    "name": "seeded-inputs",
+    "request": {"code": "deliver(pages)", "inputCode": "pages = np.random.randint(0, 10, 4)", "seed": 0},
+    "expected": {"delivered": {"kind": "array", "values": [5, 0, 3, 3]}, "error": null}
+  },
+  {
+    "name": "input-overrides",
+    "request": {"code": "deliver(pages)", "inputCode": "pages = np.arange(4)", "inputs": {"pages": {"kind": "array", "values": [30, 40]}}},
+    "expected": {"delivered": {"kind": "array", "values": [30, 40]}, "error": null}
+  },
+  {
+    "name": "player-files",
+    "request": {"code": "from cart import arrange\ndeliver(arrange(np.array([3, 1, 2])))", "files": {"cart.py": "def arrange(values):\n    return np.sort(values)\n"}},
+    "expected": {"delivered": {"kind": "array", "values": [1, 2, 3]}, "error": null}
+  },
+  {
+    "name": "loop-and-deletion",
+    "request": {"code": "total = 0\nfor i in range(4):\n    total += i\ndel i\ndeliver(total)"},
+    "expected": {"delivered": 6, "error": null}
+  },
+  {
+    "name": "numpy-nonfinite",
+    "request": {"code": "deliver(np.array([1, np.nan, np.inf]))"},
+    "expected": {"delivered": {"kind": "array", "values": [1, null, null]}, "error": null}
+  },
+  {
+    "name": "bundled-csv",
+    "request": {"code": "deliver(Table.read_table('shelf.csv').select('Pages').take([2, 0]))"},
+    "expected": {"delivered": {"kind": "table", "labels": ["Pages"], "rows": [[96], [144]], "totalRows": 2}, "error": null}
+  }
+]
