@@ -1,0 +1,28 @@
+{
+  "id": "ch5-show-1", "chapter": 5, "kind": "show",
+  "title": "Names on the Slips", "patron": "Clerk Odo",
+  "request": "The slips carry card numbers, the register carries names. Put a name beside every slip we can account for: deliver the borrower name and the days column, sorted by name.",
+  "objective": "Join two tables on a shared column and read the combined rows.",
+  "concepts": ["join", "shared_keys", "combining_tables"],
+  "requiredApi": ["join", "select", "sort", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "are.contained_in", "barh", "hist", "scatter", "plot", "apply", "group", "pivot", "join", "read_table"],
+  "starter": "deliver(slips.sort('days'))",
+  "hints": ["The slips alone cannot tell you who is holding the book; the register knows the card numbers.", "join matches rows of two tables on one shared column and keeps only the rows that match on both sides.", "Join the slips to the register on the card column, then select the name and days columns and sort by name."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nnames = ['Alder Finch', 'Bryony Sable', 'Corvin Reed', 'Delphine Wren', 'Eamon Thistle', 'Fenna Larkspur']\ncards = [101, 102, 103, 104, 105, 106]\nsize = random.randint(3, 6)\nchosen = sorted(random.sample(range(6), size))\nregister = Table().with_columns('card', make_array(*[cards[index] for index in chosen]), 'name', make_array(*[names[index] for index in chosen]))\nn = random.randint(3, 6)\nborrowed = [cards[random.choice(chosen)] for _ in range(n)]\nslips = Table().with_columns('card', make_array(*borrowed), 'days', make_array(*[random.randint(1, 28) for _ in range(n)]))",
+  "visibleSeed": 6,
+  "visibleInputs": {
+    "slips": {"kind": "table", "labels": ["card", "days"], "rows": [[102, 9], [104, 3], [101, 21], [104, 12]], "totalRows": 4},
+    "register": {"kind": "table", "labels": ["card", "name"], "rows": [[101, "Alder Finch"], [102, "Bryony Sable"], [104, "Delphine Wren"]], "totalRows": 3}
+  },
+  "fixtures": [
+    {"name": "one_borrower_many_slips", "inputs": {"slips": {"kind": "table", "labels": ["card", "days"], "rows": [[103, 5], [103, 14], [103, 2]], "totalRows": 3}, "register": {"kind": "table", "labels": ["card", "name"], "rows": [[103, "Corvin Reed"], [105, "Eamon Thistle"]], "totalRows": 2}}, "predicate": "int(len(set(slips.column('card').tolist()))) == 1 and slips.num_rows > 1"},
+    {"name": "register_has_idle_members", "inputs": {"slips": {"kind": "table", "labels": ["card", "days"], "rows": [[106, 7], [101, 4]], "totalRows": 2}, "register": {"kind": "table", "labels": ["card", "name"], "rows": [[101, "Alder Finch"], [103, "Corvin Reed"], [105, "Eamon Thistle"], [106, "Fenna Larkspur"]], "totalRows": 4}}, "predicate": "register.num_rows > int(len(set(slips.column('card').tolist())))"}
+  ],
+  "queueSize": 7,
+  "reference": "matched = slips.join('card', register)\ndeliver(matched.select('name', 'days').sort('name'))",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["join"],
+  "standingOrder": {"eligible": true, "ink": 6, "oil": 1},
+  "setPiece": "register-desk", "hazards": ["register_has_idle_members"], "stochastic": false
+}

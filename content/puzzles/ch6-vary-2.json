@@ -1,0 +1,25 @@
+{
+  "id": "ch6-vary-2", "chapter": 6, "kind": "vary",
+  "title": "A Model Week at the Desk", "patron": "Dr. Newt",
+  "request": "Suppose next week's 500 returns fall into the chutes with the chances in odds. Model one such week with sample_proportions and deliver the modelled number of books in each chute as whole counts.",
+  "objective": "Simulate one draw from a categorical model and convert proportions back into counts.",
+  "concepts": ["sample_proportions", "probability_model", "counts_vs_proportions", "simulation"],
+  "requiredApi": ["sample_proportions", "make_array", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "np.append", "item", "sum", "np.mean", "np.std", "np.count_nonzero", "np.max", "np.min", "np.sum", "np.random.choice", "percentile", "sample_proportions", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "sample", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "are.contained_in", "barh", "hist", "scatter", "plot", "apply", "group", "pivot", "join", "read_table"],
+  "starter": "deliver(make_array(*[round(chance * 500) for chance in odds]))",
+  "hints": ["The odds say what to expect on average; a modelled week is allowed to disagree with them.", "sample_proportions takes the sample size and the array of chances and returns the proportions that actually came up.", "Multiply each returned proportion by 500 and round it to a whole count before delivering the array."],
+  "inputCode": "import random\nfrom datascience import make_array\nflat = [0.5, 0.3, 0.2, 0.7, 0.2, 0.1, 0.34, 0.33, 0.33, 0.8, 0.15, 0.05, 0.6, 0.4, 0.0]\nstart = 3 * random.randint(0, 4)\nodds = make_array(flat[start], flat[start + 1], flat[start + 2])",
+  "visibleSeed": 10,
+  "visibleInputs": {"odds": {"kind": "array", "values": [0.5, 0.3, 0.2], "length": 3}},
+  "fixtures": [
+    {"name": "one_chute_never_used", "inputs": {"odds": {"kind": "array", "values": [0.6, 0.4, 0.0], "length": 3}}, "predicate": "bool(float(np.min(odds)) == 0.0)"},
+    {"name": "one_chute_almost_always", "inputs": {"odds": {"kind": "array", "values": [0.8, 0.15, 0.05], "length": 3}}, "predicate": "bool(float(np.max(odds)) >= 0.8)"}
+  ],
+  "queueSize": 8,
+  "reference": "modelled = sample_proportions(500, odds)\ndeliver(make_array(*[int(round(share * 500)) for share in modelled]))",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["sample_proportions"],
+  "standingOrder": {"eligible": true, "ink": 8, "oil": 2},
+  "setPiece": "model-desk", "hazards": ["one_chute_never_used", "one_chute_almost_always"], "stochastic": true
+}

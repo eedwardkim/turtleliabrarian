@@ -1,0 +1,27 @@
+{
+  "id": "ch3-break-1", "chapter": 3, "kind": "break",
+  "title": "The Wide Bin at the End", "patron": "Mrs. Quill",
+  "request": "The hall bins are 0 to 100, 100 to 200 and 200 to 500 pages, and the last one is three times as wide. Draw the histogram and deliver each bin's height in percent per page, rounded to four decimals, so the wide bin cannot pretend to be tall.",
+  "objective": "Convert bin counts into percent-per-unit heights so unequal bin widths stay comparable.",
+  "concepts": ["hist", "unequal_bins", "density", "percent_per_unit", "counts_vs_density"],
+  "requiredApi": ["hist", "column", "np.count_nonzero", "num_rows", "make_array", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "barh", "hist", "scatter", "plot"],
+  "starter": "edges = make_array(0, 100, 200, 500)\nshelf.hist('pages', bins=edges)\npages = shelf.column('pages')\ndeliver(make_array(*[int(np.count_nonzero((pages >= edges.item(index)) & (pages < edges.item(index + 1)))) for index in range(len(edges) - 1)]))",
+  "hints": ["A bin three times as wide collects three times the books at the same density, so a raw count flatters it.", "Height is the percent of books in the bin divided by the width of the bin, and the widths here are 100, 100 and 300.", "Count each bin, turn the count into a percent of all books, then divide by that bin's own width before rounding to four decimals."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nn = random.randint(5, 9)\npages = [random.choice([20, 55, 80, 95, 120, 150, 180, 199, 210, 260, 340, 420, 480]) for _ in range(n)]\nshelf = Table().with_columns('pages', make_array(*pages))",
+  "visibleSeed": 9,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["pages"], "rows": [[55], [120], [95], [180], [20]], "totalRows": 5}},
+  "fixtures": [
+    {"name": "wide_bin_occupied", "inputs": {"shelf": {"kind": "table", "labels": ["pages"], "rows": [[40], [150], [260], [420], [480]], "totalRows": 5}}, "predicate": "int(np.count_nonzero(shelf.column('pages') >= 200)) >= 3"},
+    {"name": "everything_in_the_wide_bin", "inputs": {"shelf": {"kind": "table", "labels": ["pages"], "rows": [[210], [340], [480], [260]], "totalRows": 4}}, "predicate": "bool((shelf.column('pages') >= 200).all())"}
+  ],
+  "queueSize": 7,
+  "reference": "edges = make_array(0, 100, 200, 500)\nshelf.hist('pages', bins=edges)\npages = shelf.column('pages')\ntotal = shelf.num_rows\nheights = [100 * int(np.count_nonzero((pages >= edges.item(index)) & (pages < edges.item(index + 1)))) / total / (edges.item(index + 1) - edges.item(index)) for index in range(len(edges) - 1)]\ndeliver(make_array(*[round(height, 4) for height in heights]))",
+  "naive": [
+    {"code": "edges = make_array(0, 100, 200, 500)\nshelf.hist('pages', bins=edges)\npages = shelf.column('pages')\ntotal = shelf.num_rows\nheights = [100 * int(np.count_nonzero((pages >= edges.item(index)) & (pages < edges.item(index + 1)))) / total / 100 for index in range(len(edges) - 1)]\ndeliver(make_array(*[round(height, 4) for height in heights]))", "fails": "silent", "hazard": "wide_bin_occupied"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["hist"],
+  "standingOrder": {"eligible": true, "ink": 7, "oil": 2},
+  "setPiece": "uneven-bins", "hazards": ["wide_bin_occupied", "everything_in_the_wide_bin"], "stochastic": false
+}

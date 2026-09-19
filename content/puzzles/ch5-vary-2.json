@@ -1,0 +1,25 @@
+{
+  "id": "ch5-vary-2", "chapter": 5, "kind": "vary",
+  "title": "The Season Report", "patron": "Trustee Pellan",
+  "request": "Open the archive: ch5-loans.csv holds the season's slips and ch5-members.csv holds the ward register. Keep the loans kept for at least min_days days, then give me the total days out for each ward, the longest-holding ward first, in a column still called days_out.",
+  "objective": "Read bundled archive tables, join them and aggregate the result into a report.",
+  "concepts": ["read_table", "join", "where", "group", "collect", "full_analysis"],
+  "requiredApi": ["read_table", "join", "where", "group", "relabeled", "sort", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "are.contained_in", "barh", "hist", "scatter", "plot", "apply", "group", "pivot", "join", "read_table"],
+  "starter": "loans = Table.read_table('ch5-loans.csv')\ndeliver(loans.where('days_out', are.above_or_equal_to(min_days)))",
+  "hints": ["Three card numbers on the season's slips belong to nobody in the register, and the report has no ward to put them in.", "Read both archive files, join them on card, and only then filter and group; a ward total is a collected sum, not a count.", "After joining, filter on days_out with are.above_or_equal_to, group the ward with sum, rename the collected column back to days_out and sort it downward."],
+  "inputCode": "import random\nmin_days = random.randint(1, 20)",
+  "visibleSeed": 12,
+  "visibleInputs": {"min_days": 5},
+  "fixtures": [
+    {"name": "keep_everything", "inputs": {"min_days": 1}, "predicate": "min_days <= 1"},
+    {"name": "only_the_longest_loans", "inputs": {"min_days": 25}, "predicate": "min_days >= 25"}
+  ],
+  "queueSize": 8,
+  "reference": "loans = Table.read_table('ch5-loans.csv')\nmembers = Table.read_table('ch5-members.csv')\nmatched = loans.join('card', members)\nkept = matched.where('days_out', are.above_or_equal_to(min_days))\ntotals = kept.select('ward', 'days_out').group('ward', sum)\ndeliver(totals.relabeled('days_out sum', 'days_out').sort('days_out', descending=True))",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["read_table"],
+  "standingOrder": {"eligible": true, "ink": 8, "oil": 2},
+  "setPiece": "archive-room", "hazards": ["only_the_longest_loans"], "stochastic": false
+}

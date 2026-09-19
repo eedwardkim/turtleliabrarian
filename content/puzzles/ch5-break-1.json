@@ -1,0 +1,30 @@
+{
+  "id": "ch5-break-1", "chapter": 5, "kind": "break",
+  "title": "The Twice-Written Card", "patron": "Trustee Pellan",
+  "request": "Total the days lent to registered borrowers — one number. Mind the register: a clerk has been known to write the same card on two lines, and I will not be billed twice for one book.",
+  "objective": "Avoid duplicate keys in the right table multiplying the rows a join returns.",
+  "concepts": ["join", "duplicate_keys", "row_multiplication", "aggregation"],
+  "requiredApi": ["where", "are.contained_in", "column", "np.sum", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "are.contained_in", "barh", "hist", "scatter", "plot", "apply", "group", "pivot", "join", "read_table"],
+  "starter": "matched = slips.join('card', register)\ndeliver(matched.num_rows)",
+  "hints": ["A card written on two register lines gives every one of its slips two partners.", "The days live entirely in the slips; the register is only being asked whether a card is known.", "Keep the slips whose card is contained in the register's card column and add up their days column, without ever building the joined table."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nnames = ['Gideon Plume', 'Halla Brine', 'Isolde Marrow', 'Jarek Quill']\ncards = [107, 108, 109, 110]\nsize = random.randint(2, 4)\nchosen = sorted(random.sample(range(4), size))\nregister_cards = [cards[index] for index in chosen]\nregister_names = [names[index] for index in chosen]\nrepeats = random.randint(0, 2)\nfor _ in range(repeats):\n    index = random.choice(chosen)\n    register_cards.append(cards[index])\n    register_names.append(names[index])\nregister = Table().with_columns('card', make_array(*register_cards), 'name', make_array(*register_names))\nn = random.randint(3, 6)\nslips = Table().with_columns('card', make_array(*[cards[random.choice(chosen)] for _ in range(n)]), 'days', make_array(*[random.randint(1, 25) for _ in range(n)]))",
+  "visibleSeed": 5,
+  "visibleInputs": {
+    "slips": {"kind": "table", "labels": ["card", "days"], "rows": [[107, 8], [109, 15], [107, 3]], "totalRows": 3},
+    "register": {"kind": "table", "labels": ["card", "name"], "rows": [[107, "Gideon Plume"], [109, "Isolde Marrow"]], "totalRows": 2}
+  },
+  "fixtures": [
+    {"name": "card_written_twice", "inputs": {"slips": {"kind": "table", "labels": ["card", "days"], "rows": [[108, 12], [110, 5], [108, 7]], "totalRows": 3}, "register": {"kind": "table", "labels": ["card", "name"], "rows": [[108, "Halla Brine"], [108, "Halla Brine"], [110, "Jarek Quill"]], "totalRows": 3}}, "predicate": "register.num_rows > int(len(set(register.column('card').tolist())))"},
+    {"name": "clean_register", "inputs": {"slips": {"kind": "table", "labels": ["card", "days"], "rows": [[109, 21], [110, 2]], "totalRows": 2}, "register": {"kind": "table", "labels": ["card", "name"], "rows": [[109, "Isolde Marrow"], [110, "Jarek Quill"]], "totalRows": 2}}, "predicate": "register.num_rows == int(len(set(register.column('card').tolist())))"}
+  ],
+  "queueSize": 8,
+  "reference": "known = slips.where('card', are.contained_in(register.column('card')))\ndeliver(int(np.sum(known.column('days'))))",
+  "naive": [
+    {"code": "matched = slips.join('card', register)\ndeliver(int(np.sum(matched.column('days'))))", "fails": "silent", "hazard": "card_written_twice"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["join"],
+  "standingOrder": {"eligible": true, "ink": 8, "oil": 2},
+  "setPiece": "register-desk", "hazards": ["card_written_twice", "clean_register"], "stochastic": false
+}

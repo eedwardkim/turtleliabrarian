@@ -1,0 +1,28 @@
+{
+  "id": "ch2-break-2", "chapter": 2, "kind": "break",
+  "title": "Spine Plates and Bookworms", "patron": "Hazel",
+  "request": "Average the page counts on this cart to one decimal. The bookworms chewed some spine plates, and a chewed plate reads '?' — a missing count is not a count of nothing.",
+  "objective": "Exclude missing readings before averaging a numeric column stored as text.",
+  "concepts": ["missing_values", "text_vs_number", "where", "mean", "exclusion"],
+  "requiredApi": ["where", "are.not_equal_to", "column", "make_array", "np.mean", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing"],
+  "starter": "readable = shelf.where('pages', are.not_equal_to('?'))\ndeliver(readable.num_rows)",
+  "hints": ["A chewed plate is not a book of zero pages; it is a book whose length nobody knows.", "are.not_equal_to('?') sieves the unreadable plates out before int turns the rest into numbers.", "Filter the cart down to readable plates, build a numeric array from that smaller cart, and round its mean to one decimal."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ntitles = ['The Cartographer\\'s Apology', 'Every Ladder in the Stacks', 'Migrations of the Paper Crane', 'Fieldwork at the Edge of Sleep', 'A Catalogue of Kind Machines', 'The Long Shelf of Tuesdays', 'The Last Card in the Drawer']\nn = random.randint(4, 7)\npicked = random.sample(titles, n)\nplates = [str(random.randrange(120, 420, 2)) for _ in range(n)]\nfor index in random.sample(range(n), random.randint(0, n - 2)):\n    plates[index] = '?'\nshelf = Table().with_columns('title', make_array(*picked), 'pages', make_array(*plates))",
+  "visibleSeed": 7,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Every Ladder in the Stacks", "122"], ["The Long Shelf of Tuesdays", "264"], ["A Catalogue of Kind Machines", "320"]], "totalRows": 3}},
+  "fixtures": [
+    {"name": "chewed_plates", "inputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Migrations of the Paper Crane", "194"], ["The Last Card in the Drawer", "?"], ["Fieldwork at the Edge of Sleep", "346"], ["The Cartographer's Apology", "?"]], "totalRows": 4}}, "predicate": "int((shelf.column('pages') == '?').sum()) >= 2"},
+    {"name": "one_plate_left", "inputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Every Ladder in the Stacks", "?"], ["The Long Shelf of Tuesdays", "258"], ["The Last Card in the Drawer", "?"]], "totalRows": 3}}, "predicate": "int((shelf.column('pages') != '?').sum()) == 1"}
+  ],
+  "queueSize": 7,
+  "reference": "readable = shelf.where('pages', are.not_equal_to('?'))\ncounts = make_array(*[int(plate) for plate in readable.column('pages')])\ndeliver(round(np.mean(counts), 1))",
+  "naive": [
+    {"code": "counts = make_array(*[int(plate) for plate in shelf.column('pages')])\ndeliver(round(np.mean(counts), 1))", "fails": "loud", "hazard": "chewed_plates"},
+    {"code": "counts = make_array(*[0 if plate == '?' else int(plate) for plate in shelf.column('pages')])\ndeliver(round(np.mean(counts), 1))", "fails": "silent", "hazard": "one_plate_left"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["are.not_equal_to"],
+  "standingOrder": {"eligible": true, "ink": 6, "oil": 1},
+  "setPiece": "bookworm-cart", "hazards": ["chewed_plates", "one_plate_left"], "stochastic": false
+}
