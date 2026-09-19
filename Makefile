@@ -1,4 +1,4 @@
-.PHONY: setup verify verify-m1 build dev models previews
+.PHONY: setup verify verify-m1 verify-m2 build dev models previews
 
 setup:
 	node scripts/setup.mjs
@@ -8,6 +8,9 @@ verify:
 
 verify-m1:
 	node scripts/verify.mjs --milestone=m1
+
+verify-m2:
+	node scripts/verify.mjs --milestone=m2
 
 build:
 	npm run prepare:runtime
