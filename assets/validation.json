@@ -1,0 +1,461 @@
+[
+  {
+    "name": "shelby",
+    "triangles": 1416,
+    "primitives": 9,
+    "bytes": 170536,
+    "nodes": [
+      "BellyPocket_mesh",
+      "BellyPocket",
+      "Body_mesh",
+      "Head_mesh",
+      "Head",
+      "BookSlot_0",
+      "BookSlot_1",
+      "BookSlot_2",
+      "Saddle_mesh",
+      "Saddle",
+      "Body",
+      "Foot_BL_mesh",
+      "Foot_BL",
+      "Foot_BR_mesh",
+      "Foot_BR",
+      "Foot_FL_mesh",
+      "Foot_FL",
+      "Foot_FR_mesh",
+      "Foot_FR",
+      "Shelby"
+    ],
+    "clips": [
+      "cheer",
+      "flip",
+      "get_up",
+      "carry_walk",
+      "stamp",
+      "flail_loop",
+      "idle",
+      "push_cart",
+      "drop_marble",
+      "think",
+      "deliver",
+      "walk",
+      "pull_lever"
+    ],
+    "bounds": {
+      "min": [
+        -0.23199999332427979,
+        0.0040000006556510925,
+        -0.40999999456107616
+      ],
+      "max": [
+        0.23199999332427979,
+        0.48899998888373375,
+        0.4699999988079071
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "quill",
+    "triangles": 1660,
+    "primitives": 5,
+    "bytes": 188624,
+    "nodes": [
+      "Body_mesh",
+      "Head_mesh",
+      "Head",
+      "Shawl_mesh",
+      "Shawl",
+      "Wing_L_mesh",
+      "Wing_L",
+      "Wing_R_mesh",
+      "Wing_R",
+      "Body",
+      "Quill"
+    ],
+    "clips": [
+      "fly_in",
+      "fly_out",
+      "land",
+      "idle",
+      "stern_look",
+      "approving_nod",
+      "mark"
+    ],
+    "bounds": {
+      "min": [
+        -0.23799999430775642,
+        -0.0010000020265579224,
+        -0.13000000268220901
+      ],
+      "max": [
+        0.23799999803304672,
+        0.5889999866485596,
+        0.2089999970048666
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "atlas",
+    "triangles": 1960,
+    "primitives": 6,
+    "bytes": 209752,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Flipper_BL_mesh",
+      "Flipper_BL",
+      "Flipper_BR_mesh",
+      "Flipper_BR",
+      "Flipper_FL_mesh",
+      "Flipper_FL",
+      "Flipper_FR_mesh",
+      "Flipper_FR",
+      "Head_mesh",
+      "Head",
+      "Atlas"
+    ],
+    "clips": [
+      "swim_idle"
+    ],
+    "bounds": {
+      "min": [
+        -4.585514426231384,
+        0.050000011920928955,
+        -4.099999904632568
+      ],
+      "max": [
+        4.585514426231384,
+        1.850000023841858,
+        4.539999902248383
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "patron",
+    "triangles": 702,
+    "primitives": 1,
+    "bytes": 80344,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Patron"
+    ],
+    "clips": [
+      "step_forward",
+      "happy",
+      "leave",
+      "queue_idle",
+      "puzzled"
+    ],
+    "bounds": {
+      "min": [
+        -0.13500000536441803,
+        0,
+        -0.10000000149011612
+      ],
+      "max": [
+        0.13500000536441803,
+        0.760000005364418,
+        0.12600000202655792
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "book",
+    "triangles": 60,
+    "primitives": 3,
+    "bytes": 7464,
+    "nodes": [
+      "Band_mesh",
+      "Band",
+      "Cover_mesh",
+      "Cover",
+      "Pages_mesh",
+      "Pages",
+      "Book"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.03750000195577741,
+        0,
+        -0.07999999821186066
+      ],
+      "max": [
+        0.03750000149011612,
+        0.25,
+        0.08350000227801502
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "cart",
+    "triangles": 412,
+    "primitives": 2,
+    "bytes": 38732,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "NamePlate_mesh",
+      "NamePlate",
+      "Cart"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.5199999809265137,
+        0.0073280930519104,
+        -0.2980000078678131
+      ],
+      "max": [
+        0.5199999809265137,
+        0.6950000068172812,
+        0.2980000078678131
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "card",
+    "triangles": 108,
+    "primitives": 1,
+    "bytes": 11564,
+    "nodes": [
+      "Paper_mesh",
+      "Paper",
+      "Card"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.12999999523162842,
+        0,
+        -0.0044999998062849045
+      ],
+      "max": [
+        0.12999999523162842,
+        0.17000000178813934,
+        0.008000001311302185
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "shelf",
+    "triangles": 332,
+    "primitives": 1,
+    "bytes": 35096,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Shelf"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.6600000262260437,
+        0,
+        -0.25999999046325684
+      ],
+      "max": [
+        0.6600000262260437,
+        1.800000011920929,
+        0.2849999964237213
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "desk",
+    "triangles": 244,
+    "primitives": 1,
+    "bytes": 24964,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Desk"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.8199999928474426,
+        0.0009999871253967285,
+        -0.43000003695487976
+      ],
+      "max": [
+        0.8199999928474426,
+        0.8274999856948853,
+        0.4300000071525574
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "lamp",
+    "triangles": 280,
+    "primitives": 1,
+    "bytes": 26328,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Lamp"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.17499999701976776,
+        0,
+        -0.17499999701976776
+      ],
+      "max": [
+        0.17499999701976776,
+        0.5100000146776438,
+        0.17499999701976776
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "sieve",
+    "triangles": 348,
+    "primitives": 2,
+    "bytes": 37464,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Screen_mesh",
+      "Screen",
+      "Sieve"
+    ],
+    "clips": [
+      "sift"
+    ],
+    "bounds": {
+      "min": [
+        -0.4749999940395355,
+        0,
+        -0.32500001788139343
+      ],
+      "max": [
+        0.4749999940395355,
+        0.7299999967217445,
+        0.32500001788139343
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "stamp",
+    "triangles": 336,
+    "primitives": 2,
+    "bytes": 36296,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Press_mesh",
+      "Press",
+      "Stamp"
+    ],
+    "clips": [
+      "stamp"
+    ],
+    "bounds": {
+      "min": [
+        -0.25,
+        0,
+        -0.23999999463558197
+      ],
+      "max": [
+        0.25,
+        0.8049999922513962,
+        0.23999998718500137
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "library",
+    "triangles": 1928,
+    "primitives": 2,
+    "bytes": 196048,
+    "nodes": [
+      "Returns_mesh",
+      "Returns",
+      "Stacks_mesh",
+      "Stacks",
+      "Library"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -2.987500011920929,
+        0,
+        -2.487500011920929
+      ],
+      "max": [
+        2.9875001907348633,
+        1.0199999809265137,
+        2.487499952316284
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "cloud",
+    "triangles": 320,
+    "primitives": 1,
+    "bytes": 35024,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Cloud"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -1.2427051067352295,
+        -0.15049999952316284,
+        -0.6590933799743652
+      ],
+      "max": [
+        1.1974796652793884,
+        0.7505000531673431,
+        0.5254587531089783
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  }
+]
