@@ -1,0 +1,24 @@
+{
+  "id": "ch2-show-1", "chapter": 2, "kind": "show",
+  "title": "A Cart with a Name", "patron": "Mr. Heron",
+  "request": "Bring a catalog containing only title and pages, in that column order. Keep the books in their original order.",
+  "objective": "Select named columns and keep the new table returned by an operation.",
+  "concepts": ["tables", "column_labels", "select", "immutable_results"],
+  "requiredApi": ["select", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns"],
+  "starter": "catalog = shelf\ndeliver(catalog.column('title'))",
+  "hints": ["The patron wants a table with two named columns, not one loose tray.", "select returns a new table; it does not trim the original cart.", "Assign shelf.select(...) to a name, listing the two requested labels in order, then deliver that name."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nn = random.randint(2, 7)\ntitles = make_array(*[random.choice(['Moss Almanac', 'Cloud Atlas', 'Fern Letters', 'Rain Ledger']) + ' ' + str(i + 1) for i in range(n)])\npages = make_array(*[random.randint(24, 340) for _ in range(n)])\nauthors = make_array(*[random.choice(['Ada Reed', 'Orin Bell', 'Lena Moss']) for _ in range(n)])\nshelf = Table().with_columns('title', titles, 'pages', pages, 'author', authors)",
+  "visibleSeed": 31,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Moss Almanac", 48], ["Cloud Atlas", 120]], "totalRows": 2}},
+  "fixtures": [
+    {"name": "extra_author_column", "inputs": {"shelf": {"kind": "table", "labels": ["title", "pages", "author"], "rows": [["Fern Letters", 72, "Ada Reed"], ["Rain Ledger", 96, "Orin Bell"]], "totalRows": 2}}, "predicate": "'author' in shelf.labels"},
+    {"name": "different_column_order", "inputs": {"shelf": {"kind": "table", "labels": ["pages", "title"], "rows": [[36, "A Small Cloud"]], "totalRows": 1}}, "predicate": "shelf.labels[0] == 'pages'"}
+  ],
+  "queueSize": 6, "reference": "catalog = shelf.select('title', 'pages')\ndeliver(catalog)",
+  "naive": [{"code": "shelf.select('title', 'pages')\ndeliver(shelf)", "fails": "silent", "hazard": "extra_author_column"}],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns"],
+  "standingOrder": {"eligible": true, "ink": 4, "oil": 0},
+  "setPiece": "named-carts", "hazards": ["extra_author_column"], "stochastic": false
+}

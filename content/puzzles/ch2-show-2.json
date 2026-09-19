@@ -1,0 +1,24 @@
+{
+  "id": "ch2-show-2", "chapter": 2, "kind": "show",
+  "title": "Precisely Late Enough", "patron": "Dr. Newt",
+  "request": "Keep every book whose days late is at least min_days, then sort the result by title. A book exactly on the boundary is still late enough.",
+  "objective": "Filter rows with an inclusive predicate and sort the returned table.",
+  "concepts": ["where", "predicates", "sort", "cutoff_ties", "empty_results"],
+  "requiredApi": ["where", "are.above_or_equal_to", "sort", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to"],
+  "starter": "selected = shelf\ndeliver(selected)",
+  "hints": ["The sieve must include the boundary; the new cart must then be alphabetized.", "where takes a column label and a predicate such as are.above_or_equal_to; sort returns another table.", "Name the filtered table first, then sort that name by the requested label before delivering it."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nn = random.randint(2, 8)\ntitles = make_array(*[random.choice(['Willow Manual', 'Amber Index', 'Cloud Diary', 'Moss Map']) + ' ' + str(i + 1) for i in range(n)])\ndays = make_array(*[random.randint(0, 12) for _ in range(n)])\nshelf = Table().with_columns('title', titles, 'days', days)\nmin_days = random.randint(1, 10)",
+  "visibleSeed": 32,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "days"], "rows": [["Willow Manual", 7], ["Cloud Diary", 1], ["Amber Index", 5]], "totalRows": 3}, "min_days": 3},
+  "fixtures": [
+    {"name": "ties_at_cutoff", "inputs": {"shelf": {"kind": "table", "labels": ["title", "days"], "rows": [["Willow Manual", 3], ["Amber Index", 3], ["Moss Map", 2]], "totalRows": 3}, "min_days": 3}, "predicate": "int((shelf.column('days') == min_days).sum()) >= 2"},
+    {"name": "empty_result", "inputs": {"shelf": {"kind": "table", "labels": ["title", "days"], "rows": [["Cloud Diary", 0]], "totalRows": 1}, "min_days": 4}, "predicate": "bool((shelf.column('days') < min_days).all())"}
+  ],
+  "queueSize": 7, "reference": "selected = shelf.where('days', are.above_or_equal_to(min_days))\nordered = selected.sort('title')\ndeliver(ordered)",
+  "naive": [{"code": "deliver(shelf.where('days', are.above(min_days)).sort('title'))", "fails": "silent", "hazard": "ties_at_cutoff"}],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to"],
+  "standingOrder": {"eligible": true, "ink": 4, "oil": 0},
+  "setPiece": "sieve-and-sort", "hazards": ["ties_at_cutoff", "empty_result"], "stochastic": false
+}

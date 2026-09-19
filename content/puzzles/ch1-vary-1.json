@@ -1,0 +1,22 @@
+{
+  "id": "ch1-vary-1", "chapter": 1, "kind": "vary",
+  "title": "A Tray of Changing Length", "patron": "Pip",
+  "request": "I want the last reading on this nonempty tray. Just that one number, quickly.",
+  "objective": "Find the final valid zero-based index from the array length.",
+  "concepts": ["indexing", "zero_based", "index_out_of_range"],
+  "requiredApi": ["item", "len", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item"],
+  "starter": "last_reading = readings.item(0)\ndeliver(last_reading)",
+  "hints": ["The final brass index changes when the tray gets shorter.", "len(readings) counts tiles, while item uses an index starting at zero.", "Use readings.item(...) with an index calculated from the tile count, rather than a fixed number."],
+  "inputCode": "import random\nfrom datascience import make_array\nreadings = make_array(*[random.randint(1, 90) for _ in range(random.randint(1, 8))])",
+  "visibleSeed": 23, "visibleInputs": {"readings": {"kind": "array", "values": [4, 7, 11]}},
+  "fixtures": [
+    {"name": "short_tray", "inputs": {"readings": {"kind": "array", "values": [5, 9]}}, "predicate": "0 < len(readings) < 3"},
+    {"name": "single_reading", "inputs": {"readings": {"kind": "array", "values": [6]}}, "predicate": "len(readings) == 1"}
+  ],
+  "queueSize": 6, "reference": "last_reading = readings.item(len(readings) - 1)\ndeliver(last_reading)",
+  "naive": [{"code": "deliver(readings.item(2))", "fails": "loud", "hazard": "short_tray"}],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["item"], "standingOrder": {"eligible": true, "ink": 2, "oil": 0},
+  "setPiece": "index-plates", "hazards": ["short_tray"], "stochastic": false
+}
