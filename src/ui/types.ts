@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { CheckDiff, Puzzle, QueueEntry, RunResult, SaveData, Settings, Value, WindowLayout } from '../contracts';
 
 export type Screen = 'title' | 'intro' | 'game' | 'credits';
-export type DialogName = 'pause' | 'settings' | 'saves' | 'almanac' | 'windows' | 'newScript' | 'alerts' | 'shop' | 'orders';
+export type DialogName = 'pause' | 'settings' | 'saves' | 'almanac' | 'windows' | 'newScript' | 'alerts' | 'shop' | 'orders' | 'atlas';
 
 export interface GameStateForUI {
   screen: Screen;
@@ -72,12 +72,24 @@ export interface ShopItem {
   ink: number;
   chapter?: number;
   hat?: boolean;
+  repeatable?: boolean;
   currency?: 'ink' | 'eggs';
+}
+
+/** One wing of the library, as the Atlas shows it. */
+export interface AtlasWing {
+  chapter: number;
+  name: string;
+  blurb: string;
+  cost: number;
+  unlocked: boolean;
+  puzzles: { id: string; title: string; completed: boolean; reachable: boolean }[];
 }
 
 export interface UIIntegrations {
   almanac?: AlmanacEntry[];
   shop?: ShopItem[];
+  atlas?: AtlasWing[];
   devtools?: ReactNode;
   onIntroBeat?: (beat: number) => void;
 }

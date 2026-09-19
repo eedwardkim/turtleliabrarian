@@ -18,7 +18,7 @@ export interface GameSave extends SaveData {
 }
 
 export const defaultSettings: Settings = {
-  masterVolume: 0.7, musicVolume: 0.35, sfxVolume: 0.65, replaySpeed: 1,
+  muted: false, ambience: true, masterVolume: 0.7, musicVolume: 0.35, sfxVolume: 0.65, replaySpeed: 1,
   reducedMotion: false, uiScale: 1, editorFontSize: 14, colorblind: false, openStacks: false,
 };
 
@@ -64,6 +64,8 @@ function boolean(value: unknown): boolean {
 export function readSettings(value: unknown): Settings {
   if (!record(value)) throw new Error('Invalid settings in save.');
   return {
+    muted: value.muted === undefined ? defaultSettings.muted : boolean(value.muted),
+    ambience: value.ambience === undefined ? defaultSettings.ambience : boolean(value.ambience),
     masterVolume: numberIn(value.masterVolume, 0, 1, 'volume'), musicVolume: numberIn(value.musicVolume, 0, 1, 'volume'),
     sfxVolume: numberIn(value.sfxVolume, 0, 1, 'volume'), replaySpeed: numberIn(value.replaySpeed, 0.25, 50, 'replay speed'),
     reducedMotion: boolean(value.reducedMotion), colorblind: boolean(value.colorblind), openStacks: boolean(value.openStacks),
@@ -136,13 +138,27 @@ function readProgress(value: unknown): Record<string, PuzzleProgress> {
 }
 
 export function migrateSave(input: unknown): unknown {
-  if (!record(input) || input.version !== 0) return input;
+  if (!record(input)) return input;
   const defaults = freshSave();
+  let value = input;
+  if (value.version === 0) {
+    value = {
+      ...defaults, ...value, version: 1,
+      files: value.files ?? { 'main.py': value.code ?? defaults.files['main.py'] },
+    };
+  }
+  if (value.version !== 1) return value;
   return {
-    ...defaults, ...input, version: 1,
-    files: input.files ?? { 'main.py': input.code ?? defaults.files['main.py'] },
-    settings: record(input.settings) ? { ...defaults.settings, ...input.settings } : defaults.settings,
-    resources: record(input.resources) ? { ...defaults.resources, ...input.resources } : defaults.resources,
+    ...value,
+    settings: record(value.settings) ? { ...defaults.settings, ...value.settings } : defaults.settings,
+    resources: record(value.resources) ? { ...defaults.resources, ...value.resources } : defaults.resources,
+    ownedItems: value.ownedItems ?? defaults.ownedItems,
+    standingOrders: value.standingOrders ?? defaults.standingOrders,
+    orderFiles: value.orderFiles ?? defaults.orderFiles,
+    seenTutorials: value.seenTutorials ?? defaults.seenTutorials,
+    layouts: value.layouts ?? defaults.layouts,
+    hat: value.hat ?? defaults.hat,
+    hatchlings: value.hatchlings ?? defaults.hatchlings,
   };
 }
 
@@ -155,7 +171,7 @@ export function parseSave(input: unknown): GameSave {
     !strings(value.seenTutorials) || !strings(value.ownedItems)) throw new Error('Invalid progress lists.');
   value.completed.forEach(getPuzzle);
   if (!record(value.resources) || !record(value.layouts) || !Array.isArray(value.standingOrders) ||
-    value.standingOrders.length > 2 || typeof value.hat !== 'string') throw new Error('Invalid save ledger.');
+    value.standingOrders.length > 3 || typeof value.hat !== 'string') throw new Error('Invalid save ledger.');
   const files = readFiles(value.files);
   const activeFile = value.activeFile ?? Object.keys(files)[0];
   if (typeof activeFile !== 'string' || !Object.hasOwn(files, activeFile)) throw new Error('Active file is missing.');
