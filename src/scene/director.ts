@@ -1,6 +1,10 @@
 import type { ArrayValue, Json, Scalar, TableValue, TraceEvent, Value, WorldProps } from '../contracts';
 
 export const BOOK_LIMIT = 40;
+export const BIN_LIMIT = 5;
+export const DRAWER_LIMIT = 5;
+export const THREAD_LIMIT = 12;
+export const POINT_LIMIT = 40;
 export const FULL_LOOP_TRIPS = 5;
 export const CATEGORY_COLORS = ['#3E5C8A', '#B5475A', '#4F8A6B', '#C28A2E', '#7A5C9A'] as const;
 export type Motion = 'inspect' | 'create' | 'sieve' | 'reshuffle' | 'tray' | 'stamp'

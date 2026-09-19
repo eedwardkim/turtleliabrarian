@@ -1,5 +1,4 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, Line, OrbitControls } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
@@ -11,6 +10,10 @@ import type { DisplayBook } from './Books';
 import { animatedBookPosition, arrayPosition, BOOK_LIMIT, bookPosition, booksFor, clampProgress, frameForWorld, INPUT_CART,
   isArray, OUTPUT_CART, PATRON, valueCount } from './director';
 import type { Position, WorldFrame } from './director';
+import { Label } from './Label';
+import { StagingSet } from './StagingSet';
+import { chartSpan, stagedBookPosition, stagingFor } from './staging';
+import { planScene } from './budget';
 import './scene.css';
 
 export interface RendererStats { fps: number; calls: number; triangles: number }
@@ -73,11 +76,18 @@ function Camera({ preset, event }: { preset?: string; event: WorldProps['event']
     }} />;
 }
 
-function Label({ position, children, kind = '' }: {
-  position: Position; children: ReactNode; kind?: string;
-}) {
-  return <Html position={position} center zIndexRange={[4, 0]} className={`scene-label ${kind}`}
-    style={{ pointerEvents: 'none' }}>{children}</Html>;
+/** Helper turtles stand along the front rail; each one works a different station. */
+const HATCHLING_SPOTS: readonly { position: Position; rotation: Position; clip: string }[] = [
+  { position: [-0.62, 1.98, 1.94], rotation: [0, 0.25, 0], clip: 'idle' },
+  { position: [-0.24, 1.98, 2.02], rotation: [0, -0.15, 0], clip: 'carry_walk' },
+  { position: [0.18, 1.98, 1.9], rotation: [0, 0.5, 0], clip: 'push_cart' },
+  { position: [0.58, 1.98, 2.04], rotation: [0, -0.4, 0], clip: 'think' },
+];
+
+/** Wing markers ring the back rail of the deck, one per unlocked chapter. */
+function wingPosition(index: number, total: number): Position {
+  const angle = Math.PI * (1.08 + 0.84 * (total > 1 ? index / (total - 1) : 0.5));
+  return [2.62 * Math.cos(angle), 1.98, 2.12 * Math.sin(angle)];
 }
 
 function Diorama({ frame, props }: { frame: WorldFrame; props: WorldProps }) {
@@ -85,6 +95,9 @@ function Diorama({ frame, props }: { frame: WorldFrame; props: WorldProps }) {
   const [hovered, setHovered] = useState<DisplayBook | null>(null);
   const p = frame.progress;
   const motion = frame.animation.motion;
+  const staging = useMemo(() => stagingFor(props.event, frame.loops.trips + frame.loops.summarized),
+    [props.event, frame.loops.trips, frame.loops.summarized]);
+  const span = useMemo(() => staging.kind === 'chart' ? chartSpan(staging.points) : 1, [staging]);
   const inputBooks = useMemo(() => booksFor(frame.input?.value).map((book) => ({
     ...book, position: bookPosition(book.index, INPUT_CART),
   })), [frame.input?.value]);
@@ -93,8 +106,10 @@ function Diorama({ frame, props }: { frame: WorldFrame; props: WorldProps }) {
     const event = spilled ? { version: 1 as const, seq: -1, type: 'error', line: 0,
       inputs: [], output: null, payload: {} } : props.event;
     const array = isArray(frame.output?.value);
-    const position = animatedBookPosition(event, book.index, p, props.reducedMotion,
+    const fallback = animatedBookPosition(event, book.index, p, props.reducedMotion,
       array ? arrayPosition(book.index) : undefined);
+    const position = spilled ? fallback : stagedBookPosition(staging, book.index, p,
+      bookPosition(book.index, INPUT_CART), fallback, props.reducedMotion, span) ?? fallback;
     const rotation: Position = spilled ? [0, book.index * 0.7, Math.PI / 2] : [0, 0, 0];
     const scale: Position | undefined = array ? [1.3, 0.12, 0.5] : undefined;
     const diff = props.feedback === 'silent' ? props.diff : null;
@@ -102,7 +117,7 @@ function Diorama({ frame, props }: { frame: WorldFrame; props: WorldProps }) {
       wrong: diff?.extraRows.includes(book.index) || diff?.wrongCells.some((cell) => cell.row === book.index),
       tied: motion === 'reshuffle' && Array.isArray(props.event?.payload.tie_groups)
         && props.event.payload.tie_groups.some((group) => Array.isArray(group) && group.includes(book.index)) };
-  }), [frame.output?.value, props.feedback, props.event, props.reducedMotion, props.diff, p, motion]);
+  }), [frame.output?.value, props.feedback, props.event, props.reducedMotion, props.diff, p, motion, staging, span]);
   const shelfBooks = useMemo(() => Array.from({ length: 30 }, (_, index): DisplayBook => ({
     index, row: [], labels: [], category: index % 5, thickness: 0.85 + index % 3 * 0.1,
     position: [-2.12 + index % 10 * 0.097 + (index >= 20 ? 1.45 : 0),
@@ -120,32 +135,52 @@ function Diorama({ frame, props }: { frame: WorldFrame; props: WorldProps }) {
   const count = valueCount(frame.output?.value);
   const showOutput = Boolean(frame.output?.visible) || motion === 'fade';
   const outputOpacity = motion === 'fade' ? 1 - p : 1;
+  const plan = useMemo(() => planScene({ chapter: props.chapter, hat: props.hat,
+    hatchlings: props.hatchlings, staging: staging.kind, showOutput, showGhosts: ghosts.length > 0 }),
+  [props.chapter, props.hat, props.hatchlings, staging.kind, showOutput, ghosts.length]);
+  const hatPosition: Position = [shelbyPosition[0] - 0.111, shelbyPosition[1] + 0.38, shelbyPosition[2] + 0.436];
+  const wingSlot = wingPosition(Math.max(0, plan.wings.length - 1), plan.wings.length);
   return <group>
     <Asset name="atlas" wireframe={wireframe} clip="swim_idle" progress={props.reducedMotion ? 0 : p} />
     <Asset name="library" position={[0, 1.8, 0]} wireframe={wireframe} />
     <Asset name="shelf" position={[-1.65, 1.98, -1.68]} wireframe={wireframe} />
     <Asset name="shelf" position={[-0.2, 1.98, -1.68]} wireframe={wireframe} />
     <Asset name="desk" position={[-2.08, 1.98, 0.72]} rotation={[0, 0.1, 0]} wireframe={wireframe} />
-    <Asset name="lamp" position={[-2.55, 2.80, 0.73]} wireframe={wireframe} />
-    <Asset name="lamp" position={[1.42, 1.98, -1.86]} scale={1.55} wireframe={wireframe} />
-    <Asset name="sieve" position={[0.9, 1.98, -0.96]} clip="sift"
-      progress={motion === 'sieve' ? p : 0} wireframe={wireframe} />
-    <Asset name="stamp" position={[-1.72, 2.80, 0.67]} clip="stamp"
-      progress={motion === 'stamp' ? p : 0} wireframe={wireframe} />
+    <Asset name="sky" position={[0, 0, 0]} />
+    {plan.lamps > 0 && <Asset name="lamp" position={[-2.55, 2.80, 0.73]} wireframe={wireframe} />}
+    {plan.lamps > 1 && <Asset name="lamp" position={[1.42, 1.98, -1.86]} scale={1.55} wireframe={wireframe} />}
+    {plan.sieve && <Asset name="sieve" position={[0.9, 1.98, -0.96]} clip="sift"
+      progress={motion === 'sieve' ? p : 0} wireframe={wireframe} />}
+    {plan.stamp && <Asset name="stamp" position={[-1.72, 2.80, 0.67]} clip="stamp"
+      progress={motion === 'stamp' ? p : 0} wireframe={wireframe} />}
     <Asset name="cart" position={INPUT_CART} wireframe={wireframe} />
     {showOutput && <Asset name="cart" position={OUTPUT_CART} wireframe={wireframe} opacity={outputOpacity} />}
     <Asset name="shelby" position={shelbyPosition} rotation={[0, -0.25, 0]} clip={clip}
       progress={props.feedback === 'loud' || props.feedback === 'success' ? Math.max(p, 0.45) : p}
       wireframe={wireframe} />
-    <Asset name="quill" position={props.feedback === 'silent' ? [1.74, 2.6, 0.45] : [-2.28, 2.80, 0.3]}
+    {plan.hat && <Asset name={plan.hat} position={hatPosition} rotation={[0, -0.25, 0]}
+      clip={plan.hat === 'lantern_hat' ? 'flicker' : plan.hat === 'gradcap' ? 'swing' : undefined}
+      progress={p} wireframe={wireframe} />}
+    {plan.quill && <Asset name="quill" position={props.feedback === 'silent' ? [1.74, 2.6, 0.45] : [-2.28, 2.80, 0.3]}
       clip={props.feedback === 'silent' ? 'mark' : props.feedback === 'success' ? 'approving_nod' : 'idle'}
-      progress={p} rotation={[0, -0.35, 0]} wireframe={wireframe} />
-    <Asset name="patron" position={PATRON} clip={props.feedback === 'success' ? 'happy' : 'queue_idle'}
-      progress={p} rotation={[0, -0.9, 0]} wireframe={wireframe} />
-    {Array.from({ length: Math.min(2, Math.max(0, Math.floor(props.hatchlings))) }, (_, index) =>
-      <Asset key={index} name="shelby" position={[-0.6 + index * 0.27, 1.98, 1.94]}
-        scale={0.45} hideSaddle clip="idle" progress={p} wireframe={wireframe} />)}
-    {props.hatchlings > 2 && <Label position={[-0.4, 2.5, 1.94]}>{props.hatchlings} hatchlings</Label>}
+      progress={p} rotation={[0, -0.35, 0]} wireframe={wireframe} />}
+    {plan.patron && <Asset name="patron" position={PATRON} clip={props.feedback === 'success' ? 'happy' : 'queue_idle'}
+      progress={p} rotation={[0, -0.9, 0]} wireframe={wireframe} />}
+    {HATCHLING_SPOTS.slice(0, plan.hatchlings).map((spot, index) =>
+      <Asset key={index} name="hatchling" position={spot.position} rotation={spot.rotation}
+        clip={props.feedback === 'success' ? 'cheer' : spot.clip} progress={p} wireframe={wireframe} />)}
+    {props.hatchlings > plan.hatchlings && <Label position={[-0.4, 2.5, 1.94]}>
+      {props.hatchlings} hatchlings
+    </Label>}
+    <StagingSet staging={staging} plan={plan} progress={p} wireframe={wireframe} />
+    {plan.wings.map((wing, index) => <Asset key={wing.name} name="wing"
+      position={wingPosition(index, plan.wings.length)} scale={0.7}
+      clip="grow" progress={1} wireframe={wireframe} />)}
+    {plan.wingProp && <Asset name={plan.wingProp.prop} scale={0.6}
+      position={[wingSlot[0] * 0.86, 1.98, wingSlot[2] * 0.86]} wireframe={wireframe} />}
+    {plan.wingProp && <Label kind="wing" position={[wingSlot[0], 2.72, wingSlot[2]]}>
+      {plan.wingProp.label}
+    </Label>}
     <Books books={idleBooks} colorblind={props.colorblind} wireframe={wireframe} onHover={setHovered} />
     {showOutput && <Books books={outputBooks} colorblind={props.colorblind}
       opacity={outputOpacity} wireframe={wireframe} onHover={setHovered} />}
@@ -198,9 +233,9 @@ function Diorama({ frame, props }: { frame: WorldFrame; props: WorldProps }) {
         </p>)}
       </div>
     </Html>}
-    <Asset name="cloud" position={[-5.3, -0.8, -2]} scale={1.8} />
-    <Asset name="cloud" position={[4.9, 0.1, -4.5]} scale={1.5} />
-    <Asset name="cloud" position={[1, -1.8, 4.7]} scale={1.25} />
+    {plan.clouds > 0 && <Asset name="cloud" position={[-5.3, -0.8, -2]} scale={1.8} />}
+    {plan.clouds > 1 && <Asset name="cloud" position={[4.9, 0.1, -4.5]} scale={1.5} />}
+    {plan.clouds > 2 && <Asset name="cloud" position={[1, -1.8, 4.7]} scale={1.25} />}
     {props.showGrid && <gridHelper args={[6, 6, '#C99A3E', '#B0925E']} position={[0, 2.0, 0]} />}
   </group>;
 }
