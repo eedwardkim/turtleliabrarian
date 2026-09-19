@@ -650,13 +650,15 @@ class Table:
             self, column_for_xticks, select, overlay, width, height, vargs
         )
 
-    def show(self, max_rows=None):
+    def show(self, max_rows=0):
         check_api("show")
         print(self.as_text(max_rows=max_rows))
         emit("show", (self,), self, maxRows=max_rows)
 
-    def as_text(self, max_rows=10):
-        count = self._num_rows if max_rows is None else min(max_rows, self._num_rows)
+    def as_text(self, max_rows=0, sep=" | "):
+        if max_rows and (not isinstance(max_rows, (int, np.integer)) or max_rows < 0):
+            raise ValueError("max_rows must be a nonnegative integer")
+        count = self._num_rows if not max_rows else min(max_rows, self._num_rows)
         labels = tuple(self._columns)
         rows = [
             [self._format(self._columns[label][i]) for label in labels]
@@ -667,12 +669,12 @@ class Table:
             for i, label in enumerate(labels)
         ]
         lines = [
-            " | ".join(
+            sep.join(
                 label.ljust(width) for label, width in zip(labels, widths)
             ).rstrip()
         ]
         lines.extend(
-            " | ".join(cell.ljust(width) for cell, width in zip(row, widths)).rstrip()
+            sep.join(cell.ljust(width) for cell, width in zip(row, widths)).rstrip()
             for row in rows
         )
         if count < self._num_rows:

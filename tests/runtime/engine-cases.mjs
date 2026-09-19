@@ -74,4 +74,32 @@ export const engineCases = [
     expectedError: { type: 'TimeoutError' },
     timingDependent: true,
   },
+  {
+    name: 'Cython generator constructors produce valid traced results',
+    request: { code: 'np.random.default_rng(1)\ndeliver(3)', allowedApi: ['np.random.default_rng'] },
+    expected: { delivered: 3, error: null },
+    events: ['numpy'],
+  },
+  {
+    name: 'NumPy callback in native reduction',
+    request: { code: 'import functools\ndeliver(functools.reduce(np.add,[1,2,3]))' },
+    expected: { delivered: 6, error: null },
+    events: ['numpy'],
+  },
+  {
+    name: 'comprehension loops',
+    request: { code: 'deliver([i+j for i in range(2) for j in range(3)])' },
+    expected: { delivered: { kind: 'array', values: [0, 1, 2, 1, 2, 3] }, error: null },
+    events: ['loop_start', 'loop_iteration', 'loop_end'],
+  },
+  {
+    name: 'set run-local NumPy options',
+    request: { code: 'np.set_printoptions(precision=1)\nnp.seterr(divide="raise")\ndeliver(1)' },
+    expected: { delivered: 1, error: null },
+  },
+  {
+    name: 'NumPy options are restored between requests',
+    request: { code: 'print(np.array([1/3]))\nnp.geterr()["divide"]' },
+    expected: { stdout: '[0.33333333]\n', value: 'warn', error: null },
+  },
 ];

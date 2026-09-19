@@ -4,9 +4,11 @@ import ast
 import builtins
 import contextlib
 import dis
+import functools
 import importlib.abc
 import importlib.util
 import io
+import itertools
 import json
 import math
 import random
@@ -48,6 +50,7 @@ def numpy_name(function):
             types.BuiltinFunctionType,
             types.MethodDescriptorType,
             type(np.mean),
+            type(np.random.default_rng),
             np.ufunc,
             type,
         ),
@@ -387,8 +390,8 @@ class Trace:
                 )
         self.bindings[scope] = current
 
-    def loop(self, phase, loop_id, line):
-        frame = sys._getframe(1)
+    def loop(self, phase, loop_id, line, frame=None):
+        frame = sys._getframe(1) if frame is None else frame
         self.resume_tracing(frame)
         if not self.enabled or self.closed:
             return
@@ -419,6 +422,38 @@ class Trace:
                 self.reserved_ends -= 1
         self.loop_event(phase, state)
 
+    def iterate(self, iterable, loop_id, line, asynchronous=False):
+        frame = sys._getframe(1)
+        iterator = builtins.aiter(iterable) if asynchronous else iter(iterable)
+
+        def iterations():
+            self.loop("start", loop_id, line, frame)
+            try:
+                while True:
+                    try:
+                        value = next(iterator)
+                    except StopIteration:
+                        return
+                    self.loop("iteration", loop_id, line, frame)
+                    yield value
+            finally:
+                self.loop("end", loop_id, line, frame)
+
+        async def async_iterations():
+            self.loop("start", loop_id, line, frame)
+            try:
+                while True:
+                    try:
+                        value = await builtins.anext(iterator)
+                    except StopAsyncIteration:
+                        return
+                    self.loop("iteration", loop_id, line, frame)
+                    yield value
+            finally:
+                self.loop("end", loop_id, line, frame)
+
+        return async_iterations() if asynchronous else iterations()
+
     def loop_event(self, phase, state, reason=None):
         if not state["recorded"]:
             name = f"loop_{phase}"
@@ -446,7 +481,11 @@ class Trace:
     def prepare(self, function, line, spelling):
         self.resume_tracing(sys._getframe(1))
         filename = sys._getframe(1).f_code.co_filename
-        if function is builtins.map or function is builtins.filter:
+        if (
+            function is builtins.map
+            or function is builtins.filter
+            or function is functools.reduce
+        ):
 
             def consume(*args, **kwargs):
                 if args:
@@ -457,7 +496,31 @@ class Trace:
                 return function(*args, **kwargs)
 
             return consume
-        if function is builtins.sorted:
+        if function is itertools.accumulate:
+
+            def accumulate(*args, **kwargs):
+                if len(args) > 1:
+                    args = (
+                        args[0],
+                        self.observe_numpy(args[1], line, spelling, filename, True),
+                        *args[2:],
+                    )
+                if "func" in kwargs:
+                    kwargs["func"] = self.observe_numpy(
+                        kwargs["func"], line, spelling, filename, True
+                    )
+                return function(*args, **kwargs)
+
+            return accumulate
+        if (
+            function is builtins.sorted
+            or function is builtins.min
+            or function is builtins.max
+        ) or (
+            isinstance(function, types.BuiltinFunctionType)
+            and isinstance(function.__self__, list)
+            and function.__name__ == "sort"
+        ):
 
             def order(*args, **kwargs):
                 if "key" in kwargs:
@@ -544,9 +607,11 @@ class Trace:
             if not module.startswith("numpy.") or frame.f_code.co_name.startswith("_"):
                 return False
             canonical = f"numpy.{frame.f_code.co_name}"
-            if self.numpy_calls and self.numpy_calls[-1] == canonical:
-                return False
             registered = frame.f_code in self.callback_codes
+            if self.numpy_calls and (
+                self.numpy_calls[-1] == canonical or not registered
+            ):
+                return False
             caller = frame.f_back
             while caller is not None and not player_frame(caller):
                 parent_module = caller.f_globals.get("__name__", "")
@@ -682,6 +747,29 @@ class Instrument(ast.NodeTransformer):
     visit_While = instrument_loop
     visit_AsyncFor = instrument_loop
 
+    def instrument_comprehension(self, node):
+        self.generic_visit(node)
+        for index, generator in enumerate(node.generators):
+            loop_id = f"{self.filename}:{node.lineno}:{node.col_offset}:comp{index}"
+            generator.iter = ast.copy_location(
+                self.helper(
+                    "iterate",
+                    [
+                        generator.iter,
+                        ast.Constant(loop_id),
+                        ast.Constant(node.lineno),
+                        ast.Constant(bool(generator.is_async)),
+                    ],
+                ),
+                generator.iter,
+            )
+        return node
+
+    visit_ListComp = instrument_comprehension
+    visit_SetComp = instrument_comprehension
+    visit_DictComp = instrument_comprehension
+    visit_GeneratorExp = instrument_comprehension
+
 
 def compile_player(code, filename, trace, namespace, last_expression=False):
     tree = ast.parse(code, filename=filename)
@@ -691,6 +779,7 @@ def compile_player(code, filename, trace, namespace, last_expression=False):
     namespace[prefix + "prepare"] = trace.prepare
     namespace[prefix + "argument"] = trace.argument
     namespace[prefix + "loop"] = trace.loop
+    namespace[prefix + "iterate"] = trace.iterate
     tree = Instrument(prefix, filename).visit(tree)
     result_name = prefix + "result"
     if last_expression and tree.body and isinstance(tree.body[-1], ast.Expr):
@@ -797,6 +886,8 @@ def run(request: dict) -> dict:
     rng_token = None
     prior_trace = sys.gettrace()
     random_state, numpy_state = random.getstate(), np.random.get_state()
+    print_options, error_options = np.get_printoptions(), np.geterr()
+    error_callback = np.geterrcall()
     namespace = {
         "__name__": "__main__",
         "__builtins__": dict(builtins.__dict__),
@@ -945,6 +1036,9 @@ def run(request: dict) -> dict:
             sys.modules.update(saved_modules)
         random.setstate(random_state)
         np.random.set_state(numpy_state)
+        np.set_printoptions(**print_options)
+        np.seterr(**error_options)
+        np.seterrcall(error_callback)
     trace.finish()
     result.update(
         stdout=output.getvalue(),

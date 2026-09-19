@@ -191,10 +191,17 @@ def scatter(
             (str(auxiliary["group"][i]), order[start:end])
             for i, start, end in zip(first, offsets[:-1], offsets[1:])
         ]
-    point_sizes = s
+    point_sizes = np.asarray(s).ravel()
+    if point_sizes.dtype.kind not in "iuf" or point_sizes.size not in (
+        1,
+        table._num_rows,
+    ):
+        raise ValueError("s must be numeric and match the number of rows")
+    if point_sizes.size == 1:
+        point_sizes = point_sizes.item()
     if sizes is not None:
         values = numeric(auxiliary["sizes"])
-        point_sizes = 2 * s * np.sqrt(values / np.max(values))
+        point_sizes = 2 * point_sizes * np.sqrt(values / np.max(values))
     series = []
     for name in selected:
         y = numeric(table._columns[name])

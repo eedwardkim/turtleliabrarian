@@ -141,8 +141,7 @@ def unique_label(label, labels):
 def join_indices(left_columns, right_columns):
     left_order = np.lexsort(tuple(reversed(left_columns)))
     left, right = left_columns[0], right_columns[0]
-    numeric = left.dtype.kind in "biuf" and right.dtype.kind in "biuf"
-    if len(left_columns) == 1 and (numeric or left.dtype.kind == right.dtype.kind):
+    if len(left_columns) == 1 and left.dtype.kind == right.dtype.kind:
         right_order = np.argsort(right, kind="stable")
         sorted_right = right[right_order]
         starts = np.searchsorted(sorted_right, left[left_order], side="left")
