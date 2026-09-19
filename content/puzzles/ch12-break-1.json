@@ -4,7 +4,7 @@
   "kind": "break",
   "title": "The Forgery Lamp",
   "patron": "the Trustees",
-  "request": "The forgery lamp flags this book. The lamp catches a forgery with this chance and wrongly flags an honest book with this chance, and forgeries are this rare. What is the chance the flagged book is really a forgery?",
+  "request": "The forgery lamp flags this book; you know the forgery rate and the lamp's chances of flagging forged and honest books. What is the chance the flagged book is really a forgery?",
   "objective": "Combine a base rate with test accuracy instead of trusting the test alone.",
   "concepts": [
     "base_rate",
@@ -80,7 +80,12 @@
     "np.sqrt",
     "np.abs",
     "np.absolute",
-    "minimize"
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
   ],
   "starter": "deliver(rarity * lamp_catches)",
   "hints": [

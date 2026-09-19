@@ -87,7 +87,12 @@
     "np.sqrt",
     "np.abs",
     "np.absolute",
-    "minimize"
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
   ],
   "starter": "import numpy as np\npages = catalogue.column('pages')\nshelves = catalogue.column('shelf')\npage_units = (pages - np.mean(pages)) / np.std(pages)\nshelf_units = (shelves - np.mean(shelves)) / np.std(shelves)\ngaps = np.sqrt((page_units - stranger.item(0)) ** 2 + (shelf_units - stranger.item(1)) ** 2)\ndeliver(catalogue.with_column('gap', gaps).sort('gap').column('genre').item(0))",
   "hints": [

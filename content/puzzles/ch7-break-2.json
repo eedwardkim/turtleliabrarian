@@ -77,7 +77,14 @@
     "sample",
     "sample_proportions",
     "np.append",
-    "np.random.choice"
+    "np.random.choice",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std",
+    "percentile"
   ],
   "starter": "import numpy as np\nfront = reports.where('display', are.equal_to('front')).column('checkouts')\ndeliver(np.mean(front))",
   "hints": [

@@ -85,7 +85,12 @@
     "np.sqrt",
     "np.abs",
     "np.absolute",
-    "minimize"
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
   ],
   "starter": "import numpy as np\ngaps = np.sqrt((catalogue.column('level') - stranger.item(0)) ** 2 + (catalogue.column('borrows') - stranger.item(1)) ** 2)\ndeliver(min(gaps))",
   "hints": [

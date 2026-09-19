@@ -75,7 +75,14 @@
     "sample",
     "sample_proportions",
     "np.append",
-    "np.random.choice"
+    "np.random.choice",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std",
+    "percentile"
   ],
   "starter": "import numpy as np\nfrom datascience import make_array\ndeliver(slips.where('state', are.equal_to('overdue')).num_rows)",
   "hints": [

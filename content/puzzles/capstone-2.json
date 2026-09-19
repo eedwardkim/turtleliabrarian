@@ -1,0 +1,41 @@
+{
+  "id": "capstone-2", "chapter": 13, "kind": "capstone",
+  "title": "Every Loan Has a Home", "patron": "Bramble",
+  "request": "Match each loan slip to its branch, then give me branch and total days, alphabetically. The register repeats some identical cards and has no home for a few slips; count matched loans once each.",
+  "objective": "Deduplicate a lookup before joining, handle unmatched rows and aggregate values rather than counts.",
+  "concepts": ["join", "duplicate_keys", "unmatched_rows", "group_collect"],
+  "requiredApi": ["sort", "join", "group", "sum", "relabeled", "Table", "with_columns", "make_array", "deliver"],
+  "learnedApi": ["sort","join","group","sum","select","relabeled","deliver","print","round","abs","max","min","len","int","float","str","make_array","np.arange","item","np.mean","np.count_nonzero","Table","with_columns","column","drop","labels","num_rows","num_columns","where","take","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","strip","lower","range","np.max","np.min","np.sum","barh","hist","scatter","plot","apply","pivot","are.contained_in","read_table","np.append","np.std","np.random.choice","percentile","sample_proportions","sample","with_column","row","rows","show","exclude","are.between_or_equal_to","np.percentile","np.sort","np.median","np.sqrt","np.abs","np.absolute","minimize"],
+  "starter": "deliver(loans.join('card', register).group('branch'))",
+  "hints": [
+    "Two identical register cards should not turn one loan into two; a missing card cannot name a branch.",
+    "sort with distinct=True makes one lookup row per card, and group with sum adds days instead of counting rows.",
+    "Deduplicate by card and join; if no cards match, construct an empty table with the requested labels, otherwise select branch and days, group with sum, and rename the summed column."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nn = random.randint(3, 7)\nkeys = list(range(1, n + 1))\nbranches = [random.choice(['Fern', 'Reed', 'Willow']) for _ in keys]\ncopies = keys + random.sample(keys, random.randint(0, n))\nregister = Table().with_columns('card', make_array(*copies), 'branch', make_array(*[branches[key - 1] for key in copies]))\nslips = [random.randint(1, n + 1) for _ in range(random.randint(4, 10))]\nloans = Table().with_columns('card', make_array(*slips), 'days', make_array(*[random.randint(1, 15) for _ in slips]))\ndel n, keys, branches, copies, slips",
+  "visibleSeed": 902,
+  "visibleInputs": {
+    "register": {"kind": "table", "labels": ["card", "branch"], "rows": [[1, "Fern"], [2, "Reed"]], "totalRows": 2},
+    "loans": {"kind": "table", "labels": ["card", "days"], "rows": [[1, 3], [2, 7], [1, 2]], "totalRows": 3}
+  },
+  "fixtures": [
+    {"name": "twin_register_cards", "inputs": {
+      "register": {"kind": "table", "labels": ["card", "branch"], "rows": [[1, "Fern"], [1, "Fern"], [2, "Reed"]], "totalRows": 3},
+      "loans": {"kind": "table", "labels": ["card", "days"], "rows": [[1, 4], [1, 6], [2, 2]], "totalRows": 3}
+    }, "predicate": "len(set(register.column('card'))) < register.num_rows"},
+    {"name": "unregistered_slips", "inputs": {
+      "register": {"kind": "table", "labels": ["card", "branch"], "rows": [[1, "Fern"]], "totalRows": 1},
+      "loans": {"kind": "table", "labels": ["card", "days"], "rows": [[1, 2], [9, 99]], "totalRows": 2}
+    }, "predicate": "any(card not in register.column('card') for card in loans.column('card'))"},
+    {"name": "empty_matching_cart", "inputs": {
+      "register": {"kind": "table", "labels": ["card", "branch"], "rows": [[1, "Fern"]], "totalRows": 1},
+      "loans": {"kind": "table", "labels": ["card", "days"], "rows": [[9, 3]], "totalRows": 1}
+    }, "predicate": "all(card not in register.column('card') for card in loans.column('card'))"}
+  ],
+  "queueSize": 7,
+  "reference": "unique_cards = register.sort('card', distinct=True)\nmatched = loans.join('card', unique_cards)\nif matched is None:\n    deliver(Table().with_columns('branch', make_array(), 'total days', make_array()))\nelse:\n    totals = matched.select('branch', 'days').group('branch', sum)\n    deliver(totals.relabeled('days sum', 'total days').sort('branch'))",
+  "naive": [{"code": "matched = loans.join('card', register).select('branch', 'days')\ndeliver(matched.group('branch', sum).relabeled('days sum', 'total days').sort('branch'))", "fails": "silent", "hazard": "twin_register_cards"}],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": [], "standingOrder": {"eligible": true, "ink": 12, "oil": 2},
+  "setPiece": "reopening-loans", "hazards": ["twin_register_cards", "unregistered_slips", "empty_matching_cart"], "stochastic": false
+}

@@ -1,5 +1,19 @@
 # Shelf Life review record
 
+## Full asset inventory review
+
+All 51 Blender-generated GLBs pass structural, scale, material, naming,
+animation and triangle validation. Rebuilding the previews produced 204 angle
+images and a complete inventory sheet. This is asset acceptance only; the
+expanded world's browser composition and frame-time acceptance remain pending.
+
+| Image | Review |
+| --- | --- |
+| `assets/previews/all-assets-contact.png` | All 51 assets are present; patrons, machines, storage, statistical props and hats have distinct silhouettes and restrained materials |
+| `assets/previews/atlas-contact.png` | Face, flippers and tail are visible in orthographic views; the broad shell supports the library platform |
+| `assets/previews/geese-contact.png` | Both patrons have complete heads, beaks, wings and feet in all four views |
+| `assets/previews/hatchling-contact.png` | Shell, glasses and feet remain readable; geometry is complete without the adult saddle |
+
 ## M1 acceptance
 
 Functional revision: `fb8120e`. This accepts the vertical slice only.

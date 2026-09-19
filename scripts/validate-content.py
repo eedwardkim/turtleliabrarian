@@ -7,11 +7,11 @@ import json
 import math
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-# The shipped campaign: prologue, twelve chapters of Show/Vary/Break pairs, capstone.
 RELEASE_SIZE = 77
 KIND_ORDER = {"show": 0, "vary": 1, "break": 2, "capstone": 3}
 ID_PATTERN = re.compile(r"^(p0-\d{2}-[a-z]+|ch([1-9]|1[0-2])-(show|vary|break)-[12]|capstone-[1-4])$")
@@ -33,9 +33,26 @@ def shelf_order(puzzle):
     return (chapter, KIND_ORDER[puzzle["kind"]], sequence(puzzle["id"]), puzzle["id"])
 
 
+def campaign(puzzles):
+    expected = {0: 4, **dict.fromkeys(range(1, 12), 6), 12: 3, 13: 4}
+    require(Counter(puzzle["chapter"] for puzzle in puzzles) == expected, "campaign chapter distribution must be 4, 11×6, 3, 4")
+    learned = set()
+    for puzzle in sorted(puzzles, key=shelf_order):
+        missing = learned - set(puzzle["learnedApi"])
+        require(not missing, f"{puzzle['id']} forgets learned API: {', '.join(sorted(missing))}")
+        learned.update(puzzle["learnedApi"])
+    for chapter in range(1, 13):
+        counts = Counter(puzzle["kind"] for puzzle in puzzles if puzzle["chapter"] == chapter)
+        expected_kinds = dict.fromkeys(("show", "vary", "break"), 1 if chapter == 12 else 2)
+        require(counts == expected_kinds, f"chapter {chapter} needs Show, Vary and Break requests")
+    require(all(puzzle["kind"] == "capstone" for puzzle in puzzles if puzzle["chapter"] == 13), "chapter 13 is the capstone")
+
+
 def metadata(puzzle):
     require(bool(ID_PATTERN.match(puzzle["id"])), f"unrecognized shelf identity {puzzle['id']}")
     require(puzzle["kind"] in KIND_ORDER, "unknown shelf kind")
+    request_text = re.sub(r"\b(?:Dr|Mr|Mrs)\.", "", puzzle["request"])
+    require(len(re.split(r"(?<=[.!?])\s+(?=[A-Z])", request_text)) <= 2, "request exceeds two sentences")
     require(5 <= puzzle["queueSize"] <= 10, "queue outside 5–10")
     require(0 < len(puzzle["fixtures"]) < puzzle["queueSize"], "queue needs curated and random shelves")
     require(len(puzzle["hints"]) == 3, "exactly three hints required")
@@ -188,6 +205,7 @@ def main():
     require(len(identities) == len(set(identities)), "duplicate shelf identity")
     require(len(data) == RELEASE_SIZE, f"exactly {RELEASE_SIZE} release puzzles required, found {len(data)}")
     puzzles = sorted(data, key=shelf_order)
+    campaign(puzzles)
     for puzzle in puzzles:
         try:
             metadata(puzzle)

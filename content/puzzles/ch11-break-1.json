@@ -88,7 +88,12 @@
     "np.sqrt",
     "np.abs",
     "np.absolute",
-    "minimize"
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
   ],
   "starter": "import numpy as np\ngaps = np.sqrt((catalogue.column('level') - stranger.item(0)) ** 2 + (catalogue.column('borrows') - stranger.item(1)) ** 2)\nnearest = catalogue.with_column('gap', gaps).sort('gap').take(np.arange(4))\nvotes = nearest.group('genre').sort('count', descending=True)\ndeliver(votes.column('count').item(0))",
   "hints": [

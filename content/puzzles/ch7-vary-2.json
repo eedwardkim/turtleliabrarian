@@ -74,7 +74,14 @@
     "sample",
     "sample_proportions",
     "np.append",
-    "np.random.choice"
+    "np.random.choice",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std",
+    "percentile"
   ],
   "starter": "counts = tally.column('requests')\ndeliver(sum(abs(counts - tally.column('claimed'))))",
   "hints": [

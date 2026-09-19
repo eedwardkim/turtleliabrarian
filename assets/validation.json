@@ -462,7 +462,7 @@
     "name": "hatchling",
     "triangles": 1344,
     "primitives": 8,
-    "bytes": 162416,
+    "bytes": 162420,
     "nodes": [
       "BellyPocket_mesh",
       "BellyPocket",
@@ -515,7 +515,7 @@
     "name": "heron",
     "triangles": 568,
     "primitives": 1,
-    "bytes": 65116,
+    "bytes": 65120,
     "nodes": [
       "Body_mesh",
       "Body",

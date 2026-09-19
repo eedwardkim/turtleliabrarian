@@ -81,7 +81,12 @@
     "np.std",
     "np.sqrt",
     "np.abs",
-    "np.absolute"
+    "np.absolute",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
   ],
   "starter": "deliver(narrower ** 2)",
   "hints": [

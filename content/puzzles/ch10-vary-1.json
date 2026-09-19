@@ -85,7 +85,12 @@
     "np.sqrt",
     "np.abs",
     "np.absolute",
-    "minimize"
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
   ],
   "starter": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nr = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\nslope = r * np.std(loans) / np.std(heights)\ndeliver(slope * asked)",
   "hints": [

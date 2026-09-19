@@ -84,7 +84,13 @@
     "percentile",
     "np.percentile",
     "np.sort",
-    "np.median"
+    "np.median",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std"
   ],
   "starter": "import numpy as np\narchive = cart.where('wing', are.equal_to('Sealed Archive')).column('days')\nhall = cart.where('wing', are.equal_to('Display Hall')).column('days')\ndeliver(np.mean(archive) - np.mean(hall))",
   "hints": [

@@ -82,7 +82,13 @@
     "percentile",
     "np.percentile",
     "np.sort",
-    "np.median"
+    "np.median",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std"
   ],
   "starter": "import numpy as np\nfrom datascience import make_array\naverage = np.mean(cart.column('days'))\ndeliver(make_array(average, average + 1))",
   "hints": [

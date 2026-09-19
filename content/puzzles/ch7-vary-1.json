@@ -78,7 +78,14 @@
     "sample",
     "sample_proportions",
     "np.append",
-    "np.random.choice"
+    "np.random.choice",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std",
+    "percentile"
   ],
   "starter": "import numpy as np\nlamp = trial.where('shelf', are.equal_to('lamp')).column('days')\nwindow = trial.where('shelf', are.equal_to('window')).column('days')\ndeliver(np.mean(lamp) - np.mean(window))",
   "hints": [

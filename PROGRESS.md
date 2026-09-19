@@ -19,7 +19,7 @@
 - Deterministic V00: title, intro, desk tutorials, typed Python and two complete queues; 97.3 seconds, 1920×1080, 30fps, 2.39 MB. See `DEVTOOLS.md` to reproduce.
 - Detailed acceptance record: `REVIEW.md`.
 
-## M2 — automated and browser gates passed; compatibility acceptance pending
+## M2 — engine verification passed
 - Integration branch: `devin/1789849312-m2-integration`, based on exact M1
   baseline `4430a32badcd36c0635efb00a8eb594c3cc9125f`.
 - Tables/charts, statistical helpers and instrumentation integrated in component
@@ -82,7 +82,8 @@ unsuccessful log/trace result. Powell distinguishes evaluation and iteration
 limits; BFGS ignores maxfev with a warning. Six additional 500-example properties
 compare finite budget results, status/messages, callbacks and evaluation counts.
 Nonfinite results and interrupted line searches have explicit oracle regressions.
-The complete native/Pyodide gate is being rerun for this correction.
+The complete native/Pyodide engine checks passed in the release integration
+at `c466042`; the remaining automated failures concern campaign expectations.
 
 ### Browser evidence
 
@@ -133,10 +134,9 @@ release gate remains in place.
   https://github.com/eedwardkim/turtleliabrarian/pull/3
 
 ## Release status
-Feature-complete on this branch: 77 puzzles, assets, staging, progression, economy,
-audio and tutorials are merged and verified from the shell. Release acceptance
-still needs browser, visual, deployment and clean-clone evidence, plus a decision
-on the three obsolete M1 assertions listed below.
+The 77-puzzle campaign, assets, staging, progression, economy, audio and tutorials
+are integrated. Release acceptance still needs corrected campaign test
+expectations, full browser coverage, deployment and clean-clone evidence.
 
 ## Release integration (devin/1789858322-release-integration)
 
@@ -158,9 +158,9 @@ branch:
 | `make build` | pass, 1.98 MB bundle (558 kB gzip) |
 | `make verify` | 14/15 checks pass in 11m4s; only `TypeScript tests` fails, on the three obsolete assertions |
 
-Campaign count: 77 puzzles (prologue 4, chapters 1-12 with two show / two vary /
-two break each, capstone 1), unique ids, curriculum order asserted independently
-in both `scripts/validate-content.py` and `tests/game/release-content.test.ts`.
+The integration initially had the wrong distribution despite totaling 77:
+prologue 4, chapters 1–12 with six each, capstone 1. The parent review below
+corrects this against requirement Q01.
 Pyodide performance is unchanged: every 200k-row operation stays under 1 s
 (sort 0.083 s median, join 0.057 s), and the scene plan stays at or under 149
 draw calls / ~22.7k triangles in the heaviest staged view.
@@ -188,3 +188,34 @@ draw calls / ~22.7k triangles in the heaviest staged view.
   driven by trace operations.
 - Save format is still version 1 with defaults backfilled.
 - `ARCHITECTURE.md`, referenced by the brief, does not exist in the repository.
+
+## Parent campaign and asset review
+
+- Corrected Q01: prologue 4, chapters 1–11 six each, chapter 12 three, capstone
+  four. New capstones combine text cleanup, duplicate/missing joins, and a
+  two-sided null tail before the bootstrap regression finale.
+- Retained every learned API across chapter boundaries. Chapter 2 now includes
+  magpie capitalization/whitespace and missing-marker fixtures; its normalization
+  methods have Almanac entries. Requests satisfy the two-sentence limit.
+- A no-match inner join returns `None` in the reference library; the second
+  capstone now returns an explicitly labeled empty table. The finale uses
+  covariance/variance for slope, avoiding division by a zero response SD, and
+  includes a constant-response fixture with independently asserted zero bounds.
+- All 77 references, fixtures, naive counterexamples and seeded shelves passed
+  across the full run and targeted corrected-capstone reruns: 500 seeds per
+  deterministic puzzle, 100 per stochastic puzzle. The first full run caught
+  the empty-join reference error; its correction passed 500 seeds.
+- Six curriculum regression tests, metadata validation, TypeScript, ESLint,
+  Ruff and production build pass. Existing suites still fail five outdated
+  expectation cases: four Vitest cases and one later-chapter inventory case.
+  These have not been weakened or changed.
+- Proposed test corrections preserve coverage: retain the original twelve-ID
+  M1 economy walk and its exact balances; test all 77 catalog IDs and the full
+  tutorial trigger set; require one Show/Vary/Break in chapter 12 and four
+  capstones in both release inventory suites.
+- Rebuilt all 51 models and all 204 angle previews; glTF validation reports
+  zero errors. The contact-sheet builder only replaces the all-assets sheet
+  for a complete inventory, preventing partial rebuilds from erasing it.
+- Inspected the full inventory and Atlas, geese and hatchling four-angle sheets.
+  Geometry budgets are validated; real browser frame-time measurements remain
+  pending and are not inferred from the static budget model.

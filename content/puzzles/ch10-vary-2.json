@@ -83,7 +83,12 @@
     "np.sqrt",
     "np.abs",
     "np.absolute",
-    "minimize"
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
   ],
   "starter": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\ndeliver(loans - np.mean(loans))",
   "hints": [

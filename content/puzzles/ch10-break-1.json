@@ -85,7 +85,12 @@
     "np.sqrt",
     "np.abs",
     "np.absolute",
-    "minimize"
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
   ],
   "starter": "import numpy as np\nfrom datascience import make_array\nloans = scatter_cart.column('loans')\ndeliver(make_array(0, np.mean(loans)))",
   "hints": [

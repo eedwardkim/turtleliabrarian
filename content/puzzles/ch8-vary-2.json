@@ -82,7 +82,13 @@
     "percentile",
     "np.percentile",
     "np.sort",
-    "np.median"
+    "np.median",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std"
   ],
   "starter": "deliver(percentile(50, ledger.column('coins')))",
   "hints": [

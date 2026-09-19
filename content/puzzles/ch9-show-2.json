@@ -82,7 +82,12 @@
     "np.std",
     "np.sqrt",
     "np.abs",
-    "np.absolute"
+    "np.absolute",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
   ],
   "starter": "import numpy as np\nreadings = log.column('degrees')\ndeliver(readings - np.mean(readings))",
   "hints": [

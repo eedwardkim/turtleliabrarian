@@ -45,5 +45,5 @@ for name in names:
     if "--preview" in args:
         preview(name)
         contact_sheet([name])
-if ("--preview" in args or "--contact-only" in args) and len(names) > 1:
+if ("--preview" in args or "--contact-only" in args) and set(names) == set(BUILDERS):
     contact_sheet(names, angles=("three-quarter",))
