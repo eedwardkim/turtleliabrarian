@@ -1,0 +1,243 @@
+{
+  "id": "ch9-break-1",
+  "chapter": 9,
+  "kind": "break",
+  "title": "The Wobble of an Average",
+  "patron": "Dr. Newt",
+  "request": "Without simulating anything, predict how much the average wait of a sample of this many slips would wobble from sample to sample, using the whole ledger's spread.",
+  "objective": "Predict the spread of a sample average from the population spread and the sample size.",
+  "concepts": [
+    "sample_mean",
+    "square_root_law",
+    "clt"
+  ],
+  "requiredApi": [
+    "column",
+    "np.std",
+    "np.sqrt",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute"
+  ],
+  "starter": "import numpy as np\ndeliver(np.mean(ledger.column('days')) / np.sqrt(draws))",
+  "hints": [
+    "A sample average wobbles less than a single slip does, and the sample size decides how much less.",
+    "The wobble of the average is the ledger's standard deviation divided by a root, not by the size itself.",
+    "Deliver np.std(days) / np.sqrt(draws)."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(12, 24)\nspread = random.choice([3, 8, 20])\ndays = [random.randint(2, 2 + spread) for _ in range(count)]\nledger = Table().with_columns('slip', make_array(*['S' + str(i + 1) for i in range(count)]), 'days', make_array(*days))\ndraws = random.choice([1, 1, 4, 9, 16, 25])\ndel count, spread, days",
+  "visibleSeed": 3,
+  "visibleInputs": {
+    "ledger": {
+      "kind": "table",
+      "labels": [
+        "slip",
+        "days"
+      ],
+      "rows": [
+        [
+          "S1",
+          4
+        ],
+        [
+          "S2",
+          9
+        ],
+        [
+          "S3",
+          6
+        ],
+        [
+          "S4",
+          11
+        ],
+        [
+          "S5",
+          5
+        ],
+        [
+          "S6",
+          7
+        ]
+      ],
+      "totalRows": 6
+    },
+    "draws": 1
+  },
+  "fixtures": [
+    {
+      "name": "sample_of_sixteen_slips",
+      "predicate": "draws == 16",
+      "inputs": {
+        "ledger": {
+          "kind": "table",
+          "labels": [
+            "slip",
+            "days"
+          ],
+          "rows": [
+            [
+              "S1",
+              3
+            ],
+            [
+              "S2",
+              12
+            ],
+            [
+              "S3",
+              7
+            ],
+            [
+              "S4",
+              15
+            ],
+            [
+              "S5",
+              4
+            ],
+            [
+              "S6",
+              9
+            ],
+            [
+              "S7",
+              6
+            ],
+            [
+              "S8",
+              11
+            ]
+          ],
+          "totalRows": 8
+        },
+        "draws": 16
+      }
+    },
+    {
+      "name": "ledger_with_no_spread_at_all",
+      "predicate": "max(ledger.column('days')) == min(ledger.column('days'))",
+      "inputs": {
+        "ledger": {
+          "kind": "table",
+          "labels": [
+            "slip",
+            "days"
+          ],
+          "rows": [
+            [
+              "S1",
+              8
+            ],
+            [
+              "S2",
+              8
+            ],
+            [
+              "S3",
+              8
+            ],
+            [
+              "S4",
+              8
+            ]
+          ],
+          "totalRows": 4
+        },
+        "draws": 9
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\ndeliver(np.std(ledger.column('days')) / np.sqrt(draws))",
+  "naive": [
+    {
+      "code": "import numpy as np\ndeliver(np.std(ledger.column('days')) / draws)",
+      "fails": "silent",
+      "hazard": "sample_of_sixteen_slips"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "wobble-of-an-average"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 13,
+    "oil": 0
+  },
+  "setPiece": "measuring-rod",
+  "hazards": [
+    "sample_of_sixteen_slips"
+  ],
+  "stochastic": false
+}

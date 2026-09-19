@@ -1,0 +1,306 @@
+{
+  "id": "ch7-break-1",
+  "chapter": 7,
+  "kind": "break",
+  "title": "The Tie at the Cutoff",
+  "patron": "Mr. Heron",
+  "request": "Simulate two hundred fair nights of overdue slips and report the share of them that are at least as overdue-heavy as tonight. At least as, exactly as I said it.",
+  "objective": "Count simulated statistics that tie the observed one, not only those that beat it.",
+  "concepts": [
+    "p_value",
+    "ties",
+    "at_least_as_extreme"
+  ],
+  "requiredApi": [
+    "sample_proportions",
+    "np.append",
+    "np.count_nonzero",
+    "range",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice"
+  ],
+  "starter": "import numpy as np\nfrom datascience import make_array\ndeliver(slips.where('state', are.equal_to('overdue')).num_rows)",
+  "hints": [
+    "Two nights that look identical should count the same way.",
+    "A simulated night that exactly equals tonight is still at least as overdue-heavy as tonight.",
+    "Count the simulated overdue totals with >= rather than >, then divide by the number of repetitions."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nslip_count = random.randint(10, 18)\nrate = random.choice([0.5, 0.55, 0.6, 0.75, 0.9])\nstates = ['overdue' if random.random() < rate else 'on time' for _ in range(slip_count)]\npatrons = [random.choice(['Heron', 'Pip', 'Bramble', 'Newt', 'Hazel']) for _ in range(slip_count)]\nslips = Table().with_columns('patron', make_array(*patrons), 'state', make_array(*states))",
+  "visibleSeed": 91,
+  "visibleInputs": {
+    "slips": {
+      "kind": "table",
+      "labels": [
+        "patron",
+        "state"
+      ],
+      "rows": [
+        [
+          "Heron",
+          "overdue"
+        ],
+        [
+          "Pip",
+          "overdue"
+        ],
+        [
+          "Bramble",
+          "overdue"
+        ],
+        [
+          "Newt",
+          "overdue"
+        ],
+        [
+          "Hazel",
+          "overdue"
+        ],
+        [
+          "Heron",
+          "overdue"
+        ],
+        [
+          "Pip",
+          "overdue"
+        ],
+        [
+          "Bramble",
+          "overdue"
+        ],
+        [
+          "Newt",
+          "overdue"
+        ],
+        [
+          "Hazel",
+          "overdue"
+        ],
+        [
+          "Heron",
+          "overdue"
+        ],
+        [
+          "Pip",
+          "overdue"
+        ],
+        [
+          "Bramble",
+          "overdue"
+        ],
+        [
+          "Newt",
+          "overdue"
+        ]
+      ],
+      "totalRows": 14
+    }
+  },
+  "fixtures": [
+    {
+      "name": "observed_sits_at_the_middle",
+      "predicate": "slips.where('state', are.equal_to('overdue')).num_rows * 2 == slips.num_rows",
+      "inputs": {
+        "slips": {
+          "kind": "table",
+          "labels": [
+            "patron",
+            "state"
+          ],
+          "rows": [
+            [
+              "Heron",
+              "overdue"
+            ],
+            [
+              "Pip",
+              "on time"
+            ],
+            [
+              "Bramble",
+              "overdue"
+            ],
+            [
+              "Newt",
+              "on time"
+            ],
+            [
+              "Hazel",
+              "overdue"
+            ],
+            [
+              "Heron",
+              "on time"
+            ],
+            [
+              "Pip",
+              "overdue"
+            ],
+            [
+              "Bramble",
+              "on time"
+            ],
+            [
+              "Newt",
+              "overdue"
+            ],
+            [
+              "Hazel",
+              "on time"
+            ],
+            [
+              "Heron",
+              "overdue"
+            ],
+            [
+              "Pip",
+              "on time"
+            ]
+          ],
+          "totalRows": 12
+        }
+      }
+    },
+    {
+      "name": "every_slip_on_time",
+      "predicate": "slips.where('state', are.equal_to('overdue')).num_rows == 0",
+      "inputs": {
+        "slips": {
+          "kind": "table",
+          "labels": [
+            "patron",
+            "state"
+          ],
+          "rows": [
+            [
+              "Heron",
+              "on time"
+            ],
+            [
+              "Pip",
+              "on time"
+            ],
+            [
+              "Bramble",
+              "on time"
+            ],
+            [
+              "Newt",
+              "on time"
+            ],
+            [
+              "Hazel",
+              "on time"
+            ],
+            [
+              "Heron",
+              "on time"
+            ],
+            [
+              "Pip",
+              "on time"
+            ],
+            [
+              "Bramble",
+              "on time"
+            ],
+            [
+              "Newt",
+              "on time"
+            ],
+            [
+              "Hazel",
+              "on time"
+            ]
+          ],
+          "totalRows": 10
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nfrom datascience import make_array\nobserved = slips.where('state', are.equal_to('overdue')).num_rows\ntotal = slips.num_rows\nsimulated = make_array()\nfor repetition in range(200):\n    fair = sample_proportions(total, make_array(0.5, 0.5))\n    simulated = np.append(simulated, fair.item(0) * total)\ndeliver(np.count_nonzero(simulated >= observed) / 200)",
+  "naive": [
+    {
+      "code": "import numpy as np\nfrom datascience import make_array\nobserved = slips.where('state', are.equal_to('overdue')).num_rows\ntotal = slips.num_rows\nsimulated = make_array()\nfor repetition in range(200):\n    fair = sample_proportions(total, make_array(0.5, 0.5))\n    simulated = np.append(simulated, fair.item(0) * total)\ndeliver(np.count_nonzero(simulated > observed) / 200)",
+      "fails": "silent",
+      "hazard": "observed_sits_at_the_middle"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 0.02,
+    "relativeTolerance": 0.0
+  },
+  "unlocks": [
+    "tail-direction"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 12,
+    "oil": 0
+  },
+  "setPiece": "observed-flag",
+  "hazards": [
+    "observed_sits_at_the_middle",
+    "every_slip_on_time"
+  ],
+  "stochastic": true
+}

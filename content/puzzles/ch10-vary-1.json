@@ -1,0 +1,224 @@
+{
+  "id": "ch10-vary-1",
+  "chapter": 10,
+  "kind": "vary",
+  "title": "Do Not Run the Rope Off the Shelf",
+  "patron": "Mr. Heron",
+  "request": "Predict the loans for a book at this height using the least squares line, but if the height sits outside the heights we actually observed, hand me back the words 'off the shelf' instead of a number.",
+  "objective": "Use a fitted line inside its range and refuse to extrapolate outside it.",
+  "concepts": [
+    "prediction",
+    "extrapolation",
+    "range_of_data"
+  ],
+  "requiredApi": [
+    "column",
+    "np.mean",
+    "np.std",
+    "max",
+    "min",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize"
+  ],
+  "starter": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nr = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\nslope = r * np.std(loans) / np.std(heights)\ndeliver(slope * asked)",
+  "hints": [
+    "A rope pinned between two shelves says nothing about the floor below them.",
+    "Check asked against max and min of the observed heights before you predict anything.",
+    "If asked falls inside the range, deliver slope * asked + intercept; otherwise deliver the text 'off the shelf'."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(5, 9)\ntilt = random.choice([-2, 1, 3])\nheights = [random.randint(2, 8) for _ in range(count)]\nif max(heights) == min(heights):\n    heights[0] = heights[0] + 2\nloans = [25 + tilt * height + random.randint(-3, 3) for height in heights]\nscatter_cart = Table().with_columns('height', make_array(*heights), 'loans', make_array(*loans))\nasked = random.choice([0, 1, 4, 5, 12, 20])\ndel count, tilt, heights, loans",
+  "visibleSeed": 38,
+  "visibleInputs": {
+    "scatter_cart": {
+      "kind": "table",
+      "labels": [
+        "height",
+        "loans"
+      ],
+      "rows": [
+        [
+          2,
+          29
+        ],
+        [
+          4,
+          33
+        ],
+        [
+          6,
+          37
+        ],
+        [
+          8,
+          41
+        ]
+      ],
+      "totalRows": 4
+    },
+    "asked": 5
+  },
+  "fixtures": [
+    {
+      "name": "asked_height_is_above_every_shelf",
+      "predicate": "asked > max(scatter_cart.column('height'))",
+      "inputs": {
+        "scatter_cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              2,
+              30
+            ],
+            [
+              3,
+              33
+            ],
+            [
+              4,
+              35
+            ],
+            [
+              5,
+              39
+            ]
+          ],
+          "totalRows": 4
+        },
+        "asked": 14
+      }
+    },
+    {
+      "name": "asked_height_sits_on_the_edge",
+      "predicate": "asked == max(scatter_cart.column('height'))",
+      "inputs": {
+        "scatter_cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              1,
+              20
+            ],
+            [
+              3,
+              26
+            ],
+            [
+              5,
+              31
+            ],
+            [
+              7,
+              38
+            ]
+          ],
+          "totalRows": 4
+        },
+        "asked": 7
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nif asked > max(heights) or asked < min(heights):\n    deliver('off the shelf')\nelse:\n    r = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\n    slope = r * np.std(loans) / np.std(heights)\n    deliver(slope * asked + np.mean(loans) - slope * np.mean(heights))",
+  "naive": [
+    {
+      "code": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nr = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\nslope = r * np.std(loans) / np.std(heights)\ndeliver(slope * asked + np.mean(loans) - slope * np.mean(heights))",
+      "fails": "silent",
+      "hazard": "asked_height_is_above_every_shelf"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "prediction",
+    "extrapolation-guard"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 14,
+    "oil": 1
+  },
+  "setPiece": "rope-line",
+  "hazards": [
+    "asked_height_is_above_every_shelf",
+    "asked_height_sits_on_the_edge"
+  ],
+  "stochastic": false
+}

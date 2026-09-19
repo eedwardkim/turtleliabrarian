@@ -1,0 +1,288 @@
+{
+  "id": "ch8-vary-2",
+  "chapter": 8,
+  "kind": "vary",
+  "title": "Bookends on the Middle Book",
+  "patron": "Mx. Wren",
+  "request": "Never mind the average: I care about the middle donation. Re-grab the ledger two hundred times, keep each re-grab's fiftieth percentile, and give me a ninety percent interval for it, left bookend first.",
+  "objective": "Bootstrap a statistic that is not a mean, and read the interval from the resampled statistics.",
+  "concepts": [
+    "bootstrap",
+    "median",
+    "confidence_interval",
+    "statistic_of_interest"
+  ],
+  "requiredApi": [
+    "sample",
+    "num_rows",
+    "column",
+    "percentile",
+    "np.append",
+    "make_array",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median"
+  ],
+  "starter": "deliver(percentile(50, ledger.column('coins')))",
+  "hints": [
+    "The bookends belong on the resampled statistic, not on the coins themselves.",
+    "Each loop pass should resample the ledger and keep percentile(50, ...) of that resample.",
+    "After two hundred passes, deliver percentile(5, middles) and percentile(95, middles) in that order."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(9, 15)\nspread = random.choice([0, 4, 9, 20])\ncoins = [random.randint(6, 6 + spread) for _ in range(count)]\ngivers = [random.choice(['Hazel', 'Otter', 'Newt', 'Wren', 'Heron']) for _ in range(count)]\nledger = Table().with_columns('giver', make_array(*givers), 'coins', make_array(*coins))\ndel count, spread, coins, givers",
+  "visibleSeed": 33,
+  "visibleInputs": {
+    "ledger": {
+      "kind": "table",
+      "labels": [
+        "giver",
+        "coins"
+      ],
+      "rows": [
+        [
+          "Hazel",
+          12
+        ],
+        [
+          "Otter",
+          12
+        ],
+        [
+          "Newt",
+          12
+        ],
+        [
+          "Wren",
+          12
+        ],
+        [
+          "Heron",
+          12
+        ],
+        [
+          "Hazel",
+          12
+        ],
+        [
+          "Otter",
+          12
+        ],
+        [
+          "Newt",
+          12
+        ],
+        [
+          "Wren",
+          12
+        ],
+        [
+          "Heron",
+          12
+        ]
+      ],
+      "totalRows": 10
+    }
+  },
+  "fixtures": [
+    {
+      "name": "one_huge_donation",
+      "predicate": "max(ledger.column('coins')) > 5 * percentile(50, ledger.column('coins'))",
+      "inputs": {
+        "ledger": {
+          "kind": "table",
+          "labels": [
+            "giver",
+            "coins"
+          ],
+          "rows": [
+            [
+              "Hazel",
+              8
+            ],
+            [
+              "Otter",
+              11
+            ],
+            [
+              "Newt",
+              9
+            ],
+            [
+              "Wren",
+              10
+            ],
+            [
+              "Heron",
+              240
+            ],
+            [
+              "Hazel",
+              12
+            ],
+            [
+              "Otter",
+              7
+            ],
+            [
+              "Newt",
+              13
+            ],
+            [
+              "Wren",
+              9
+            ],
+            [
+              "Heron",
+              10
+            ]
+          ],
+          "totalRows": 10
+        }
+      }
+    },
+    {
+      "name": "coins_are_spread_wide",
+      "predicate": "max(ledger.column('coins')) - min(ledger.column('coins')) > 20",
+      "inputs": {
+        "ledger": {
+          "kind": "table",
+          "labels": [
+            "giver",
+            "coins"
+          ],
+          "rows": [
+            [
+              "Hazel",
+              3
+            ],
+            [
+              "Otter",
+              31
+            ],
+            [
+              "Newt",
+              14
+            ],
+            [
+              "Wren",
+              27
+            ],
+            [
+              "Heron",
+              6
+            ],
+            [
+              "Hazel",
+              19
+            ],
+            [
+              "Otter",
+              9
+            ],
+            [
+              "Newt",
+              36
+            ],
+            [
+              "Wren",
+              22
+            ],
+            [
+              "Heron",
+              11
+            ]
+          ],
+          "totalRows": 10
+        }
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "from datascience import make_array\nimport numpy as np\nmiddles = make_array()\nfor repetition in range(200):\n    resample = ledger.sample(ledger.num_rows)\n    middles = np.append(middles, percentile(50, resample.column('coins')))\ndeliver(make_array(percentile(5, middles), percentile(95, middles)))",
+  "naive": [
+    {
+      "code": "from datascience import make_array\ncoins = ledger.column('coins')\ndeliver(make_array(percentile(5, coins), percentile(95, coins)))",
+      "fails": "silent",
+      "hazard": "one_huge_donation"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "bootstrap-statistic"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 14,
+    "oil": 1
+  },
+  "setPiece": "bookends",
+  "hazards": [
+    "one_huge_donation"
+  ],
+  "stochastic": true
+}

@@ -1,0 +1,234 @@
+{
+  "id": "ch9-vary-1",
+  "chapter": 9,
+  "kind": "vary",
+  "title": "Inside the Promised Band",
+  "patron": "the Trustees",
+  "request": "Chebyshev promised us that most loans sit within a few rods of the middle. Tell us the fraction of loans whose page count lies within this many standard deviations of the mean, counting a loan exactly on the line as inside.",
+  "objective": "Count how much of a collection lies inside a band measured in standard units.",
+  "concepts": [
+    "chebyshev",
+    "standard_units",
+    "inclusive_bounds"
+  ],
+  "requiredApi": [
+    "column",
+    "np.mean",
+    "np.std",
+    "np.abs",
+    "np.count_nonzero",
+    "num_rows",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute"
+  ],
+  "starter": "import numpy as np\npages = shelf.column('pages')\ndeliver(np.count_nonzero(pages < np.mean(pages) + rods * np.std(pages)) / shelf.num_rows)",
+  "hints": [
+    "A band has two edges, and the question is about distance from the middle in either direction.",
+    "Standard units turn the band into a plain comparison: how many readings have |standard unit| at most rods?",
+    "Count the loans with np.abs(standard_units) <= rods, then divide by shelf.num_rows."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(6, 14)\nmiddle = random.randint(100, 200)\nspread = random.choice([10, 30, 70])\npages = [middle + random.randint(-spread, spread) for _ in range(count)]\nif max(pages) == min(pages):\n    pages[0] = pages[0] + spread\nshelf = Table().with_columns('title', make_array(*['Loan ' + str(i + 1) for i in range(count)]), 'pages', make_array(*pages))\nrods = random.choice([1, 1.5, 2, 3])\ndel count, middle, spread, pages",
+  "visibleSeed": 15,
+  "visibleInputs": {
+    "shelf": {
+      "kind": "table",
+      "labels": [
+        "title",
+        "pages"
+      ],
+      "rows": [
+        [
+          "Loan 1",
+          110
+        ],
+        [
+          "Loan 2",
+          130
+        ],
+        [
+          "Loan 3",
+          150
+        ],
+        [
+          "Loan 4",
+          170
+        ],
+        [
+          "Loan 5",
+          190
+        ]
+      ],
+      "totalRows": 5
+    },
+    "rods": 1
+  },
+  "fixtures": [
+    {
+      "name": "a_loan_sits_exactly_on_the_line",
+      "predicate": "np.count_nonzero(np.abs((shelf.column('pages') - np.mean(shelf.column('pages'))) / np.std(shelf.column('pages'))) == rods) > 0",
+      "inputs": {
+        "shelf": {
+          "kind": "table",
+          "labels": [
+            "title",
+            "pages"
+          ],
+          "rows": [
+            [
+              "Loan 1",
+              120
+            ],
+            [
+              "Loan 2",
+              180
+            ]
+          ],
+          "totalRows": 2
+        },
+        "rods": 1
+      }
+    },
+    {
+      "name": "one_loan_far_outside_the_band",
+      "predicate": "max(np.abs((shelf.column('pages') - np.mean(shelf.column('pages'))) / np.std(shelf.column('pages')))) > 2",
+      "inputs": {
+        "shelf": {
+          "kind": "table",
+          "labels": [
+            "title",
+            "pages"
+          ],
+          "rows": [
+            [
+              "Loan 1",
+              140
+            ],
+            [
+              "Loan 2",
+              145
+            ],
+            [
+              "Loan 3",
+              138
+            ],
+            [
+              "Loan 4",
+              142
+            ],
+            [
+              "Loan 5",
+              141
+            ],
+            [
+              "Loan 6",
+              139
+            ],
+            [
+              "Loan 7",
+              143
+            ],
+            [
+              "Loan 8",
+              620
+            ]
+          ],
+          "totalRows": 8
+        },
+        "rods": 2
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\npages = shelf.column('pages')\nunits = (pages - np.mean(pages)) / np.std(pages)\ndeliver(np.count_nonzero(np.abs(units) <= rods) / shelf.num_rows)",
+  "naive": [
+    {
+      "code": "import numpy as np\npages = shelf.column('pages')\nunits = (pages - np.mean(pages)) / np.std(pages)\ndeliver(np.count_nonzero(np.abs(units) < rods) / shelf.num_rows)",
+      "fails": "silent",
+      "hazard": "a_loan_sits_exactly_on_the_line"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "chebyshev"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 12,
+    "oil": 0
+  },
+  "setPiece": "measuring-rod",
+  "hazards": [
+    "a_loan_sits_exactly_on_the_line"
+  ],
+  "stochastic": false
+}
