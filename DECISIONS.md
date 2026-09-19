@@ -88,7 +88,8 @@ loop `invocationId`. Removing a local alias preserves names still bound in anoth
 scope. Loop `count` remains authoritative after trace truncation; a new invocation
 starts its own five full trips before summarizing. Three replay regressions cover
 local shadows, recursive aliases and sequential loop invocations. Browser
-verification remains separate.
+verification at `0072db3` confirms local release preserves global names and
+a second loop invocation resumes full physical trips.
 3D chart staging and further style controls remain M3/M4.
 
 PR #1 merged while this work was underway. The integration was reconciled with
@@ -134,3 +135,36 @@ the tested builds and APIs, not a guarantee across arbitrary NumPy builds.
 other methods, bounds, constraints, jac and unsupported options explicitly raise
 `NotImplementedError`. These API exceptions and the E13 opaque-callback gap
 prevent an unconditional M2 acceptance claim.
+
+### Independent review corrections
+
+- NumPy Cython callable types, including `default_rng`, are recognized at the
+  player boundary. Internal NumPy helpers are suppressed while that call is
+  active unless they are registered player callbacks. This avoids treating
+  private seed-material arrays as player values or separate locked APIs.
+- Exact `functools.reduce`, `itertools.accumulate`, `min`, `max` and `list.sort`
+  callback boundaries join map/filter/sorted. Function identity and lazy
+  consumption are preserved outside those invocation boundaries.
+- Comprehensions wrap the iterable, retaining eager outer iterator creation
+  and lazy consumption. Per-generator invocation counts include rejected filter
+  candidates; cleanup closes incomplete traces after exceptions or partial
+  generator consumption. Synchronous and asynchronous iterator protocols have
+  regression coverage. This does not add an asynchronous notebook entrypoint.
+- NumPy print options, floating-point error modes and error callbacks are restored
+  after every run, including instrument-disabled runs.
+- Mixed numeric join kinds use exact hashed keys instead of searchsorted coercion,
+  which can falsely match an int64 above 2**53 to a neighboring float64.
+  Same-kind numeric joins retain the measured fast path.
+- Scatter accepts scalar or row-length sizes; grouped series select matching
+  sizes. show/as_text treat zero as all rows and as_text accepts a separator.
+
+The follow-up suite passes 530 tests in both CPython and actual Pyodide. This
+includes 39 new review regressions. The 14 M2 automated gates pass, but they do
+not erase the optimizer and opaque-callback compatibility exceptions.
+
+Direct oracle probes confirm that optimizer budget exhaustion returns a candidate
+and unsuccessful result rather than raising. Existing tests instead require
+RuntimeError for maxiter/maxfev exhaustion. These tests are left unchanged pending
+approval to correct their expectations; M2 remains open. BFGS also ignores maxfev
+with a warning in the oracle, whereas this implementation enforces it. No SciPy
+code or oracle source has been copied.

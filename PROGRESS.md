@@ -19,15 +19,15 @@
 - Deterministic V00: title, intro, desk tutorials, typed Python and two complete queues; 97.3 seconds, 1920×1080, 30fps, 2.39 MB. See `DEVTOOLS.md` to reproduce.
 - Detailed acceptance record: `REVIEW.md`.
 
-## M2 — automated gates passed; independent and browser review pending
+## M2 — automated and browser gates passed; compatibility acceptance pending
 - Integration branch: `devin/1789849312-m2-integration`, based on exact M1
   baseline `4430a32badcd36c0635efb00a8eb594c3cc9125f`.
 - Tables/charts, statistical helpers and instrumentation integrated in component
   order. Parent chart UI `d74fda7` merged with ancestry preserved.
 - Statistical helpers are exposed in notebook, scratch and player modules.
   Omitted sample-proportion seeds consume a run-local seeded stream; explicit
-  seeds do not consume it. Exact native map/filter/sorted NumPy callbacks are
-  observed without replacing NumPy exports.
+  seeds do not consume it. Recognized native callback boundaries are observed
+  without replacing NumPy exports.
 - Full Pyodide pytest execution uses the same engine suite and isolated host
   oracle, including 500-example Hypothesis properties. Pure-Python Hypothesis
   6.155.7 works in both runtimes. CPython keeps exact dtype comparisons; wasm
@@ -45,8 +45,8 @@ gates on the consolidated release branch. No assertion was weakened or skipped.
 
 | Gate | Measured result |
 | --- | --- |
-| CPython engine/oracle suite | 491 passed; 114.4 s |
-| Same suite on Pyodide 314.0.7 | 491 passed; 195.85 s |
+| CPython engine/oracle suite | 530 passed; 124.04 s |
+| Same suite on Pyodide 314.0.7 | 530 passed; 262.68 s |
 | Complete-result parity inventory | 38 scenarios × instrumentation off/on = 76 passed, plus exact repeat traces |
 | Infinite-loop worker termination | Passed at the 8-second Node deadline |
 | TypeScript tests | 233 passed across 20 files |
@@ -57,12 +57,46 @@ gates on the consolidated release branch. No assertion was weakened or skipped.
 | Production build | Passed; Vite reported the bundle-size warning |
 | Release campaign | Failed: 12/77 puzzles, as required before M5 expansion |
 
-Both runtimes reported an unraisable Hypothesis GC-callback timeout warning
-during deliberate timeout regressions; those regressions passed. CPython also
-emitted expected zero-size sampling warnings. The discovered seed remains an
+Pyodide reported an unraisable Hypothesis GC-callback timeout warning during
+deliberate timeout regressions; those regressions passed. CPython emitted
+expected zero-size sampling warnings. The discovered seed remains an
 explicit Hypothesis example and now passes in both runtimes. The numerical
-assertion and 500-example setting are unchanged. Independent review is underway;
-browser-driven M2 verification is still pending.
+assertion and 500-example setting are unchanged.
+
+### Independent review follow-up
+
+Commit `0072db3` fixes the Cython `default_rng` classification and suppresses
+internal NumPy helpers, preventing private seed arrays from invalidating the
+worker protocol or triggering player API locks. It adds comprehension loop
+events, reduce/accumulate/min/max/list.sort callback observation, restores NumPy
+print/error settings between runs, preserves exact mixed numeric join keys,
+accepts scatter size sequences and matches show/as_text row limits/separators.
+Thirty-nine new regressions pass in both runtimes. The actual worker protocol
+checks also pass, including the previously invalid constructor result.
+An additional 36 default-contract cross-runtime cases pass with instrumentation
+off/on and exact repeat traces.
+
+Optimizer failure semantics still differ from the oracle and are currently
+encoded in existing tests. For `(x-3)**2` with `maxiter=0`, the oracle returns
+3.0 (Powell) or 0.0 (BFGS) and reports `success=False`; this engine raises
+RuntimeError. With `maxfev=1`, Powell returns 0.0 while BFGS ignores the unsupported
+option with a warning; the engine raises in both cases. Correcting the existing
+test expectations requires approval before this compatibility change proceeds.
+
+### Browser evidence
+
+The real-worker browser pass at `0072db3` found no new blocker in the tested
+paths. Output/Scratch charts passed grouped density modes, multiple series,
+scatter sizes and fit lines, limits, bounded previews and error/repeat recovery.
+Main-editor world replay preserved global bindings after a local release and
+reset physical trips between loop invocations.
+
+The high-speed tour completed all 12 available requests. Separate normal replays
+reached their last events and all 78 queue patrons passed. Auto-solve triggered
+20 tutorials; seven additional interaction paths completed all 27 tutorial IDs.
+The absent 65 puzzles, exhaustive advanced-API browser coverage and broader
+cross-browser M2 acceptance remain untested. Four recordings and full screenshots
+are attached to the session, with representative screenshots in PR #3.
 
 ### 200k-row Pyodide benchmark
 
@@ -73,10 +107,10 @@ samples are strictly below 1 s**. Full samples are emitted by
 
 | Operation | Instrumentation off | Instrumentation on |
 | --- | ---: | ---: |
-| where | 0.000866 / 0.004127 | 0.001571 / 0.002403 |
-| sort | 0.087833 / 0.094330 | 0.088145 / 0.089462 |
-| group | 0.017515 / 0.021332 | 0.027096 / 0.038422 |
-| unique-key join | 0.065665 / 0.077313 | 0.066742 / 0.069402 |
+| where | 0.000916 / 0.003805 | 0.001848 / 0.002106 |
+| sort | 0.087779 / 0.090927 | 0.087998 / 0.089453 |
+| group | 0.016879 / 0.019679 | 0.028164 / 0.030325 |
+| unique-key join | 0.067414 / 0.082063 | 0.066351 / 0.072858 |
 
 The same parity, full Pyodide suite and strict performance checks are wired into
 `make verify-m1`, `make verify-m2` and release `make verify`. The exact 77-puzzle
@@ -85,13 +119,15 @@ release gate remains in place.
 ### Unmet requirements and parent handoff
 
 - **E13:** native NumPy callbacks invoked wholly inside opaque extension
-  consumers outside recognized map/filter/sorted boundaries remain unobserved
-  and can bypass API locks. `allowedApi` is not a security boundary.
+  consumers outside recognized map/filter/sorted/reduce/accumulate/min/max and
+  list.sort boundaries remain unobserved and can bypass API locks.
+  `allowedApi` is not a security boundary.
 - **E09 compatibility:** minimize supports Powell/BFGS and documented controls;
   other methods and options, including bounds/constraints/jac, remain unsupported.
+  Exhausted-budget return behavior also needs correction, as recorded above.
 - Director scoped binding and loop invocation/count consumption pass targeted
-  replay regressions. Multiple-series chart UI is merged; browser review,
-  3D staging and further style controls remain.
+  replay regressions and browser checks. Multiple-series charts pass the browser
+  checks above; 3D staging and further style controls remain.
 - PR #1 was merged during M2. All remaining work is consolidated in draft PR #3:
   https://github.com/eedwardkim/turtleliabrarian/pull/3
 
