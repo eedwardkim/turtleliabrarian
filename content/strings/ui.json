@@ -1,4 +1,5 @@
 {
+  "charts": { "fitLine": "Line of best fit", "omitted": "{count} points are outside this trace preview." },
   "brand": { "title": "Shelf Life", "titleLines": ["Shelf", "Life"], "eyebrow": "A little library. An endless sky.", "tagline": "A cozy adventure in Python & possibility", "footer": "THE ATLAS FLOATING LIBRARY", "edition": "A story told one shelf at a time", "privacy": "Your library lives on this device. No accounts. No telemetry." },
   "menu": { "continue": "Continue", "new": "New game", "load": "Load a library", "settings": "Settings", "credits": "Credits", "resume": "Back to the library", "save": "Save & load", "quit": "Return to title", "pause": "A moment between pages", "pauseNote": "The books can wait.", "back": "Back", "close": "Close", "cancel": "Cancel", "confirm": "Confirm", "escape": "Esc · menu", "runShortcut": "⌘ / Ctrl + Enter · run", "begin": "Open the library" },
   "intro": {

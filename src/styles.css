@@ -172,7 +172,11 @@ details pre{padding:10px;background:#342d2409}
 .diff-card ul{padding-left:17px}
 .chart{margin:10px 0}
 .chart>svg{width:100%;height:auto;max-height:220px}
-.chart text{font:9px 'IBM Plex Mono',monospace;fill:#675d4c}
+.chart text{font:11px 'IBM Plex Mono',monospace;fill:#675d4c}
+.chart figcaption{font-weight:600}
+.chart-legend{display:flex;flex-wrap:wrap;gap:6px 14px;list-style:none;padding:0;font-size:12px}
+.chart-legend li{display:flex;align-items:center;gap:6px}
+.chart-legend li>span{display:inline-block;width:12px;height:12px;border:1px solid #675d4c}
 .elapsed{font:9px 'IBM Plex Mono',monospace;color:#726b60;text-align:right;margin-top:10px}
 .request-slip{padding:24px 24px 28px;background:linear-gradient(#fbf8f1,#f6eedc);min-height:100%}
 .request-number{display:flex;justify-content:space-between;align-items:center;padding-bottom:17px;border-bottom:1px solid #d5c9ae;font-size:9px;letter-spacing:.15em;color:#7c6d52}
