@@ -188,3 +188,34 @@ draw calls and triangles before adding visual cost. Additional shader polish is
 subordinate to functional completion and responsiveness. Independent release
 work can run concurrently after the accepted M1 slice; all changes still enter
 the single consolidated PR #3.
+
+### Release integration (branch devin/1789858322-release-integration)
+
+The content validator's twelve-puzzle M1 identity table is replaced by a release
+policy: an identity pattern, a unique-id requirement, an exact 77-puzzle release
+size and a curriculum sort that is the Python mirror of `shelfOrder` in
+`src/game/catalog.ts`. Widening the validator required correcting its reference
+API resolution: `np.mean(...)` without an explicit `import numpy as np` and
+dotted submodule calls such as `np.random.choice(...)` previously resolved to
+`mean`/`choice`, which no authored shelf declares. The engine preloads `np`, so
+the validator now resolves `np.` roots and keeps submodule paths intact. This
+makes the learned-API lock stricter, not looser.
+
+Tutorial triggers are keyed to the vocabulary the shelves actually author. The
+eleven tutorials whose triggers named a hazard no shelf declares
+(`messy_strings`, `numbers_as_text`, `empty_table`, `append_not_assigned`,
+`sampling_replacement`, `few_repetitions`, `wrong_tail`,
+`percentile_definition`, `resample_size`, `unscaled_features`,
+`test_on_training`) now use the authored concept/hazard names, and the
+controller raises a tutorial for every concept as well as every hazard of the
+shelf being opened. `tests/game/release-content.test.ts` fails if any tutorial
+trigger is unreachable from the shipped campaign.
+
+Per-shelf `setPiece` is surfaced as an idle-scene label rather than new geometry:
+the physical staging is driven by real trace operations, and inventing a mesh per
+named set piece would cost draw calls without teaching anything. The unused
+`silent` audio cue is now distinguished from `fail` by whether the run raised an
+error.
+
+The three obsolete M1-scoped assertions are left failing rather than relaxed; the
+proposed minimal corrections are recorded in PROGRESS.md for parent approval.

@@ -418,7 +418,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         if (puzzle.chapter >= ARCHIVE_CHAPTER) tutorial('archive');
         if (puzzle.kind === 'capstone') tutorial('capstone');
         if (puzzle.requiredApi.some((api) => CHART_API.has(api))) tutorial('chart');
-        for (const hazard of puzzle.hazards) tutorial(hazard);
+        for (const topic of [...puzzle.concepts, ...puzzle.hazards]) tutorial(topic);
         if (get().ready) void get().refreshExpected();
       },
       nextPuzzle() {

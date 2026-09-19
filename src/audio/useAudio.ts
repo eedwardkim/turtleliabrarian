@@ -6,6 +6,7 @@ export interface AudioSignals {
   settings: Settings;
   busy: boolean;
   diff: CheckDiff | null;
+  errored: boolean;
   served: number;
   ownedItems: string[];
   hatchlings: number;
@@ -60,7 +61,9 @@ export function useAudio(signals: AudioSignals): AudioHandle {
     const before = previous.current;
     previous.current = signals;
     if (signals.busy && !before.busy) engine.cue('run');
-    if (signals.diff && signals.diff !== before.diff) engine.cue(signals.diff.pass ? 'pass' : 'fail');
+    if (signals.diff && signals.diff !== before.diff) {
+      engine.cue(signals.diff.pass ? 'pass' : signals.errored ? 'fail' : 'silent');
+    }
     if (signals.served > before.served) engine.cue('stamp');
     if (signals.completed > before.completed) engine.cue('unlock');
     if (signals.hatchlings > before.hatchlings) engine.cue('hatch');

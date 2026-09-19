@@ -166,6 +166,7 @@ export interface WorldProps {
   colorblind: boolean;
   hat: string;
   hatchlings: number;
+  setPiece?: string;
   cameraPreset?: string;
   wireframe?: boolean;
   showGrid?: boolean;

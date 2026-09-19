@@ -27,6 +27,31 @@ describe('release tutorial coverage', () => {
       expect(entry.steps.every((step) => step.length > 20)).toBe(true);
     }
   });
+  it('raises every tutorial from a trigger the shipped campaign actually reaches', () => {
+    const raised = new Set(uiTriggers);
+    for (const puzzle of puzzles) for (const topic of [...puzzle.concepts, ...puzzle.hazards]) raised.add(topic);
+    for (const entry of tutorials) expect(raised).toContain(entry.trigger);
+  });
+  it('ships the full campaign in curriculum order', () => {
+    expect(puzzles).toHaveLength(77);
+    expect(new Set(puzzles.map((puzzle) => puzzle.id)).size).toBe(77);
+    const kinds = ['show', 'vary', 'break'] as const;
+    for (let chapter = 1; chapter <= 12; chapter++) {
+      const shelves = puzzles.filter((puzzle) => puzzle.chapter === chapter && puzzle.kind !== 'capstone');
+      for (const kind of kinds) expect(shelves.filter((puzzle) => puzzle.kind === kind)).toHaveLength(2);
+    }
+    expect(puzzles.filter((puzzle) => puzzle.chapter === 0)).toHaveLength(4);
+    expect(puzzles.filter((puzzle) => puzzle.kind === 'capstone')).toHaveLength(1);
+    const rank = (index: number): [number, number] => [
+      puzzles[index].kind === 'capstone' ? Number.MAX_SAFE_INTEGER : puzzles[index].chapter,
+      ['show', 'vary', 'break', 'capstone'].indexOf(puzzles[index].kind),
+    ];
+    for (let index = 1; index < puzzles.length; index++) {
+      const [chapter, kind] = rank(index - 1);
+      const [nextChapter, nextKind] = rank(index);
+      expect(chapter < nextChapter || (chapter === nextChapter && kind <= nextKind)).toBe(true);
+    }
+  });
   it('documents every API the curriculum teaches or requires', () => {
     const ids = new Set(almanac.map((entry) => entry.id));
     for (const puzzle of puzzles) {

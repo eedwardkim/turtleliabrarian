@@ -63,6 +63,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     settings: state.save.settings,
     busy: state.busy,
     diff: state.diff,
+    errored: !!state.result?.error,
     served: state.save.resources.served,
     ownedItems: state.save.ownedItems,
     hatchlings: state.save.hatchlings,
@@ -219,7 +220,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     <div className={`app ${reducedMotion ? 'reduced-motion' : ''} ${settings.colorblind ? 'colorblind' : ''}`}>
       {viewport.width >= 1024 && <div className="world-backdrop" aria-hidden="true">
         <World inputs={visibleInputs} result={result} event={event} progress={queueEntry ? 1 : event ? game.replayElapsed / eventDuration(event) : 0} feedback={feedback} diff={diff}
-          chapter={game.puzzle.chapter} reducedMotion={reducedMotion} colorblind={settings.colorblind} hat={game.save.hat} hatchlings={game.save.hatchlings}
+          chapter={game.puzzle.chapter} reducedMotion={reducedMotion} colorblind={settings.colorblind} hat={game.save.hat} hatchlings={game.save.hatchlings} setPiece={game.puzzle.setPiece}
           cameraPreset={game.screen === 'title' ? 'overview' : game.screen === 'intro' ? ['overview', 'returns', 'stacks'][introBeat] : cameraPreset}
           wireframe={wireframe} showGrid={showGrid} />
         <div className="world-vignette" />

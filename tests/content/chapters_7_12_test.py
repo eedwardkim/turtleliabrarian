@@ -1,11 +1,9 @@
 """Validate the later shelves — chapters seven through twelve and the capstone.
 
-The shipped validator pins the twelve vertical-slice identities in its ORDER table, so
-these shelves cannot go through `validate-content.py` unchanged. Every other authoring
-rule it enforces still applies here: three graded hints, curated fixtures that really
-contain their hazard, naive answers that survive the visible shelf and fail their
-fixture, references restricted to learned API, and seeded determinism. The rules are
-reused from the validator itself with the identity table widened for this run only.
+Every authoring rule `validate-content.py` enforces applies here: three graded hints,
+curated fixtures that really contain their hazard, naive answers that survive the
+visible shelf and fail their fixture, references restricted to learned API, and seeded
+determinism. The rules are reused from the validator itself.
 """
 
 import importlib
@@ -14,7 +12,6 @@ import os
 import sys
 import unittest
 from pathlib import Path
-from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -22,6 +19,11 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "engine"))
 validator = importlib.import_module("validate-content")
 
+VERTICAL_SLICE = (
+    "p0-01-stamp", "p0-02-shares", "p0-03-badge", "p0-04-budget",
+    "ch1-show-1", "ch1-show-2", "ch1-vary-1", "ch1-vary-2",
+    "ch1-break-1", "ch1-break-2", "ch2-show-1", "ch2-show-2",
+)
 CHAPTERS = (7, 8, 9, 10, 11, 12)
 KINDS = ("break", "break", "show", "show", "vary", "vary")
 SEEDS = int(os.environ.get("SHELF_CONTENT_SEEDS", "0"))
@@ -48,8 +50,8 @@ class LaterChapterContent(unittest.TestCase):
         self.assertEqual(len({item["id"] for item in self.puzzles}), 37)
 
     def test_vertical_slice_is_untouched(self):
-        shipped = {json.loads((ROOT / f"content/puzzles/{name}.json").read_text())["id"] for name in validator.ORDER}
-        self.assertEqual(shipped, set(validator.ORDER))
+        shipped = {json.loads((ROOT / f"content/puzzles/{name}.json").read_text())["id"] for name in VERTICAL_SLICE}
+        self.assertEqual(shipped, set(VERTICAL_SLICE))
         self.assertFalse(shipped & {item["id"] for item in self.puzzles})
 
     def test_curriculum_never_forgets_an_api(self):
@@ -63,11 +65,9 @@ class LaterChapterContent(unittest.TestCase):
             earlier = set.union(*learned[chapter])
 
     def test_metadata(self):
-        identities = tuple(item["id"] for item in self.puzzles)
         for puzzle in self.puzzles:
             with self.subTest(puzzle=puzzle["id"]):
-                with mock.patch.object(validator, "ORDER", identities):
-                    validator.metadata(puzzle)
+                validator.metadata(puzzle)
                 self.assertNotEqual(puzzle["starter"], puzzle["reference"], "starter ships the answer")
                 self.assertTrue(puzzle["naive"], "later shelves each carry a counterexample")
                 names = {fixture["name"] for fixture in puzzle["fixtures"]}

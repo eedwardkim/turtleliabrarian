@@ -189,6 +189,9 @@ function Diorama({ frame, props }: { frame: WorldFrame; props: WorldProps }) {
     {(motion === 'thread' || props.feedback === 'success') && <Line
       points={[[-0.82, 2.56, 0.78], [0.05, 2.76, 0.9], [0.93, 2.56, 0.78]]}
       color="#E0B43A" lineWidth={2} transparent opacity={props.reducedMotion ? 1 : Math.max(0.3, p)} />}
+    {staging.kind === 'idle' && props.setPiece && <Label position={[0.05, 2.34, 1.5]} kind="wing">
+      {props.setPiece.replace(/-/g, ' ')}
+    </Label>}
     <Label position={[-2.1, 3.0, 1.18]} kind="wing">RETURNS</Label>
     <Label position={[-0.95, 3.99, -1.7]} kind="wing">THE STACKS</Label>
     {frame.input && <Label position={[-0.82, 2.52, 0.84]}>

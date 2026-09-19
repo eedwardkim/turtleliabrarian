@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT / "engine"))
 validator = importlib.import_module("validate-content")
 
 CHAPTERS = (2, 3, 4, 5, 6)
-KINDS = ("show", "vary", "break")
+KINDS = ("show", "vary", "break", "capstone")
 RELEASE_TOTAL = 77
 BASE_API = (
     "deliver",
