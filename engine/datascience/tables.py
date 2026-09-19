@@ -10,6 +10,17 @@ import numpy as np
 from shelf_events import check_api, emit
 
 from .predicates import Predicate, are
+from . import table_charts
+from .table_helpers import (
+    aggregation_array,
+    buckets,
+    collected,
+    collected_label,
+    join_indices,
+    key,
+    predicate_mask,
+    unique_label,
+)
 
 
 class Row(tuple):
@@ -296,6 +307,7 @@ class Table:
         else:
             indices = np.argsort(values, kind="stable")
         result = self._take(indices)
+        _, tie_order, tie_offsets = buckets([values[indices]])
         emit(
             "sort",
             (self,),
@@ -304,6 +316,11 @@ class Table:
             descending=descending,
             distinct=distinct,
             sortValues=values[indices],
+            tieGroups=[
+                indices[tie_order[start:end]]
+                for start, end in zip(tie_offsets[:-1], tie_offsets[1:])
+                if end - start > 1
+            ],
         )
         return result
 
@@ -314,12 +331,12 @@ class Table:
             other_values = self._column(other)
             mask = [value_or_predicate(b)(a) for a, b in zip(values, other_values)]
         elif callable(value_or_predicate):
-            mask = [value_or_predicate(value) for value in values]
+            mask = predicate_mask(values, value_or_predicate)
         elif value_or_predicate is None:
             mask = values
         else:
             predicate = are.equal_to(value_or_predicate)
-            mask = [predicate(value) for value in values]
+            mask = predicate_mask(values, predicate)
         indices = np.flatnonzero(mask)
         result = self._take(indices)
         predicate = (
@@ -333,6 +350,203 @@ class Table:
         )
         emit("where", (self,), result, keptIndices=indices, predicate=predicate)
         return result
+
+    def apply(self, fn, *column_or_columns):
+        check_api("apply")
+        labels = self._labels_args(column_or_columns)
+        if labels:
+            columns = [self._columns[self._argument_label(label)] for label in labels]
+            result = np.array([fn(*row) for row in zip(*columns)])
+        else:
+            result = np.array([
+                fn(Row(row, tuple(self._columns)))
+                for row in zip(*self._columns.values())
+            ])
+        emit("apply", (self,), result, columns=labels)
+        return result
+
+    def _argument_label(self, label):
+        if isinstance(label, (int, np.integer)):
+            return tuple(self._columns)[label]
+        return self._label(label)
+
+    def _group_columns(self, column_or_label):
+        if isinstance(column_or_label, (str, int, np.integer)):
+            label = self._label(column_or_label)
+            return [label], [self._columns[label]]
+        labels = list(column_or_label)
+        if not labels:
+            raise ValueError("At least one grouping column is required")
+        if len(labels) == self._num_rows:
+            return ["group"], [np.asarray(labels)]
+        labels = [self._argument_label(label) for label in labels]
+        return labels, [self._columns[label] for label in labels]
+
+    def group(self, column_or_label, collect=None):
+        check_api("group")
+        if collect is not None and not callable(collect):
+            raise TypeError("collect must be callable")
+        labels, columns = self._group_columns(column_or_label)
+        first, order, offsets = buckets(columns)
+        output = {
+            label: np.array(column[first].tolist())
+            for label, column in zip(labels, columns)
+        }
+        if collect is None:
+            if "count" not in output:
+                output["count"] = np.array(np.diff(offsets).tolist())
+        else:
+            for label, column in self._columns.items():
+                if label not in labels:
+                    output[unique_label(collected_label(label, collect), output)] = aggregation_array([
+                        collected(collect, column[order[start:end]])
+                        for start, end in zip(offsets[:-1], offsets[1:])
+                    ])
+        result = self._from_columns(output.items())
+        emit(
+            "group", (self,), result, labels=labels,
+            keys=[column[first] for column in columns],
+            bucketIndices=order, bucketOffsets=offsets,
+            buckets=[
+                {"key": [column[index] for column in columns], "indices": order[start:end]}
+                for index, start, end in zip(first[:100], offsets[:-1], offsets[1:])
+            ],
+            bucketCount=len(first),
+        )
+        return result
+
+    def pivot(self, columns, rows, values=None, collect=None, zero=None):
+        check_api("pivot")
+        if (values is None) != (collect is None):
+            raise TypeError("values and collect must be specified together")
+        column_label = self._argument_label(columns)
+        row_labels = [self._argument_label(label) for label in self._labels_args((rows,))]
+        if column_label in row_labels:
+            raise TypeError("Pivot row and column labels must differ")
+        if not row_labels:
+            raise ValueError("At least one pivot row column is required")
+        row_columns = [self._columns[label] for label in row_labels]
+        category = self._columns[column_label]
+        row_first, row_order, row_offsets = buckets(row_columns)
+        cell_first, _, _ = buckets([category, *row_columns])
+        col_first, _, _ = buckets([category[cell_first]])
+        col_first = cell_first[col_first]
+        row_ids = np.empty(self._num_rows, dtype=int)
+        row_ids[row_order] = np.repeat(np.arange(len(row_first)), np.diff(row_offsets))
+        categories = {key(category[i]): n for n, i in enumerate(col_first)}
+        cells = {}
+        for i, value in enumerate(category):
+            cells.setdefault((row_ids[i], categories[key(value)]), []).append(i)
+        value_label = None if values is None else self._argument_label(values)
+        value_column = None if values is None else self._columns[value_label]
+        cell_values = {
+            cell: (
+                len(indices) if collect is None
+                else "" if value_label in [column_label, *row_labels]
+                else collected(collect, value_column[indices])
+            )
+            for cell, indices in cells.items()
+        }
+        if zero is None:
+            zero = type(next(iter(cell_values.values()), 0))()
+        output = {
+            label: np.array(column[row_first].tolist())
+            for label, column in zip(row_labels, row_columns)
+        }
+        for column_id, index in enumerate(col_first):
+            entries = []
+            for row_id in range(len(row_first)):
+                entries.append(cell_values.get((row_id, column_id), zero))
+            output[unique_label(str(category[index]), output)] = np.array(entries)
+        result = self._from_columns(output.items())
+        emit(
+            "pivot", (self,), result, rowLabels=row_labels, columnLabel=column_label,
+            cells=[
+                {"row": row, "column": column, "indices": indices}
+                for (row, column), indices in cells.items()
+            ],
+            rowKeys=[column[row_first] for column in row_columns],
+            columnKeys=category[col_first],
+        )
+        return result
+
+    def join(self, column_label, other, other_label=None):
+        check_api("join")
+        left_labels = list(self._labels_args((column_label,)))
+        right_labels = list(self._labels_args((column_label if other_label is None else other_label,)))
+        left_columns = [self._column(label) for label in left_labels]
+        right_columns = [other._column(label) for label in right_labels]
+        if len(left_labels) != len(right_labels):
+            raise ValueError("Join keys must have the same length")
+        left_indices, right_indices = join_indices(left_columns, right_columns)
+        result = None
+        if len(left_indices):
+            if any(not isinstance(label, str) for label in left_labels + right_labels):
+                raise KeyError(column_label)
+            output = {label: self._columns[label][left_indices] for label in left_labels}
+            output.update({
+                label: column[left_indices] for label, column in self._columns.items()
+                if label not in left_labels
+            })
+            for label, column in other._columns.items():
+                if label not in right_labels:
+                    output[unique_label(label, output)] = column[right_indices]
+            output = {
+                label: np.array(column.tolist()) if column.dtype.kind in "US" else column
+                for label, column in output.items()
+            }
+            result = self._from_columns(output.items())
+        left_used = np.zeros(self._num_rows, dtype=bool)
+        right_used = np.zeros(other._num_rows, dtype=bool)
+        left_used[left_indices] = True
+        right_used[right_indices] = True
+        emit(
+            "join", (self, other), result,
+            matchedPairs=np.column_stack((left_indices[:100], right_indices[:100])).tolist(),
+            matchedPairCount=len(left_indices),
+            leftIndices=left_indices,
+            rightIndices=right_indices,
+            unmatchedLeftIndices=np.flatnonzero(~left_used),
+            unmatchedRightIndices=np.flatnonzero(~right_used),
+            leftLabels=left_labels, rightLabels=right_labels,
+        )
+        return result
+
+    def sample(self, k=None, with_replacement=True, weights=None):
+        check_api("sample")
+        k = self._num_rows if k is None else k
+        indices = np.random.choice(self._num_rows, k, replace=with_replacement, p=weights)
+        result = self._from_columns(
+            (label, np.array(column[indices].tolist()))
+            for label, column in self._columns.items()
+        )
+        emit("sample", (self,), result, indices=indices, withReplacement=with_replacement)
+        return result
+
+    def barh(self, column_for_categories=None, select=None, overlay=True, width=None, **vargs):
+        check_api("barh")
+        return table_charts.barh(self, column_for_categories, select, overlay, width, vargs)
+
+    def hist(self, *columns, overlay=True, bins=None, bin_column=None, unit=None,
+             counts=None, group=None, rug=False, side_by_side=False, left_end=None,
+             right_end=None, width=None, height=None, **vargs):
+        check_api("hist")
+        return table_charts.histogram(
+            self, columns, overlay, bins, bin_column, unit, counts, group, rug,
+            side_by_side, left_end, right_end, width, height, vargs,
+        )
+
+    def scatter(self, column_for_x, select=None, overlay=True, fit_line=False,
+                group=None, labels=None, sizes=None, width=None, height=None, s=20, **vargs):
+        check_api("scatter")
+        return table_charts.scatter(
+            self, column_for_x, select, overlay, fit_line, group, labels, sizes,
+            width, height, s, vargs,
+        )
+
+    def plot(self, column_for_xticks=None, select=None, overlay=True, width=None, height=None, **vargs):
+        check_api("plot")
+        return table_charts.plot(self, column_for_xticks, select, overlay, width, height, vargs)
 
     def show(self, max_rows=None):
         check_api("show")
