@@ -65,6 +65,7 @@ export interface SceneObject {
 export interface DirectorState {
   objects: Record<string, SceneObject>;
   bindings: Record<string, string>;
+  bindingNames: Record<string, string>;
   delivered: Value;
   lastOutput: string | null;
   error: { line: number; message: string } | null;
@@ -122,11 +123,33 @@ export function initialState(inputs: Record<string, Value> = {}): DirectorState 
     objects[id] = { id, value: copyValue(value), names: [...(existing?.names ?? []), name], visible: true };
     bindings[name] = id;
   }
-  return { objects, bindings, delivered: null, lastOutput: null, error: null, loops: {}, lastSeq: -1 };
+  return { objects, bindings, bindingNames: Object.fromEntries(Object.keys(bindings).map(name => [name, name])),
+    delivered: null, lastOutput: null, error: null, loops: {}, lastSeq: -1 };
+}
+
+function bindingKey(event: TraceEvent, name: string): string {
+  const scope = event.payload.scope;
+  return typeof scope === 'string' && scope !== 'global' ? JSON.stringify([scope, name]) : name;
+}
+
+function refreshNames(state: DirectorState, id: string) {
+  const object = state.objects[id];
+  if (!object) return;
+  const names = [...new Set(Object.entries(state.bindings)
+    .filter(([, target]) => target === id).map(([key]) => state.bindingNames[key]))];
+  state.objects[id] = { ...object, names, visible: names.length > 0 };
+}
+
+function loopKey(event: TraceEvent): string {
+  if (event.payload.invocationId !== undefined) {
+    return JSON.stringify([event.payload.scope ?? 'global', event.payload.loopId, event.payload.invocationId]);
+  }
+  return String(event.payload.loopId ?? event.payload.loop_id ?? event.line);
 }
 
 export function reduceEvent(state: DirectorState, event: TraceEvent): DirectorState {
   const next: DirectorState = { ...state, objects: { ...state.objects }, bindings: { ...state.bindings },
+    bindingNames: { ...state.bindingNames },
     loops: { ...state.loops }, lastSeq: event.seq };
   const type = eventType(event);
   const value = parseValue(event.payload.value);
@@ -137,30 +160,28 @@ export function reduceEvent(state: DirectorState, event: TraceEvent): DirectorSt
     next.lastOutput = event.output;
   }
   const name = typeof event.payload.name === 'string' ? event.payload.name : null;
-  if (type === 'bind' && id && name) {
-    const oldId = next.bindings[name];
-    if (oldId && oldId !== id && next.objects[oldId]) {
-      const old = next.objects[oldId];
-      const names = old.names.filter((entry) => entry !== name);
-      next.objects[oldId] = { ...old, names, visible: names.length > 0 };
-    }
-    next.bindings[name] = id;
-    const object = next.objects[id];
-    if (object) next.objects[id] = { ...object, names: [...new Set([...object.names, name])], visible: true };
+  const key = name ? bindingKey(event, name) : null;
+  if (type === 'bind' && id && name && key) {
+    const oldId = next.bindings[key];
+    next.bindings[key] = id;
+    next.bindingNames[key] = name;
+    if (oldId && oldId !== id) refreshNames(next, oldId);
+    refreshNames(next, id);
   }
   if (type === 'unbind') {
-    const oldId = name ? next.bindings[name] : id;
-    if (name) delete next.bindings[name];
-    else {
+    const oldId = key ? next.bindings[key] : id;
+    if (key) {
+      delete next.bindings[key];
+      delete next.bindingNames[key];
+    } else {
       for (const [alias, target] of Object.entries(next.bindings)) {
-        if (target === oldId) delete next.bindings[alias];
+        if (target === oldId) {
+          delete next.bindings[alias];
+          delete next.bindingNames[alias];
+        }
       }
     }
-    if (oldId && next.objects[oldId]) {
-      const object = next.objects[oldId];
-      const names = name ? object.names.filter((entry) => entry !== name) : [];
-      next.objects[oldId] = { ...object, names, visible: names.length > 0 };
-    }
+    if (oldId) refreshNames(next, oldId);
   }
   if (type === 'deliver') {
     next.delivered = copyValue(value !== undefined ? value : (id ? next.objects[id]?.value : undefined) ?? null);
@@ -170,11 +191,12 @@ export function reduceEvent(state: DirectorState, event: TraceEvent): DirectorSt
       message: typeof event.payload.message === 'string' ? event.payload.message : 'Python error' };
   }
   if (type.startsWith('loop_')) {
-    const loop = String(event.payload.loop_id ?? event.line);
+    const loop = loopKey(event);
+    const count = event.payload.count ?? event.payload.iterations;
     if (type === 'loop_start') next.loops[loop] = 0;
     if (type === 'loop_iter' || type === 'loop_iteration') next.loops[loop] = (next.loops[loop] ?? 0) + 1;
-    if (type === 'loop_end' && typeof event.payload.iterations === 'number') {
-      next.loops[loop] = Math.max(0, Math.floor(event.payload.iterations));
+    if (typeof count === 'number' && Number.isSafeInteger(count) && count >= 0) {
+      next.loops[loop] = count;
     }
   }
   return next;
@@ -309,7 +331,8 @@ export function frameForWorld(props: Pick<WorldProps, 'result' | 'event' | 'feed
       ? props.result.delivered : props.result.delivered ?? props.result.value;
     output = { id: 'final', value, names: output?.names ?? [], visible: true };
   }
-  const loopCount = Math.max(0, ...Object.values(state.loops));
+  const loopCount = props.event && eventType(props.event).startsWith('loop_')
+    ? state.loops[loopKey(props.event)] ?? 0 : Math.max(0, ...Object.values(state.loops));
   const animation = props.event ? animationFor(props.event) : spec('inspect', 'idle');
   if (animation.motion === 'trip' && loopCount > FULL_LOOP_TRIPS) {
     return { state, input, output, animation: spec('summary', 'idle', 0.08),

@@ -12,6 +12,19 @@ if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('Use Nod
 run('npm', [process.argv.includes('--incremental') ? 'install' : 'ci']);
 run('uv', ['python', 'install', '3.14.2']);
 if (!existsSync('.venv')) run('uv', ['venv', '--python', '3.14.2', '.venv']);
-run('uv', ['pip', 'sync', '--python', '.venv/bin/python', '--require-hashes', 'engine-requirements.txt']);
+const compilerCheck = [
+  'import numpy',
+  "assert '-ffp-contract=off' in numpy.show_config(mode='dicts')['Compilers']['c']['args']",
+  "assert '-ffp-contract=off' in numpy.show_config(mode='dicts')['Compilers']['c++']['args']",
+].join('\n');
+const compatibleBuild = spawnSync('.venv/bin/python', ['-I', '-c', compilerCheck], { stdio: 'ignore' }).status === 0;
+run('uv', [
+  'pip', 'sync', '--python', '.venv/bin/python', '--require-hashes', 'engine-requirements.txt',
+  '--no-binary', 'numpy',
+  '--config-settings-package', 'numpy:setup-args=-Dc_args=-ffp-contract=off',
+  '--config-settings-package', 'numpy:setup-args=-Dcpp_args=-ffp-contract=off',
+  ...compatibleBuild ? [] : ['--reinstall-package', 'numpy'],
+]);
+run('.venv/bin/python', ['-I', '-c', compilerCheck]);
 run('npm', ['run', 'prepare:runtime']);
 run('npx', ['playwright', 'install', 'chromium', 'firefox']);

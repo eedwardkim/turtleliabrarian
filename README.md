@@ -19,6 +19,10 @@ make dev
 
 `make setup` installs the hash-pinned Python 3.14.2 test environment, JavaScript
 dependencies, local Pyodide/NumPy assets and Chromium/Firefox test browsers.
+The native test oracle builds NumPy with GCC or Clang and disables floating-point
+contraction to match wasm arithmetic. Install a C/C++ toolchain first (Xcode
+Command Line Tools on macOS or `build-essential` on Ubuntu). Subsequent setup
+runs reuse the compatible build. The browser uses the unmodified Pyodide package.
 `make build` prepares runtime assets and creates `dist/`.
 `make models` rebuilds original GLBs with Blender 4.5 LTS; `make previews`
 renders their contact sheets. Set `BLENDER_BIN` if Blender is not on PATH or

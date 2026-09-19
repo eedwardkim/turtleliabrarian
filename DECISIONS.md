@@ -83,20 +83,22 @@ percent per unit when density is enabled. Trace bounding adds counts and
 
 Parent UI commit `d74fda7` is merged with ancestry preserved. It consumes multiple
 series, axes, limits, fit lines, split/overlaid charts and preview bounds. The
-Director accepts these version-1 events, but its name map does not distinguish
-binding `scope`, and its loop reducer still keys on legacy `loop_id`/line rather
-than `loopId`/`invocationId` and `count`. Recursive/local-scope visual playback
-needs parent work; this integration does not claim that UI behavior verified.
+Director accepts these version-1 events and distinguishes binding `scope` and
+loop `invocationId`. Removing a local alias preserves names still bound in another
+scope. Loop `count` remains authoritative after trace truncation; a new invocation
+starts its own five full trips before summarizing. Three replay regressions cover
+local shadows, recursive aliases and sequential loop invocations. Browser
+verification remains separate.
 3D chart staging and further style controls remain M3/M4.
 
-PR #1 merged while this work was underway. The parent will reconcile the default
-branch and create one follow-up PR for M2–M8. The integration branch remains
-independent and no PR is created or modified here.
+PR #1 merged while this work was underway. The integration was reconciled with
+the default branch in the single follow-up draft PR #3 for M2–M8.
 
-### Unresolved seeded NumPy compatibility
+### Native NumPy arithmetic matching
 
-The complete Pyodide suite found an upstream numerical difference that blocks
-E11. Direct `np.random.default_rng(86888).multinomial(2028, p)`, with
+The initial complete Pyodide suite found a numerical difference between
+the prebuilt native wheel and wasm. Direct
+`np.random.default_rng(86888).multinomial(2028, p)`, with
 `p = np.array([19, 9, 64, 9, 20, 1, 1, 51]) / 174`, produces:
 
 - CPython/macOS arm64: `[210, 111, 721, 111, 247, 12, 12, 604]`.
@@ -107,8 +109,8 @@ stream and the final generator state are identical. Sequential conditional
 `Generator.binomial` calls isolate the first difference to `n=875`,
 `p=float.fromhex('0x1.188c46231188cp-2')`. On both runtimes,
 `floor(p*n+p)` is 239 whereas `floor(math.fma(p,n,p))` is 240; the host draw
-is 247 and the wasm draw 246. This is consistent with fused versus unfused
-arithmetic in the builds; build flags have not been independently audited.
+is 247 and the wasm draw 246. Rebuilding native NumPy with floating-point
+contraction disabled produces the wasm counts exactly.
 
 [NumPy's compatibility policy](https://numpy.org/doc/stable/reference/random/compatibility.html)
 limits stream guarantees to the same build/environment/machine and explicitly
@@ -116,12 +118,19 @@ notes CPU floating-point differences. The integration preserves real NumPy and
 the standalone oracle semantics, so no seed-specific correction or statistical
 tolerance is substituted for exact sample equality. The existing 500-example
 property remains strict, with the discovered input added as an explicit example.
-The run-local stream is reproducible within each runtime, but universal
-cross-runtime random parity is **not complete**.
+`scripts/setup.mjs` now builds the hash-pinned NumPy source with Meson
+`-Dc_args=-ffp-contract=off` and `-Dcpp_args=-ffp-contract=off`. These configuration
+settings participate in uv's build cache selection. Setup inspects both compiler
+flags, replaces incompatible installed wheels, and reuses a compatible build.
+The first verified source build took 28 seconds on this macOS arm64 machine.
+The unmodified Pyodide package remains the production dependency.
 
-This needs a parent decision on numerically matched NumPy builds or an approved
-portable sampling contract before E11 can be accepted. `minimize` also remains
-limited to Powell/BFGS with tol, callback, maxiter/maxfev, xtol/ftol and gtol;
+After the build change, all 491 tests pass in both CPython and Pyodide, including
+the explicit seed regression and 500-example random properties. The separate
+76-scenario result/trace parity inventory also passes. This is evidence for
+the tested builds and APIs, not a guarantee across arbitrary NumPy builds.
+
+`minimize` remains limited to Powell/BFGS with tol, callback, maxiter/maxfev, xtol/ftol and gtol;
 other methods, bounds, constraints, jac and unsupported options explicitly raise
 `NotImplementedError`. These API exceptions and the E13 opaque-callback gap
 prevent an unconditional M2 acceptance claim.

@@ -19,7 +19,7 @@
 - Deterministic V00: title, intro, desk tutorials, typed Python and two complete queues; 97.3 seconds, 1920×1080, 30fps, 2.39 MB. See `DEVTOOLS.md` to reproduce.
 - Detailed acceptance record: `REVIEW.md`.
 
-## M2 — integrated; acceptance blocked, independent review pending
+## M2 — automated gates passed; independent and browser review pending
 - Integration branch: `devin/1789849312-m2-integration`, based on exact M1
   baseline `4430a32badcd36c0635efb00a8eb594c3cc9125f`.
 - Tables/charts, statistical helpers and instrumentation integrated in component
@@ -37,17 +37,19 @@
 
 ### Automated evidence
 
-`make verify` ran all gates. Its result is **FAIL**, with the exact seeded NumPy
-mismatch below and the retained release campaign gate at **12/77**. No assertion
-was weakened or skipped to obtain a green milestone.
+The initial integrated `make verify` failed one seeded NumPy cross-runtime
+comparison and the retained release campaign gate at **12/77**. Native NumPy is
+now compiled without floating-point contraction to match wasm arithmetic.
+`node scripts/setup.mjs --incremental && make verify-m2` passed all 14 automated
+gates on the consolidated release branch. No assertion was weakened or skipped.
 
 | Gate | Measured result |
 | --- | --- |
-| CPython engine/oracle suite | 491 passed; 97.28 s; 4 expected zero-size sampling warnings |
-| Same suite on Pyodide 314.0.7 | 490 passed, 1 failed; 170.49 s |
+| CPython engine/oracle suite | 491 passed; 114.4 s |
+| Same suite on Pyodide 314.0.7 | 491 passed; 195.85 s |
 | Complete-result parity inventory | 38 scenarios × instrumentation off/on = 76 passed, plus exact repeat traces |
 | Infinite-loop worker termination | Passed at the 8-second Node deadline |
-| TypeScript tests | 230 passed across 19 files |
+| TypeScript tests | 233 passed across 20 files |
 | Content validator tests | 8 passed |
 | Existing content | All 12 puzzles passed fixtures, naive-answer checks and 500 seeds |
 | Typecheck / ESLint / Ruff / Ruff format | Passed |
@@ -55,12 +57,12 @@ was weakened or skipped to obtain a green milestone.
 | Production build | Passed; Vite reported the bundle-size warning |
 | Release campaign | Failed: 12/77 puzzles, as required before M5 expansion |
 
-The Pyodide suite also reported an unraisable Hypothesis GC-callback timeout
-warning during the deliberate timeout regression; the regression itself passed.
-After adding the discovered seed as an explicit Hypothesis example, the focused
-property passed on CPython (1.37 s) and reproduced the exact Pyodide failure
-(0.42 s). The numerical assertion and 500-example setting are unchanged.
-No browser-driven M2 test or independent review was performed here.
+Both runtimes reported an unraisable Hypothesis GC-callback timeout warning
+during deliberate timeout regressions; those regressions passed. CPython also
+emitted expected zero-size sampling warnings. The discovered seed remains an
+explicit Hypothesis example and now passes in both runtimes. The numerical
+assertion and 500-example setting are unchanged. Independent review is underway;
+browser-driven M2 verification is still pending.
 
 ### 200k-row Pyodide benchmark
 
@@ -71,10 +73,10 @@ samples are strictly below 1 s**. Full samples are emitted by
 
 | Operation | Instrumentation off | Instrumentation on |
 | --- | ---: | ---: |
-| where | 0.000709 / 0.003430 | 0.001520 / 0.001597 |
-| sort | 0.075377 / 0.081614 | 0.075849 / 0.078725 |
-| group | 0.012624 / 0.014365 | 0.021538 / 0.025340 |
-| unique-key join | 0.057027 / 0.065775 | 0.056548 / 0.058510 |
+| where | 0.000866 / 0.004127 | 0.001571 / 0.002403 |
+| sort | 0.087833 / 0.094330 | 0.088145 / 0.089462 |
+| group | 0.017515 / 0.021332 | 0.027096 / 0.038422 |
+| unique-key join | 0.065665 / 0.077313 | 0.066742 / 0.069402 |
 
 The same parity, full Pyodide suite and strict performance checks are wired into
 `make verify-m1`, `make verify-m2` and release `make verify`. The exact 77-puzzle
@@ -82,23 +84,16 @@ release gate remains in place.
 
 ### Unmet requirements and parent handoff
 
-- **E11:** NumPy's seeded multinomial differs across the pinned host/wasm builds.
-  Seed 86888, count 2028, weights `[19,9,64,9,20,1,1,51]` produce host counts
-  `[210,111,721,111,247,12,12,604]` versus wasm counts
-  `[210,111,721,111,246,12,12,605]`. Direct NumPy reproduces the mismatch with
-  identical probability bits and PCG64 state. The strict test remains failing
-  and the discovered input is retained explicitly. Details are in `DECISIONS.md`.
 - **E13:** native NumPy callbacks invoked wholly inside opaque extension
   consumers outside recognized map/filter/sorted boundaries remain unobserved
   and can bypass API locks. `allowedApi` is not a security boundary.
 - **E09 compatibility:** minimize supports Powell/BFGS and documented controls;
   other methods and options, including bounds/constraints/jac, remain unsupported.
-- Director playback still needs scoped binding and loop invocation/count
-  consumption. Multiple-series chart UI is merged; 3D staging and further
-  style controls remain M3/M4.
-- PR #1 was merged during M2. The parent owns default-branch reconciliation on
-  its release branch and will create one follow-up PR for M2–M8. No PR was created
-  or modified from this integration branch.
+- Director scoped binding and loop invocation/count consumption pass targeted
+  replay regressions. Multiple-series chart UI is merged; browser review,
+  3D staging and further style controls remain.
+- PR #1 was merged during M2. All remaining work is consolidated in draft PR #3:
+  https://github.com/eedwardkim/turtleliabrarian/pull/3
 
 ## Release status
 Not ready. M2–M8 remain outstanding, including 65 more puzzles, full world assets,
