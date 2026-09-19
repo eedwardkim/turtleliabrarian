@@ -4,7 +4,8 @@ import World from './scene/World';
 import { useGame } from './game/store';
 import { getTutorial } from '../content/tutorials';
 import { almanac as almanacCatalog, visibleAlmanac } from '../content/almanac';
-import { shop as shopCatalog } from './game/economy';
+import { atlasWings, shop as shopCatalog } from './game/economy';
+import { useAudio } from './audio/useAudio';
 import { eventDuration } from './game/replay';
 import type { WindowLayout, WorldProps } from './contracts';
 import { CodeEditor } from './ui/CodeEditor';
@@ -13,23 +14,23 @@ import { QueuePanel, ReplayPanel, RequestPanel, ScratchPanel } from './ui/GamePa
 import { Icon, IconButton } from './ui/Icon';
 import { OutputPanel } from './ui/Output';
 import { CreditsScreen, DesktopGate, IntroScreen, TitleScreen } from './ui/Screens';
-import { AlmanacDialog, NewScriptDialog, OrdersDialog, SavesDialog, SettingsDialog, ShopDialog } from './ui/UtilityDialogs';
+import { AlmanacDialog, AtlasDialog, NewScriptDialog, OrdersDialog, SavesDialog, SettingsDialog, ShopDialog } from './ui/UtilityDialogs';
 import { FloatingWindow } from './ui/Window';
 import { DevPanel } from './ui/DevPanel';
 import { devEnabled } from './game/devtools';
 import { canReveal, clampLayout, compactNumber, defaultLayout, isTextInput } from './ui/helpers';
 import { format, text } from './ui/text';
-import type { AlmanacEntry, DialogName, ShopItem, UIIntegrations } from './ui/types';
+import type { AlmanacEntry, AtlasWing, DialogName, ShopItem, UIIntegrations } from './ui/types';
 
 const EMPTY_ALMANAC: AlmanacEntry[] = [];
 const EMPTY_SHOP: ShopItem[] = [];
+const EMPTY_ATLAS: AtlasWing[] = [];
 
-export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtools, onIntroBeat }: UIIntegrations) {
+export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas = EMPTY_ATLAS, devtools, onIntroBeat }: UIIntegrations) {
   const state = useGame();
   const game = {
     ...state,
     runScratch: state.scratch,
-    equipHat: state.purchase,
     toggleStandingOrder: (id: string) => state.setOrderPaused(id, !state.save.standingOrders.find(order => order.puzzleId === id)?.paused),
   };
   const authoredAlmanac: AlmanacEntry[] = visibleAlmanac(state.save.settings.openStacks
@@ -38,9 +39,11 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
       { id: entry.id, title: entry.id, description: entry.explanation, signature: entry.signature, example: entry.example, output: entry.output, category: 'tools' as const },
       ...entry.pitfalls.map((description, index) => ({ id: `${entry.id}-${index}`, title: entry.id, description, category: 'pitfalls' as const })),
     ]);
-  const availableShop: ShopItem[] = shopCatalog.filter(item => !item.id.startsWith('hat-')).map(item => ({
-    id: item.id, title: item.title, description: item.title, ink: item.cost, currency: item.currency, chapter: 1,
+  const availableShop: ShopItem[] = shopCatalog.map(item => ({
+    id: item.id, title: item.title, description: item.description, ink: item.cost, repeatable: item.repeatable,
+    currency: item.currency, chapter: item.chapter, hat: item.id.startsWith('hat-'),
   }));
+  const authoredAtlas: AtlasWing[] = atlasWings(state.save);
   const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [dialog, setDialog] = useState<DialogName | null>(null);
   const [initError, setInitError] = useState('');
@@ -56,6 +59,16 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
   const [queuePaused, setQueuePaused] = useState(false);
   const [systemReducedMotion, setSystemReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const initialized = useRef(false);
+  useAudio({
+    settings: state.save.settings,
+    busy: state.busy,
+    diff: state.diff,
+    served: state.save.resources.served,
+    ownedItems: state.save.ownedItems,
+    hatchlings: state.save.hatchlings,
+    completed: state.save.completed.length,
+    activeTutorial: state.activeTutorial ?? null,
+  });
   const { initialize, setActivityPaused, setReplayPaused } = state;
   const settings = game.save.settings;
   const reducedMotion = settings.reducedMotion || systemReducedMotion;
@@ -204,7 +217,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
   return <>
     <DesktopGate />
     <div className={`app ${reducedMotion ? 'reduced-motion' : ''} ${settings.colorblind ? 'colorblind' : ''}`}>
-      {viewport.width >= 1024 && <div className="world-backdrop">
+      {viewport.width >= 1024 && <div className="world-backdrop" aria-hidden="true">
         <World inputs={visibleInputs} result={result} event={event} progress={queueEntry ? 1 : event ? game.replayElapsed / eventDuration(event) : 0} feedback={feedback} diff={diff}
           chapter={game.puzzle.chapter} reducedMotion={reducedMotion} colorblind={settings.colorblind} hat={game.save.hat} hatchlings={game.save.hatchlings}
           cameraPreset={game.screen === 'title' ? 'overview' : game.screen === 'intro' ? ['overview', 'returns', 'stacks'][introBeat] : cameraPreset}
@@ -214,7 +227,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
       {game.screen === 'title' && <TitleScreen game={game} openDialog={setDialog} onNew={() => game.setScreen('intro')} error={initError} retry={retry} />}
       {game.screen === 'intro' && <IntroScreen onFinish={name => { game.newGame(name); game.setScreen('game'); setQueueIndex(null); }} onBeat={handleIntroBeat} reducedMotion={reducedMotion} />}
       {game.screen === 'credits' && <CreditsScreen onBack={() => game.setScreen('title')} />}
-      {game.screen === 'game' && <div className="ui-stage" style={stageStyle}>
+      {game.screen === 'game' && <main className="ui-stage" style={stageStyle} aria-label={text.brand.title}>
         <header className="game-hud">
           <div className="resource-bar" aria-label={text.brand.footer}>
             {(['ink', 'stars', 'oil', 'eggs', 'served'] as const).filter(resource => resource === 'ink' || resource === 'served' || game.puzzle.chapter > 0 || game.save.resources[resource] > 0).map(resource => <div className="resource-counter" key={resource} title={`${text.resources[resource]}: ${game.save.resources[resource]}`} aria-label={`${text.resources[resource]}: ${game.save.resources[resource]}`}><Icon name={resource} /><span>{compactNumber(game.save.resources[resource])}</span></div>)}
@@ -226,6 +239,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
             {revealed('scratch') && <IconButton icon="terminal" label={text.tools.scratch} onClick={() => openWindow('scratch')} />}
             {(shop.length ? shop : availableShop).some(item => (item.chapter ?? 0) <= game.puzzle.chapter) && <IconButton icon="shop" label={text.tools.shop} onClick={() => setDialog('shop')} />}
             {!!game.save.standingOrders.length && <IconButton icon="order" label={text.tools.orders} onClick={() => setDialog('orders')} />}
+            <IconButton icon="book" label={text.tools.atlas} onClick={() => setDialog('atlas')} />
             <span className="tool-divider" /><IconButton icon="windows" label={text.tools.windows} onClick={() => setDialog('windows')} />
             <IconButton icon="hint" label={text.tools.help} onClick={startTour} /><IconButton icon="settings" label={text.tools.settings} onClick={() => setDialog('settings')} />
             <IconButton icon="pause" label={text.tools.menu} onClick={() => setDialog('pause')} />
@@ -242,7 +256,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
         {revealed('replay') && floating('replay', <ReplayPanel result={result} index={replayIndex} paused={paused} speed={settings.replaySpeed} onIndex={setIndex} onPaused={setPaused} onSpeed={game.setSpeed} />)}
         {revealed('scratch') && floating('scratch', <ScratchPanel game={game} runScratch={game.runScratch} />)}
         <div className="window-dock">{windowIds.filter(id => layoutFor(id).minimized && !layoutFor(id).closed).map(id => <button className="dock-button" key={id} onClick={() => openWindow(id)}>{titleFor(id)}<Icon name="restore" /></button>)}</div>
-      </div>}
+      </main>}
       <footer className="screen-footer"><span className="footer-brand"><Icon name="book" />{text.brand.footer}</span><span className="corner-hints">{game.screen === 'game' ? <><span>{text.menu.runShortcut}</span><span>{text.menu.escape}</span></> : text.brand.edition}</span></footer>
       <div className="sr-only" role="status" aria-live="polite">{game.status}</div>
       {dialog === 'pause' && <Dialog title={text.menu.pause} onClose={() => setDialog(null)} className="pause-dialog">
@@ -258,6 +272,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
       {dialog === 'almanac' && <AlmanacDialog game={game} entries={almanac.length ? almanac : authoredAlmanac} onClose={() => setDialog(null)} onTour={startTour} />}
       {dialog === 'orders' && <OrdersDialog game={game} onClose={() => setDialog(null)} />}
       {dialog === 'shop' && <ShopDialog game={game} items={shop.length ? shop : availableShop} onClose={() => setDialog(null)} />}
+      {dialog === 'atlas' && <AtlasDialog game={game} wings={atlas.length ? atlas : authoredAtlas} onClose={() => setDialog(null)} />}
       {dialog === 'alerts' && <Dialog title={text.alerts.title} onClose={() => setDialog(null)}>
         {actionError ? <p className="error-text" role="alert">{actionError}</p> : game.status ? <p className="notice">{game.status}</p> : <><h3>{text.alerts.quiet}</h3><p>{text.alerts.quietBody}</p></>}
       </Dialog>}

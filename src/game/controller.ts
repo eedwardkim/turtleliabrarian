@@ -5,7 +5,10 @@ import type {
 import { getTutorial, tutorialsFor } from '../../content/tutorials';
 import { puzzles, getPuzzle } from './catalog';
 import { check } from './checker';
-import { canEnterPuzzle, completePuzzle, enterWing, offlineSeconds, orderTrips, ORDER_SECONDS, purchaseItem } from './economy';
+import {
+  ARCHIVE_CHAPTER, canEnterPuzzle, completePuzzle, enterWing, equipHat, firstTryBonus, inkFor, maxReplaySpeed, offlineSeconds,
+  OFFLINE_CAP_SECONDS, orderCapacity, orderTrips, purchaseItem, scriptCapacity, shareTrips, spendOil, tripSeconds, wingUnlocked,
+} from './economy';
 import { buildQueue, requestFor } from './queue';
 import { advanceReplay, currentLine, eventDuration, replayProgress } from './replay';
 import {
@@ -79,6 +82,7 @@ export interface GameState {
   stepClock(seconds: number): void;
   markTutorial(id: string): void;
   purchase(id: string): void;
+  equipHat(id: string): void;
   autoSolve(): Promise<void>;
   playNaive(): Promise<void>;
   refreshExpected(): Promise<void>;
@@ -96,6 +100,8 @@ export interface GameState {
   waitForIdle(): Promise<void>;
   disposeGame(): void;
 }
+
+const CHART_API = new Set(['hist', 'barh', 'scatter', 'plot']);
 
 function progressFor(save: GameSave, puzzle: Puzzle): PuzzleProgress {
   return save.progress[puzzle.id] ?? { code: puzzle.starter, attempts: 0, hints: 0 };
@@ -178,22 +184,25 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
     const rewardPatrons = (puzzle: Puzzle, count: number): void => {
       const save = get().save;
       persist({ ...save, resources: {
-        ...save.resources, ink: save.resources.ink + count * puzzle.standingOrder.ink,
+        ...save.resources, ink: save.resources.ink + inkFor(save, puzzle.standingOrder.ink, count),
         oil: save.resources.oil + count * puzzle.standingOrder.oil, served: save.resources.served + count,
       } });
     };
     const runOrders = async (): Promise<void> => {
       if (!get().ready || get().busy || get().backgroundBusy || !get().save.standingOrders.some((order) => !order.paused)) return;
-      const trips = orderTrips(backgroundSeconds, get().save.hatchlings);
+      const trips = orderTrips(backgroundSeconds, get().save.hatchlings, get().save.hat);
       if (!trips) return;
-      backgroundSeconds -= trips * ORDER_SECONDS / (1 + get().save.hatchlings);
+      backgroundSeconds -= tripSeconds(trips, get().save.hatchlings, get().save.hat);
       const ticket = ++epoch;
       set({ backgroundBusy: true });
       try {
-        for (const order of [...get().save.standingOrders]) {
-          if (order.paused) continue;
+        const active = get().save.standingOrders.filter((order) => !order.paused);
+        const shares = shareTrips(trips, active.length);
+        for (const [index, order] of active.entries()) {
+          const earnedTrips = shares[index];
+          if (!earnedTrips) continue;
           const puzzle = getPuzzle(order.puzzleId);
-          const count = Math.min(5, trips);
+          const count = Math.min(5, earnedTrips);
           let failed = false;
           for (let sample = 0; sample < count; sample++) {
             if (ticket !== epoch) return;
@@ -217,10 +226,10 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
             const save = get().save;
             persist({ ...save,
               resources: { ...save.resources,
-                ink: save.resources.ink + trips * puzzle.standingOrder.ink,
-                oil: save.resources.oil + trips * puzzle.standingOrder.oil, served: save.resources.served + trips },
+                ink: save.resources.ink + inkFor(save, puzzle.standingOrder.ink, earnedTrips),
+                oil: save.resources.oil + earnedTrips * puzzle.standingOrder.oil, served: save.resources.served + earnedTrips },
               standingOrders: save.standingOrders.map((entry) => entry.puzzleId === order.puzzleId ?
-                { ...entry, earned: entry.earned + trips * puzzle.standingOrder.ink } : entry),
+                { ...entry, earned: entry.earned + earnedTrips * puzzle.standingOrder.ink } : entry),
             });
           }
         }
@@ -309,7 +318,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       },
       addFile(name) {
         const save = get().save;
-        const capacity = save.ownedItems.includes('script-slot') ? 8 : 2;
+        const capacity = scriptCapacity(save);
         if (!validFilename(name)) { set({ status: 'Use a Python module name such as helper.py, without a folder or library name.' }); return; }
         if (Object.hasOwn(save.files, name)) { get().setActiveFile(name); return; }
         if (Object.keys(save.files).length >= capacity) { set({ status: 'The writing desks are full. Another desk in the shop adds six script slots.' }); return; }
@@ -347,7 +356,9 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         const ticket = begin('The queue is taking its places…');
         const { puzzle, code, save } = get();
         const progress = progressFor(save, puzzle);
-        persist({ ...save, progress: { ...save.progress, [puzzle.id]: { ...progress, attempts: progress.attempts + 1 } } });
+        const { save: charged, lent } = spendOil(save, puzzle);
+        persist({ ...charged, progress: { ...charged.progress, [puzzle.id]: { ...progress, attempts: progress.attempts + 1 } } });
+        if (lent) set({ status: 'The archive lends you lamp oil for this sampling trip.' });
         const queue = buildQueue(puzzle, puzzle.visibleSeed + progress.attempts);
         set({ queue });
         tutorial('run-pass');
@@ -368,7 +379,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           }
           if (get().queue.every((entry) => entry.status === 'passed')) {
             const current = get().save;
-            const completed = completePuzzle(current, puzzle, progress.attempts === 0 && get().hintLevel === 0);
+            const completed = completePuzzle(current, puzzle, firstTryBonus(current, progress.attempts, get().hintLevel));
             persist({ ...current, ...completed, progress: {
               ...current.progress, [puzzle.id]: { ...progressFor(current, puzzle), solvedCode: code, solvedFiles: { ...save.files } },
             } });
@@ -391,8 +402,12 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           set({ status: 'Complete the previous request to open this one.' }); return;
         }
         let save: GameSave;
-        try { save = { ...get().save, ...enterWing(get().save, puzzle.chapter) }; }
-        catch (error) { set({ status: errorMessage(error) }); return; }
+        const current = get().save;
+        try {
+          save = current.settings.openStacks && !wingUnlocked(current, puzzle.chapter)
+            ? { ...current, ownedItems: puzzle.chapter > 0 ? [...current.ownedItems, `wing-${puzzle.chapter}`] : current.ownedItems }
+            : { ...current, ...enterWing(current, puzzle.chapter) };
+        } catch (error) { set({ status: errorMessage(error) }); return; }
         const chapterChanged = puzzle.chapter !== get().puzzle.chapter;
         stop();
         const code = progressFor(save, puzzle).code;
@@ -400,13 +415,17 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         persist(get().save);
         set({ screen: 'game' });
         if (chapterChanged) tutorial('chapter');
+        if (puzzle.chapter >= ARCHIVE_CHAPTER) tutorial('archive');
+        if (puzzle.kind === 'capstone') tutorial('capstone');
+        if (puzzle.requiredApi.some((api) => CHART_API.has(api))) tutorial('chart');
         for (const hazard of puzzle.hazards) tutorial(hazard);
         if (get().ready) void get().refreshExpected();
       },
       nextPuzzle() {
         const next = puzzles[puzzles.findIndex((entry) => entry.id === get().puzzle.id) + 1];
-        if (next) get().gotoPuzzle(next.id);
-        else set({ status: 'The Returns Desk and first Stacks lessons are complete.' });
+        if (next) { get().gotoPuzzle(next.id); return; }
+        set({ status: 'Every request in the library is answered. The Grand Reopening is yours to enjoy.' });
+        if (puzzles.every((entry) => get().save.completed.includes(entry.id))) set({ screen: 'credits' });
       },
       hint() {
         const { puzzle, save } = get();
@@ -432,7 +451,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       setReplayPaused(replayPaused) { set({ replayPaused }); },
       setSpeed(speed) {
         if (!Number.isFinite(speed)) return;
-        const maximum = get().save.ownedItems.includes('replay-speed') ? 8 : 2;
+        const maximum = maxReplaySpeed(get().save);
         get().setSettings({ replaySpeed: Math.min(maximum, Math.max(0.25, speed)) });
       },
       async loadSlot(slot) {
@@ -449,6 +468,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           set({ activeSlot: slot, screen: 'game' });
           await get().refreshExpected();
           get().stepClock(elapsed);
+          if (elapsed > 60) tutorial('offline');
           set({ status: loaded.recovered ? 'Recovered the last good snapshot from this slot.' : 'Save loaded.' });
           tutorial('save');
         } catch (error) { set({ status: errorMessage(error) }); throw error; }
@@ -489,8 +509,8 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           set({ status: 'Pass this request’s full queue before filing an order.' }); return;
         }
         const existing = save.standingOrders.find((order) => order.puzzleId === puzzle.id);
-        const capacity = save.ownedItems.includes('standing-slot') ? 2 : 1;
-        if (!existing && save.standingOrders.length >= capacity) { set({ status: 'The order pegs are full. A second peg is available in the shop.' }); return; }
+        const capacity = orderCapacity(save);
+        if (!existing && save.standingOrders.length >= capacity) { set({ status: 'The order pegs are full. Another peg is available in the shop.' }); return; }
         const order = { puzzleId: puzzle.id, code: solvedCode, earned: existing?.earned ?? 0, paused: false };
         persist({ ...save, orderFiles: { ...save.orderFiles, [puzzle.id]: solvedFiles ?? save.orderFiles[puzzle.id] ?? { 'main.py': solvedCode } }, standingOrders: existing ?
           save.standingOrders.map((entry) => entry.puzzleId === puzzle.id ? order : entry) : [...save.standingOrders, order] });
@@ -499,7 +519,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       },
       stepClock(seconds) {
         if (!Number.isFinite(seconds) || seconds <= 0 || !get().save.standingOrders.some((order) => !order.paused)) return;
-        backgroundSeconds = Math.min(28800, backgroundSeconds + seconds);
+        backgroundSeconds = Math.min(OFFLINE_CAP_SECONDS, backgroundSeconds + seconds);
         void runOrders();
       },
       markTutorial(id) {
@@ -513,7 +533,14 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         try {
           persist({ ...get().save, ...purchaseItem(get().save, id) });
           set({ status: 'The ledger is updated.' });
-          tutorial(id === 'hatchling' ? 'hatch' : 'complete');
+          tutorial(id === 'hatchling' ? 'hatch' : 'shop');
+        } catch (error) { set({ status: errorMessage(error) }); }
+      },
+      equipHat(id) {
+        try {
+          const next = equipHat(get().save, id);
+          persist({ ...get().save, ...next });
+          set({ status: next.hat ? 'Shelby tries on the new hat.' : 'Shelby hangs the hat back on its peg.' });
         } catch (error) { set({ status: errorMessage(error) }); }
       },
       async autoSolve() { get().setCode(get().puzzle.reference); await get().run(); },

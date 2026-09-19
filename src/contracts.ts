@@ -102,6 +102,8 @@ export interface QueueEntry {
   diff?: CheckDiff;
 }
 export interface Settings {
+  muted: boolean;
+  ambience: boolean;
   masterVolume: number;
   musicVolume: number;
   sfxVolume: number;
