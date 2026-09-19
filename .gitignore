@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.hypothesis/
+.ruff_cache/
+test-results/
+playwright-report/
+.DS_Store
+.env*
+public/pyodide/
+artifacts/
+.vercel/
