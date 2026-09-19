@@ -175,7 +175,11 @@ class Trace:
         if isinstance(output, np.ndarray):
             payload["totalValues"] = int(output.size)
             payload["shape"] = list(output.shape)
-            payload["dtype"] = str(output.dtype)
+            payload["dtype"] = (
+                "integer"
+                if np.issubdtype(output.dtype, np.signedinteger)
+                else str(output.dtype)
+            )
         self.events.append(
             {
                 "version": 1,

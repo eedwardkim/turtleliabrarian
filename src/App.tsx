@@ -1,7 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import World from './scene/World';
 import { useGame } from './game/store';
+import { getTutorial } from '../content/tutorials';
+import { almanac as almanacCatalog, visibleAlmanac } from '../content/almanac';
+import { shop as shopCatalog } from './game/economy';
+import { eventDuration } from './game/replay';
 import type { WindowLayout, WorldProps } from './contracts';
 import { CodeEditor } from './ui/CodeEditor';
 import { Dialog } from './ui/Dialog';
@@ -11,33 +15,52 @@ import { OutputPanel } from './ui/Output';
 import { CreditsScreen, DesktopGate, IntroScreen, TitleScreen } from './ui/Screens';
 import { AlmanacDialog, NewScriptDialog, OrdersDialog, SavesDialog, SettingsDialog, ShopDialog } from './ui/UtilityDialogs';
 import { FloatingWindow } from './ui/Window';
+import { DevPanel } from './ui/DevPanel';
+import { devEnabled } from './game/devtools';
 import { canReveal, clampLayout, compactNumber, defaultLayout, isTextInput } from './ui/helpers';
 import { format, text } from './ui/text';
-import type { AlmanacEntry, DialogName, GameStateForUI, ShopItem, UIIntegrations } from './ui/types';
+import type { AlmanacEntry, DialogName, ShopItem, UIIntegrations } from './ui/types';
 
 const EMPTY_ALMANAC: AlmanacEntry[] = [];
 const EMPTY_SHOP: ShopItem[] = [];
 
 export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtools, onIntroBeat }: UIIntegrations) {
-  const game: GameStateForUI = useGame();
+  const state = useGame();
+  const game = {
+    ...state,
+    runScratch: state.scratch,
+    equipHat: state.purchase,
+    toggleStandingOrder: (id: string) => state.setOrderPaused(id, !state.save.standingOrders.find(order => order.puzzleId === id)?.paused),
+  };
+  const authoredAlmanac: AlmanacEntry[] = visibleAlmanac(state.save.settings.openStacks
+    ? almanacCatalog.map(entry => entry.id)
+    : [...new Set([...state.puzzle.learnedApi, ...state.puzzle.unlocks])], state.save.completed).flatMap(entry => [
+      { id: entry.id, title: entry.id, description: entry.explanation, signature: entry.signature, example: entry.example, output: entry.output, category: 'tools' as const },
+      ...entry.pitfalls.map((description, index) => ({ id: `${entry.id}-${index}`, title: entry.id, description, category: 'pitfalls' as const })),
+    ]);
+  const availableShop: ShopItem[] = shopCatalog.filter(item => !item.id.startsWith('hat-')).map(item => ({
+    id: item.id, title: item.title, description: item.title, ink: item.cost, currency: item.currency, chapter: 1,
+  }));
   const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [dialog, setDialog] = useState<DialogName | null>(null);
   const [initError, setInitError] = useState('');
   const [actionError, setActionError] = useState('');
   const [introBeat, setIntroBeat] = useState(0);
-  const [tourIndex, setTourIndex] = useState<number | null>(null);
+  const [tutorialPosition, setTutorialPosition] = useState({ id: '', step: 0 });
   const [showDevtools, setShowDevtools] = useState(false);
+  const [cameraPreset, setCameraPreset] = useState('default');
+  const [wireframe, setWireframe] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
   const [queueIndex, setQueueIndex] = useState<number | null>(null);
   const [queueTraceIndex, setQueueTraceIndex] = useState(0);
   const [queuePaused, setQueuePaused] = useState(false);
   const [systemReducedMotion, setSystemReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const initialized = useRef(false);
-  const { initialize, stepClock, setReplay, setReplayPaused } = game;
+  const { initialize, setActivityPaused, setReplayPaused } = state;
   const settings = game.save.settings;
   const reducedMotion = settings.reducedMotion || systemReducedMotion;
   const scale = Math.max(0.8, Math.min(1.25, settings.uiScale));
   const deskViewport = { width: viewport.width / scale, height: viewport.height / scale };
-  const devEnabled = new URLSearchParams(window.location.search).get('dev') === '1' && !!devtools;
   const queueEntry = queueIndex === null ? undefined : game.queue[queueIndex];
   const result = queueEntry?.result ?? game.result;
   const diff = queueEntry?.diff ?? game.diff;
@@ -45,15 +68,16 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
   const paused = queueEntry ? queuePaused : game.replayPaused;
   const totalEvents = result?.trace.length ?? 0;
   const event = result?.trace[Math.max(0, Math.min(replayIndex, totalEvents - 1))] ?? null;
-  const visibleInputs = queueEntry?.inputs ?? result?.inputs ?? game.puzzle.visibleInputs ?? {};
-  const currentTour = tourIndex === null ? null : text.tutorial.steps[tourIndex];
+  const visibleInputs = queueEntry?.inputs ?? result?.inputs ?? game.inputs;
+  const currentTour = game.activeTutorial ? getTutorial(game.activeTutorial) : undefined;
+  const tutorialStep = tutorialPosition.id === currentTour?.id ? tutorialPosition.step : 0;
   const revealed = (feature: Parameters<typeof canReveal>[2]) => canReveal(game.puzzle, game.save.completed, feature) || (feature === 'queue' && !!game.diff?.pass);
   const optionalWindows = [
     ...(revealed('queue') ? ['queue'] : []),
     ...(revealed('replay') ? ['replay'] : []),
-    ...(revealed('scratch') && game.runScratch ? ['scratch'] : []),
+    ...(revealed('scratch') ? ['scratch'] : []),
   ];
-  const files = useMemo(() => Object.keys(game.save.files), [game.save.files]);
+  const files = Object.keys(game.save.files);
   const primaryFile = files.includes('main.py') ? 'main.py' : files[0] ?? game.activeFile;
   const windowIds = ['editor', ...files.filter(file => file !== primaryFile).map(file => `script:${file}`), 'output', 'request', ...optionalWindows];
 
@@ -78,38 +102,30 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
     return () => media.removeEventListener('change', changed);
   }, []);
   useEffect(() => {
-    if (game.screen !== 'game' || dialog || tourIndex !== null || viewport.width < 1024) return;
-    let previous = performance.now();
-    const timer = window.setInterval(() => {
-      const now = performance.now();
-      if (!document.hidden) stepClock(Math.min(2, (now - previous) / 1000));
-      previous = now;
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [game.screen, dialog, tourIndex, viewport.width, stepClock]);
+    setActivityPaused(!!dialog || !!currentTour || viewport.width < 1024);
+  }, [dialog, currentTour, viewport.width, setActivityPaused]);
   useEffect(() => {
-    if (game.screen !== 'game' || paused || dialog || tourIndex !== null || !totalEvents || game.busy) return;
+    if (!queueEntry || game.screen !== 'game' || paused || dialog || currentTour || !totalEvents || game.busy) return;
     const timer = window.setTimeout(() => {
       if (replayIndex >= totalEvents - 1) {
         if (queueEntry) setQueuePaused(true);
         else setReplayPaused(true);
-      } else if (queueEntry) setQueueTraceIndex(replayIndex + 1);
-      else setReplay(replayIndex + 1);
+      } else setQueueTraceIndex(replayIndex + 1);
     }, 650 / Math.max(0.5, settings.replaySpeed));
     return () => window.clearTimeout(timer);
-  }, [game.screen, game.busy, paused, dialog, tourIndex, totalEvents, replayIndex, queueEntry, settings.replaySpeed, setReplay, setReplayPaused]);
+  }, [game.screen, game.busy, paused, dialog, currentTour, totalEvents, replayIndex, queueEntry, settings.replaySpeed, setReplayPaused]);
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if (isTextInput(event.target)) return;
       if (event.key === '`' && devEnabled && !dialog) {
         event.preventDefault(); setShowDevtools(value => !value);
-      } else if (event.key === 'Escape' && !dialog && tourIndex === null && game.screen === 'game') {
+      } else if (event.key === 'Escape' && !dialog && !currentTour && game.screen === 'game') {
         event.preventDefault(); setDialog('pause');
       }
     };
     window.addEventListener('keydown', keydown);
     return () => window.removeEventListener('keydown', keydown);
-  }, [dialog, devEnabled, game.screen, tourIndex]);
+  }, [dialog, game.screen, currentTour]);
 
   const handleIntroBeat = useCallback((beat: number) => {
     setIntroBeat(beat); onIntroBeat?.(beat);
@@ -133,11 +149,11 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
   function startTour() {
     setDialog(null);
     ['request', 'editor', 'output'].forEach(openWindow);
-    setTourIndex(0);
+    game.replayTutorial('request');
   }
   function finishTour() {
-    text.tutorial.steps.forEach(step => game.markTutorial(step.id));
-    setTourIndex(null);
+    game.dismissTutorial();
+    setTutorialPosition({ id: '', step: 0 });
   }
   async function run(file: string, queue = false) {
     if (game.busy) return;
@@ -189,13 +205,14 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
     <DesktopGate />
     <div className={`app ${reducedMotion ? 'reduced-motion' : ''} ${settings.colorblind ? 'colorblind' : ''}`}>
       {viewport.width >= 1024 && <div className="world-backdrop">
-        <World inputs={visibleInputs} result={result} event={event} progress={totalEvents ? (replayIndex + 1) / totalEvents : 0} feedback={feedback} diff={diff}
+        <World inputs={visibleInputs} result={result} event={event} progress={queueEntry ? 1 : event ? game.replayElapsed / eventDuration(event) : 0} feedback={feedback} diff={diff}
           chapter={game.puzzle.chapter} reducedMotion={reducedMotion} colorblind={settings.colorblind} hat={game.save.hat} hatchlings={game.save.hatchlings}
-          cameraPreset={game.screen === 'title' ? 'orbit' : game.screen === 'intro' ? text.intro.beats[introBeat].camera : 'default'} />
+          cameraPreset={game.screen === 'title' ? 'overview' : game.screen === 'intro' ? ['overview', 'returns', 'stacks'][introBeat] : cameraPreset}
+          wireframe={wireframe} showGrid={showGrid} />
         <div className="world-vignette" />
       </div>}
       {game.screen === 'title' && <TitleScreen game={game} openDialog={setDialog} onNew={() => game.setScreen('intro')} error={initError} retry={retry} />}
-      {game.screen === 'intro' && <IntroScreen onFinish={name => { game.newGame(name); setQueueIndex(null); setTourIndex(0); }} onBeat={handleIntroBeat} reducedMotion={reducedMotion} />}
+      {game.screen === 'intro' && <IntroScreen onFinish={name => { game.newGame(name); game.setScreen('game'); setQueueIndex(null); }} onBeat={handleIntroBeat} reducedMotion={reducedMotion} />}
       {game.screen === 'credits' && <CreditsScreen onBack={() => game.setScreen('title')} />}
       {game.screen === 'game' && <div className="ui-stage" style={stageStyle}>
         <header className="game-hud">
@@ -206,8 +223,8 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
             <IconButton icon="bell" label={text.tools.alerts} onClick={() => setDialog('alerts')} />
             {revealed('scripts') && <IconButton icon="plus" label={text.tools.newScript} onClick={() => setDialog('newScript')} />}
             {revealed('almanac') && <IconButton icon="book" label={text.tools.almanac} onClick={() => setDialog('almanac')} />}
-            {revealed('scratch') && game.runScratch && <IconButton icon="terminal" label={text.tools.scratch} onClick={() => openWindow('scratch')} />}
-            {shop.some(item => (item.chapter ?? 0) <= game.puzzle.chapter) && <IconButton icon="shop" label={text.tools.shop} onClick={() => setDialog('shop')} />}
+            {revealed('scratch') && <IconButton icon="terminal" label={text.tools.scratch} onClick={() => openWindow('scratch')} />}
+            {(shop.length ? shop : availableShop).some(item => (item.chapter ?? 0) <= game.puzzle.chapter) && <IconButton icon="shop" label={text.tools.shop} onClick={() => setDialog('shop')} />}
             {!!game.save.standingOrders.length && <IconButton icon="order" label={text.tools.orders} onClick={() => setDialog('orders')} />}
             <span className="tool-divider" /><IconButton icon="windows" label={text.tools.windows} onClick={() => setDialog('windows')} />
             <IconButton icon="hint" label={text.tools.help} onClick={startTour} /><IconButton icon="settings" label={text.tools.settings} onClick={() => setDialog('settings')} />
@@ -223,7 +240,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
         {floating('request', <RequestPanel key={game.puzzle.id} game={game} />)}
         {revealed('queue') && floating('queue', <QueuePanel game={game} onReplay={index => { setQueueIndex(index); setQueueTraceIndex(0); setQueuePaused(false); openWindow('replay'); openWindow('output'); }} />)}
         {revealed('replay') && floating('replay', <ReplayPanel result={result} index={replayIndex} paused={paused} speed={settings.replaySpeed} onIndex={setIndex} onPaused={setPaused} onSpeed={game.setSpeed} />)}
-        {revealed('scratch') && game.runScratch && floating('scratch', <ScratchPanel game={game} runScratch={game.runScratch} />)}
+        {revealed('scratch') && floating('scratch', <ScratchPanel game={game} runScratch={game.runScratch} />)}
         <div className="window-dock">{windowIds.filter(id => layoutFor(id).minimized && !layoutFor(id).closed).map(id => <button className="dock-button" key={id} onClick={() => openWindow(id)}>{titleFor(id)}<Icon name="restore" /></button>)}</div>
       </div>}
       <footer className="screen-footer"><span className="footer-brand"><Icon name="book" />{text.brand.footer}</span><span className="corner-hints">{game.screen === 'game' ? <><span>{text.menu.runShortcut}</span><span>{text.menu.escape}</span></> : text.brand.edition}</span></footer>
@@ -238,9 +255,9 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
       {dialog === 'settings' && <SettingsDialog game={game} onClose={() => setDialog(null)} onTour={startTour} />}
       {dialog === 'saves' && <SavesDialog game={game} onClose={() => setDialog(null)} />}
       {dialog === 'newScript' && <NewScriptDialog game={game} onClose={() => setDialog(null)} onCreate={name => { game.addFile(name); game.setActiveFile(name); openWindow(`script:${name}`); setDialog(null); }} />}
-      {dialog === 'almanac' && <AlmanacDialog game={game} entries={almanac} onClose={() => setDialog(null)} onTour={startTour} />}
+      {dialog === 'almanac' && <AlmanacDialog game={game} entries={almanac.length ? almanac : authoredAlmanac} onClose={() => setDialog(null)} onTour={startTour} />}
       {dialog === 'orders' && <OrdersDialog game={game} onClose={() => setDialog(null)} />}
-      {dialog === 'shop' && <ShopDialog game={game} items={shop} onClose={() => setDialog(null)} />}
+      {dialog === 'shop' && <ShopDialog game={game} items={shop.length ? shop : availableShop} onClose={() => setDialog(null)} />}
       {dialog === 'alerts' && <Dialog title={text.alerts.title} onClose={() => setDialog(null)}>
         {actionError ? <p className="error-text" role="alert">{actionError}</p> : game.status ? <p className="notice">{game.status}</p> : <><h3>{text.alerts.quiet}</h3><p>{text.alerts.quietBody}</p></>}
       </Dialog>}
@@ -250,12 +267,13 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, devtoo
         <button className="text-button layout-reset" onClick={() => windowIds.forEach(id => game.setLayout(id, { ...defaultLayout(id, deskViewport), closed: !['editor', 'output', 'request'].includes(id) }))}><Icon name="rewind" />{text.windows.reset}</button>
       </Dialog>}
       {game.screen === 'game' && currentTour && !dialog && <Dialog title={currentTour.title} onClose={finishTour} className="tutorial-dialog">
-        <span className="eyebrow">{text.tutorial.speaker}</span><p>{currentTour.body}</p><div className="button-row">
-          <button className="button primary" onClick={() => { game.markTutorial(currentTour.id); if (tourIndex === text.tutorial.steps.length - 1) finishTour(); else setTourIndex((tourIndex ?? 0) + 1); }}>{tourIndex === text.tutorial.steps.length - 1 ? text.tutorial.done : text.tutorial.next}</button>
-          <button className="text-button" onClick={finishTour}>{text.tutorial.skip}</button><span className="tutorial-count">{format(text.tutorial.count, { current: (tourIndex ?? 0) + 1, total: text.tutorial.steps.length })}</span>
+        <span className="eyebrow">{text.tutorial.speaker}</span><p>{currentTour.steps[tutorialStep]}</p><div className="button-row">
+          <button className="button primary" onClick={() => { if (tutorialStep === currentTour.steps.length - 1) finishTour(); else setTutorialPosition({ id: currentTour.id, step: tutorialStep + 1 }); }}>{tutorialStep === currentTour.steps.length - 1 ? text.tutorial.done : text.tutorial.next}</button>
+          <button className="text-button" onClick={finishTour}>{text.tutorial.skip}</button><span className="tutorial-count">{format(text.tutorial.count, { current: tutorialStep + 1, total: currentTour.steps.length })}</span>
         </div>
       </Dialog>}
-      {devEnabled && showDevtools && <Dialog title={text.tools.developer} onClose={() => setShowDevtools(false)}>{devtools}</Dialog>}
+      {devEnabled && showDevtools && (devtools ?? <DevPanel onClose={() => setShowDevtools(false)} onCamera={setCameraPreset}
+        wireframe={wireframe} onWireframe={() => setWireframe(!wireframe)} grid={showGrid} onGrid={() => setShowGrid(!showGrid)} />)}
     </div>
   </>;
 }

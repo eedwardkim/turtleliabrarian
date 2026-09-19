@@ -75,6 +75,9 @@ export async function prepareEngine(root = projectRoot) {
   const engine = join(root, 'engine');
   for (const path of await walk(engine)) {
     if (path.endsWith('.py')) sources.set(path, { source: join(engine, path), kind: 'python' });
+    else if (path.startsWith('data/') && /\.(csv|tsv|json|txt)$/i.test(path)) {
+      sources.set(path, { source: join(engine, path), kind: 'dataset' });
+    }
   }
   for (const directory of ['datasets', 'content/datasets', 'engine/datasets']) {
     for (const path of await walk(join(root, directory))) {

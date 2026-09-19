@@ -1,4 +1,5 @@
 node_modules/
+public/engine/
 dist/
 .venv/
 __pycache__/

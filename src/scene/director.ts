@@ -46,6 +46,9 @@ export function eventType(event: TraceEvent): string {
   if (type === 'numpy' && typeof event.payload.operation === 'string') {
     return event.payload.operation.replace(/^np\./, '');
   }
+  if (type === 'numpy' && typeof event.payload.function === 'string') {
+    return event.payload.function.replace(/^(np|numpy)\./, '');
+  }
   return type;
 }
 

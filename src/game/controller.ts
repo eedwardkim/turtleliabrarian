@@ -49,6 +49,8 @@ export interface GameState {
   activeSlot: number;
   activeTutorial: string | null;
   tutorialQueue: string[];
+  activityPaused: boolean;
+  setActivityPaused(paused: boolean): void;
   initialize(): Promise<void>;
   newGame(name: string): void;
   setScreen(screen: Screen): void;
@@ -233,7 +235,8 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       inputs: {}, result: null, expected: null, queue: [], diff: null, busy: false, backgroundBusy: false,
       status: 'Welcome to the Returns Desk.', hintLevel: 0, traceIndex: 0, replayPaused: true,
       replayElapsed: 0, currentLine: null, event: null, progress: 0, activeSlot: 0,
-      activeTutorial: null, tutorialQueue: [],
+      activeTutorial: null, tutorialQueue: [], activityPaused: false,
+      setActivityPaused(activityPaused) { set({ activityPaused }); },
       initialize() {
         if (initializing) return initializing;
         const generation = lifecycle;
@@ -263,8 +266,10 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
               const now = Date.now();
               const milliseconds = Math.max(0, now - lastTick);
               lastTick = now;
-              get().tickReplay(milliseconds);
-              get().stepClock(milliseconds / 1000);
+              if (get().screen === 'game' && !get().activityPaused && (typeof document === 'undefined' || !document.hidden)) {
+                get().tickReplay(milliseconds);
+                get().stepClock(milliseconds / 1000);
+              }
             }, 100);
           } catch (error) {
             set({ ready: false, status: errorMessage(error), loadingMessage: 'The reading lamp could not start. Try loading again.' });
@@ -535,7 +540,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           if (ticket !== epoch) return null;
           const result = await runtime.run(requestFor(state.puzzle, code, state.puzzle.visibleSeed, state.save.files, expected.inputs, state.save.settings.openStacks));
           if (ticket !== epoch) return null;
-          set({ ...replayFields(result), diff: null, status: result.error?.friendly ?? 'Scratch work finished. Your script is unchanged.' });
+          set({ status: result.error?.friendly ?? 'Scratch work finished. Your script is unchanged.' });
           tutorial('scratch');
           return result;
         } catch (error) { if (ticket === epoch) set({ status: errorMessage(error) }); return null; }

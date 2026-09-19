@@ -61,7 +61,7 @@ export function ReplayPanel({ result, index, paused, speed, onIndex, onPaused, o
   </div>;
 }
 
-export function ScratchPanel({ game, runScratch }: { game: GameStateForUI; runScratch: (code: string) => Promise<RunResult> }) {
+export function ScratchPanel({ game, runScratch }: { game: GameStateForUI; runScratch: (code: string) => Promise<RunResult | null> }) {
   const [code, setCode] = useState('');
   const [result, setResult] = useState<RunResult | null>(null);
   const [busy, setBusy] = useState(false);

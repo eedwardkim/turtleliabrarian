@@ -47,9 +47,10 @@ export interface GameStateForUI {
   stepClock: (seconds: number) => void;
   markTutorial: (id: string) => void;
   purchase: (id: string) => void;
-  runScratch?: (code: string) => Promise<RunResult>;
+  runScratch?: (code: string) => Promise<RunResult | null>;
   toggleStandingOrder?: (puzzleId: string) => void;
   equipHat?: (id: string) => void;
+  replayStandingOrder?: (puzzleId: string) => Promise<void>;
 }
 
 export interface AlmanacEntry {
@@ -71,6 +72,7 @@ export interface ShopItem {
   ink: number;
   chapter?: number;
   hat?: boolean;
+  currency?: 'ink' | 'eggs';
 }
 
 export interface UIIntegrations {

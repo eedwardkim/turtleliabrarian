@@ -1,5 +1,13 @@
 # Decisions
 
+## Cross-runtime integer metadata
+
+NumPy uses platform-width signed integers: 32 bits in wasm32 and 64 bits on
+the development host. Trace snapshots describe signed integer arrays as
+`integer`; their real NumPy values and dtypes are never changed. Float,
+unsigned, string and object metadata retain their explicit dtype. Full
+cross-runtime result/trace comparison remains strict.
+
 1. The follow-up names `eedwardkim/turtleliabrarian`; use it unchanged.
 2. The repository is empty. Work starts on a `devin/…-foundation` feature branch,
    never a direct push to main. This functional contract/tooling baseline will

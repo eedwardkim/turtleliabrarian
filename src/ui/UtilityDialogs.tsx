@@ -57,7 +57,7 @@ export function SavesDialog({ game, onClose }: { game: GameStateForUI; onClose: 
       <p>{confirmation.kind === 'load' ? text.saves.replace : text.saves.overwrite}</p>
       <div className="button-row"><button className="button" disabled={busy} onClick={() => setConfirmation(null)}>{text.menu.cancel}</button><button className="button primary" disabled={busy} onClick={() => {
         const { kind, slot } = confirmation;
-        void execute(() => kind === 'load' ? game.loadSlot(slot) : game.saveSlot(slot), kind === 'load' ? text.saves.loaded : text.saves.saved);
+        void execute(() => kind === 'load' ? game.loadSlot(slot - 1) : game.saveSlot(slot - 1), kind === 'load' ? text.saves.loaded : text.saves.saved);
       }}>{confirmation.kind === 'load' ? text.saves.confirmLoad : text.saves.confirmSave}</button></div>
     </section>}
     <div className="save-portability"><button className="button" disabled={busy} onClick={download}><Icon name="download" />{text.saves.export}</button><button className="button" disabled={busy} onClick={() => input.current?.click()}><Icon name="upload" />{text.saves.import}</button></div>
@@ -117,6 +117,7 @@ export function OrdersDialog({ game, onClose }: { game: GameStateForUI; onClose:
     {game.save.standingOrders.length ? game.save.standingOrders.map(order => <article className="order-card" key={order.puzzleId}>
       <h3>{format(text.request.number, { number: order.puzzleId })}</h3><p>{format(text.orders.earned, { count: compactNumber(order.earned) })} · {order.paused ? text.orders.paused : text.orders.active}</p>
       {order.failure && <p className="error-text">{text.orders.failure}</p>}
+      {order.failure && game.replayStandingOrder && <button className="button" onClick={() => { void game.replayStandingOrder?.(order.puzzleId); onClose(); }}>{text.queue.replay}</button>}
       {game.toggleStandingOrder && <button className="button" onClick={() => game.toggleStandingOrder?.(order.puzzleId)}>{order.paused ? text.orders.resume : text.orders.pause}</button>}
     </article>) : <p className="notice">{text.orders.empty}</p>}
   </Dialog>;
@@ -126,9 +127,10 @@ export function ShopDialog({ game, items, onClose }: { game: GameStateForUI; ite
   return <Dialog title={text.shop.title} onClose={onClose}>
     {items.filter(item => (item.chapter ?? 0) <= game.puzzle.chapter).map(item => {
       const owned = game.save.ownedItems.includes(item.id);
-      const affordable = game.save.resources.ink >= item.ink;
-      return <article className="shop-card" key={item.id}><h3>{item.title}</h3><p>{item.description}</p><div className="shop-card-footer"><span>{format(text.shop.cost, { count: item.ink })}</span>
-        {owned ? item.hat && game.equipHat && game.save.hat !== item.id ? <button className="button" onClick={() => game.equipHat?.(item.id)}>{text.shop.equip}</button> : <span className="eyebrow">{game.save.hat === item.id ? text.shop.equipped : text.shop.owned}</span>
+      const affordable = game.save.resources[item.currency ?? 'ink'] >= item.ink;
+      const equipped = game.save.hat === item.id.replace(/^hat-/, '');
+      return <article className="shop-card" key={item.id}><h3>{item.title}</h3><p>{item.description}</p><div className="shop-card-footer"><span>{item.currency === 'eggs' ? `${item.ink} Egg` : format(text.shop.cost, { count: item.ink })}</span>
+        {owned ? item.hat && game.equipHat && !equipped ? <button className="button" onClick={() => game.equipHat?.(item.id)}>{text.shop.equip}</button> : <span className="eyebrow">{equipped ? text.shop.equipped : text.shop.owned}</span>
           : affordable ? <button className="button" onClick={() => game.purchase(item.id)}>{text.shop.buy}</button> : <small>{text.shop.insufficient}</small>}
       </div></article>;
     })}

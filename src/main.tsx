@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import { TurtleMark } from './ui/Icon';
 import { text } from './ui/text';
+import { initializeDevtools } from './game/devtools';
 import './styles.css';
 
 class LibraryBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -22,3 +23,4 @@ class LibraryBoundary extends Component<{ children: ReactNode }, { error: Error 
 
 const root = document.getElementById('root');
 if (root) createRoot(root).render(<LibraryBoundary><App /></LibraryBoundary>);
+void initializeDevtools().catch(console.error);
