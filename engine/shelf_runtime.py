@@ -18,9 +18,9 @@ from itertools import islice
 from pathlib import PurePosixPath
 
 import numpy as np
-from datascience import Table, are, make_array
+from datascience import Table, are, make_array, minimize, percentile, sample_proportions
 
-from shelf_events import observer
+from shelf_events import observer, sampling_rng
 
 SNAPSHOT_LIMIT = 40
 TEXT_LIMIT = 500
@@ -306,10 +306,8 @@ class Trace:
         if isinstance(output, np.ndarray):
             payload["totalValues"] = int(output.size)
             payload["shape"] = list(output.shape)
-            payload["dtype"] = (
-                "integer"
-                if np.issubdtype(output.dtype, np.signedinteger)
-                else str(output.dtype)
+            payload["dtype"] = {"i": "integer", "U": "unicode", "S": "bytes"}.get(
+                output.dtype.kind, str(output.dtype)
             )
         self.events.append(
             {
@@ -447,10 +445,34 @@ class Trace:
 
     def prepare(self, function, line, spelling):
         self.resume_tracing(sys._getframe(1))
+        filename = sys._getframe(1).f_code.co_filename
+        if function is builtins.map or function is builtins.filter:
+
+            def consume(*args, **kwargs):
+                if args:
+                    args = (
+                        self.observe_numpy(args[0], line, spelling, filename, True),
+                        *args[1:],
+                    )
+                return function(*args, **kwargs)
+
+            return consume
+        if function is builtins.sorted:
+
+            def order(*args, **kwargs):
+                if "key" in kwargs:
+                    kwargs["key"] = self.observe_numpy(
+                        kwargs["key"], line, spelling, filename, True
+                    )
+                return function(*args, **kwargs)
+
+            return order
+        return self.observe_numpy(function, line, spelling, filename)
+
+    def observe_numpy(self, function, line, spelling, filename, callback=False):
         canonical = numpy_name(function)
         if canonical is None:
             return function
-        filename = sys._getframe(1).f_code.co_filename
 
         def invoke(*args, **kwargs):
             self.line, self.filename = line, filename
@@ -482,6 +504,7 @@ class Trace:
                         "arguments": before,
                         "keywords": kwargs,
                         "exception": type(error).__name__,
+                        **({"callback": True} if callback else {}),
                     },
                 )
                 raise
@@ -495,6 +518,7 @@ class Trace:
                     "canonical": canonical,
                     "arguments": before,
                     "keywords": kwargs,
+                    **({"callback": True} if callback else {}),
                 },
             )
             return result
@@ -770,6 +794,7 @@ def run(request: dict) -> dict:
     files = None
     saved_modules = {}
     token = None
+    rng_token = None
     prior_trace = sys.gettrace()
     random_state, numpy_state = random.getstate(), np.random.get_state()
     namespace = {
@@ -778,6 +803,9 @@ def run(request: dict) -> dict:
         "Table": Table,
         "are": are,
         "make_array": make_array,
+        "percentile": percentile,
+        "minimize": minimize,
+        "sample_proportions": sample_proportions,
         "np": np,
     }
 
@@ -826,6 +854,7 @@ def run(request: dict) -> dict:
             seed = request.get("seed", 0)
             random.seed(seed)
             np.random.seed(seed)
+            rng_token = sampling_rng.set(np.random.default_rng(seed))
             trace.tracer = check_time
             sys.settrace(check_time)
             baseline = set(namespace)
@@ -855,6 +884,9 @@ def run(request: dict) -> dict:
                     "Table": Table,
                     "are": are,
                     "make_array": make_array,
+                    "percentile": percentile,
+                    "minimize": minimize,
+                    "sample_proportions": sample_proportions,
                     "np": np,
                     "deliver": deliver,
                 },
@@ -903,6 +935,8 @@ def run(request: dict) -> dict:
         sys.settrace(prior_trace)
         if token is not None:
             observer.reset(token)
+        if rng_token is not None:
+            sampling_rng.reset(rng_token)
         if files is not None:
             if files in sys.meta_path:
                 sys.meta_path.remove(files)

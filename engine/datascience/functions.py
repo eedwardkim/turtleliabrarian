@@ -6,7 +6,7 @@ from math import ceil
 
 import numpy as np
 
-from shelf_events import check_api, emit
+from shelf_events import check_api, emit, sampling_rng
 
 
 def _percentile(p, arr):
@@ -45,7 +45,10 @@ def sample_proportions(sample_size: int, probabilities, seed=None):
     yields NaNs; invalid sizes/probabilities raise NumPy's own errors.
     """
     check_api("sample_proportions")
-    counts = np.random.default_rng(seed).multinomial(sample_size, probabilities)
+    generator = sampling_rng.get() if seed is None else None
+    if generator is None:
+        generator = np.random.default_rng(seed)
+    counts = generator.multinomial(sample_size, probabilities)
     result = counts / sample_size
     emit(
         "sample_proportions",
