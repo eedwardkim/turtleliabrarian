@@ -1,10 +1,6 @@
 """Independent 500-example comparisons against the isolated installed oracle."""
 
 import json
-import os
-import subprocess
-import sys
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -12,6 +8,7 @@ from hypothesis import given, settings, strategies as st
 
 from datascience import Table, are
 from oracle import evaluate
+from oracle_process import oracle_process
 from shelf_runtime import SNAPSHOT_LIMIT, run
 
 EXAMPLES = settings(max_examples=500, deadline=None, derandomize=True)
@@ -25,19 +22,8 @@ SETUP = (
 
 @pytest.fixture(scope="module")
 def advanced_oracle():
-    environment = dict(os.environ)
-    environment.pop("PYTHONPATH", None)
-    process = subprocess.Popen(
-        [sys.executable, "-I", str(Path(__file__).with_name("oracle.py"))],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        text=True,
-        env=environment,
-    )
-    yield process
-    process.stdin.close()
-    process.wait(timeout=20)
-    assert process.returncode == 0
+    with oracle_process() as process:
+        yield process
 
 
 def compare_advanced(process, expression, variables, setup=SETUP):
@@ -163,19 +149,32 @@ def test_predicate_fast_paths(values, target):
 )
 @pytest.mark.parametrize(
     "keys",
-    [[2, 1, 2, 1], [np.nan, 2, 1, np.nan], [True, False, True, False], [" 2", "2", "A", "a"]],
+    [
+        [2, 1, 2, 1],
+        [np.nan, 2, 1, np.nan],
+        [True, False, True, False],
+        [" 2", "2", "A", "a"],
+    ],
 )
 def test_table_edge_regressions(advanced_oracle, expression, keys):
     compare_advanced(
         advanced_oracle,
         expression,
-        dict(keys=keys, categories=["b", "A", "b", "a"], values=[3, 4, 5, 6], other=[], seed=32),
+        dict(
+            keys=keys,
+            categories=["b", "A", "b", "a"],
+            values=[3, 4, 5, 6],
+            other=[],
+            seed=32,
+        ),
     )
 
 
 def test_group_count_label_collision(advanced_oracle):
     compare_advanced(
-        advanced_oracle, "t.group('count')", {},
+        advanced_oracle,
+        "t.group('count')",
+        {},
         "t = Table().with_column('count', [0, 1, 2, 2])",
     )
 
@@ -213,7 +212,9 @@ deliver(j)
     off = run({"code": code, "seed": 10, "instrument": False})
     assert off["delivered"] == result["delivered"]
 
-    large = run({"code": "t=Table().with_column('n',np.arange(200))\ndeliver(t.group('n'))"})
+    large = run(
+        {"code": "t=Table().with_column('n',np.arange(200))\ndeliver(t.group('n'))"}
+    )
     assert large["error"] is None
     assert len(large["delivered"]["rows"]) == 200
     group = next(e for e in large["trace"] if e["type"] == "group")

@@ -2,9 +2,6 @@
 
 import csv
 import json
-import os
-import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
@@ -12,6 +9,7 @@ import pytest
 from hypothesis import given, settings, strategies as st
 
 from oracle import evaluate
+from oracle_process import oracle_process
 
 SETUP = "t = Table().with_columns('key', values, 'position', np.arange(len(values)))"
 EXAMPLES = settings(max_examples=500, deadline=None, derandomize=True)
@@ -19,19 +17,8 @@ EXAMPLES = settings(max_examples=500, deadline=None, derandomize=True)
 
 @pytest.fixture(scope="module")
 def oracle():
-    environment = dict(os.environ)
-    environment.pop("PYTHONPATH", None)
-    process = subprocess.Popen(
-        [sys.executable, "-I", str(Path(__file__).with_name("oracle.py"))],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        text=True,
-        env=environment,
-    )
-    yield process
-    process.stdin.close()
-    process.wait(timeout=20)
-    assert process.returncode == 0
+    with oracle_process() as process:
+        yield process
 
 
 @st.composite

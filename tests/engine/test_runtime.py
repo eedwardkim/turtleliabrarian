@@ -1,8 +1,11 @@
 """Execution, isolation and Director wire-contract regressions."""
 
 import builtins
+import contextlib
+import io
 import json
 import random
+import runpy
 import subprocess
 import sys
 from pathlib import Path
@@ -323,15 +326,29 @@ def test_api_unlocks():
 
 def test_json_cli():
     root = Path(__file__).resolve().parents[2]
-    process = subprocess.run(
-        [sys.executable, str(root / "engine" / "shelf_runtime.py")],
-        input=json.dumps({"code": "print('hello')\ndeliver(np.arange(20))\n2+3"}),
-        text=True,
-        capture_output=True,
-        timeout=10,
-        check=True,
-    )
-    result = json.loads(process.stdout)
+    request = json.dumps({"code": "print('hello')\ndeliver(np.arange(20))\n2+3"})
+    if sys.platform == "emscripten":
+        previous_stdin = sys.stdin
+        output = io.StringIO()
+        try:
+            sys.stdin = io.StringIO(request)
+            with contextlib.redirect_stdout(output):
+                runpy.run_path(
+                    str(root / "engine" / "shelf_runtime.py"), run_name="__main__"
+                )
+        finally:
+            sys.stdin = previous_stdin
+        result = json.loads(output.getvalue())
+    else:
+        process = subprocess.run(
+            [sys.executable, str(root / "engine" / "shelf_runtime.py")],
+            input=request,
+            text=True,
+            capture_output=True,
+            timeout=10,
+            check=True,
+        )
+        result = json.loads(process.stdout)
     assert result["error"] is None and result["value"] == 5
     assert result["stdout"] == "hello\n"
     assert len(result["delivered"]["values"]) == 20

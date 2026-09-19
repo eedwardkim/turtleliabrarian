@@ -4,7 +4,7 @@ import json
 
 import numpy as np
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import example, given, strategies as st
 
 import datascience
 from datascience import minimize
@@ -125,6 +125,7 @@ def test_sample_proportions_differential(oracle, count, probabilities, seed):
 
 
 @EXAMPLES
+@example(weights=[19, 9, 64, 9, 20, 1, 1, 51], count=2028, seed=86888)
 @given(
     weights=st.lists(st.integers(1, 100), min_size=1, max_size=20),
     count=st.integers(1, 5000),

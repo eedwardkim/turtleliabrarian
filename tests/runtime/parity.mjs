@@ -13,6 +13,34 @@ function comparable(result) {
   return deterministic;
 }
 
+function semantics(result) {
+  const value = comparable(result);
+  delete value.trace;
+  return value;
+}
+
+function validate(test, result, instrument) {
+  assert(isRunResult(result), `${test.name}: RunResult schema`);
+  for (const [key, expected] of Object.entries(test.expected ?? {})) {
+    assert.deepEqual(result[key], expected, `${test.name}: ${key}`);
+  }
+  for (const [key, expected] of Object.entries(test.expectedError ?? {})) {
+    assert.equal(result.error?.[key], expected, `${test.name}: error.${key}`);
+  }
+  if (!instrument) assert.deepEqual(result.trace, []);
+  else {
+    assert(result.trace.length <= 2001, `${test.name}: bounded event count`);
+    for (const [index, event] of result.trace.entries()) {
+      assert.equal(event.seq, index);
+      assert.equal(event.version, 1);
+      assert(JSON.stringify(event.payload).length < 200_000, `${test.name}: bounded payload`);
+    }
+    for (const type of test.events ?? []) {
+      assert(result.trace.some(event => event.type === type), `${test.name}: missing ${type} event`);
+    }
+  }
+}
+
 function runCPython(executable, cases) {
   return new Promise((resolveResult, reject) => {
     const command = /[/\\]/.test(executable) ? resolve(executable) : executable;
@@ -95,17 +123,29 @@ export async function main(args) {
         for (const test of cases) {
           assert(typeof test.name === 'string' && isRunRequest(test.request), 'Cases require name and valid request');
         }
-        const cpython = await runCPython(config.python, cases);
+        const expanded = cases.flatMap(test => [false, true].map(instrument => ({
+          ...test, name: `${test.name} / instrument=${instrument}`,
+          request: { ...test.request, instrument },
+        })));
+        const cpython = await runCPython(config.python, expanded);
+        assert.equal(cpython.versions.python, '3.14.2');
         assert.equal(cpython.versions.numpy, '2.4.6', 'CPython must use the same NumPy as Pyodide');
-        assert.equal(cpython.results.length, cases.length);
-        for (let index = 0; index < cases.length; index += 1) {
-          const test = cases[index];
+        assert.equal(cpython.results.length, expanded.length);
+        let uninstrumented;
+        for (let index = 0; index < expanded.length; index += 1) {
+          const test = expanded[index];
           const actual = await embedding.request({ type: 'run', request: test.request });
-          assert(isRunResult(cpython.results[index]), `${test.name}: CPython RunResult schema`);
+          validate(test, actual, test.request.instrument);
+          validate(test, cpython.results[index], test.request.instrument);
           assert.deepEqual(comparable(actual), comparable(cpython.results[index]), test.name);
+          if (test.request.instrument) {
+            assert.deepEqual(semantics(actual), semantics(uninstrumented), `${test.name}: instrumentation parity`);
+            const repeated = await embedding.request({ type: 'run', request: test.request });
+            assert.deepEqual(comparable(actual), comparable(repeated), `${test.name}: repeat determinism`);
+          } else uninstrumented = actual;
           console.log(`PASS CPython/Pyodide parity: ${test.name}`);
         }
-        console.log(`PASS ${cases.length} cross-runtime cases (CPython ${cpython.versions.python})`);
+        console.log(`PASS ${expanded.length} cross-runtime cases with on/off and repeat parity (CPython ${cpython.versions.python})`);
       } else {
         console.log('CPython parity NOT RUN: supply --python /path/to/pinned/python.');
       }
