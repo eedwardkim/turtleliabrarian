@@ -1,0 +1,27 @@
+{
+  "id": "ch3-vary-1", "chapter": 3, "kind": "vary",
+  "title": "A Scatter on the Reading Floor", "patron": "Dr. Newt",
+  "request": "Chalk a scatter on the floor with pages across and loans up, then give me the two columns as numbers, shortest book first. Some page counts were copied in by hand as text.",
+  "objective": "Coerce a text column to numbers, scatter two numeric columns and deliver the plotted pairs in x order.",
+  "concepts": ["scatter", "numeric_columns", "text_vs_number", "sort"],
+  "requiredApi": ["scatter", "with_columns", "column", "make_array", "sort", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "barh", "hist", "scatter", "plot"],
+  "starter": "floor = shelf.select('pages', 'loans')\nfloor.scatter('pages', 'loans')\ndeliver(floor)",
+  "hints": ["Chalk cannot be drawn against a column of text, and the chalk line runs from the shortest book rightwards.", "Rebuild the pages column with int inside make_array, then scatter takes the x column first.", "Make a two-column table of numeric pages and loans, scatter it, and deliver that table sorted by pages."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nn = random.randint(4, 8)\npages = [random.randrange(120, 460, 4) for _ in range(n)]\nif random.random() < 0.5:\n    pages = [str(count) for count in pages]\nloans = [random.randint(1, 45) for _ in range(n)]\nshelf = Table().with_columns('pages', make_array(*pages), 'loans', make_array(*loans))",
+  "visibleSeed": 29,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["pages", "loans"], "rows": [[312, 18], [148, 7], [264, 31], [420, 5]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "handwritten_pages", "inputs": {"shelf": {"kind": "table", "labels": ["pages", "loans"], "rows": [["208", 12], ["156", 22], ["388", 3]], "totalRows": 3}}, "predicate": "all(isinstance(count, str) for count in shelf.column('pages'))"},
+    {"name": "already_in_order", "inputs": {"shelf": {"kind": "table", "labels": ["pages", "loans"], "rows": [[130, 9], [242, 14], [398, 2]], "totalRows": 3}}, "predicate": "bool((np.diff(shelf.column('pages')) > 0).all())"}
+  ],
+  "queueSize": 7,
+  "reference": "counts = make_array(*[int(value) for value in shelf.column('pages')])\nfloor = Table().with_columns('pages', counts, 'loans', shelf.column('loans'))\nfloor.scatter('pages', 'loans')\ndeliver(floor.sort('pages'))",
+  "naive": [
+    {"code": "floor = shelf.select('pages', 'loans')\nfloor.scatter('pages', 'loans')\ndeliver(floor.sort('pages'))", "fails": "loud", "hazard": "handwritten_pages"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["scatter"],
+  "standingOrder": {"eligible": true, "ink": 6, "oil": 1},
+  "setPiece": "floor-scatter", "hazards": ["handwritten_pages"], "stochastic": false
+}

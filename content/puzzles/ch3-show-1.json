@@ -1,0 +1,25 @@
+{
+  "id": "ch3-show-1", "chapter": 3, "kind": "show",
+  "title": "Bars for the Display Hall", "patron": "Mrs. Quill",
+  "request": "Hang a bar of loans for every wing in the Display Hall, busiest wing first, and hand me the ordered table you charted so the sign painter can copy it.",
+  "objective": "Draw a horizontal bar chart of a categorical column and deliver the ordered table behind it.",
+  "concepts": ["barh", "categorical_bars", "sort", "chart_source"],
+  "requiredApi": ["barh", "sort", "select", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "barh", "hist", "scatter", "plot"],
+  "starter": "hall = shelf.select('wing', 'loans')\nhall.barh('wing', 'loans')\ndeliver(hall)",
+  "hints": ["The painter copies the table, so the table itself has to carry the order the wall shows.", "barh takes the category column first and the measured column second; sort has a descending flag.", "Sort the two-column hall table by loans downward, chart that sorted table, and deliver the very same table."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nwings = ['Reference', 'Nature', 'Travel', 'Poetry', 'Mystery', 'Science', 'Letters']\nn = random.randint(3, 6)\npicked = random.sample(wings, n)\nloans = random.sample(range(5, 90), n)\nshelf = Table().with_columns('wing', make_array(*picked), 'loans', make_array(*loans))",
+  "visibleSeed": 5,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["wing", "loans"], "rows": [["Reference", 34], ["Nature", 61], ["Poetry", 12], ["Mystery", 48]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "one_wing_open", "inputs": {"shelf": {"kind": "table", "labels": ["wing", "loans"], "rows": [["Travel", 27]], "totalRows": 1}}, "predicate": "shelf.num_rows == 1"},
+    {"name": "quiet_wings_first", "inputs": {"shelf": {"kind": "table", "labels": ["wing", "loans"], "rows": [["Letters", 6], ["Science", 19], ["Nature", 73]], "totalRows": 3}}, "predicate": "bool((np.diff(shelf.column('loans')) > 0).all())"}
+  ],
+  "queueSize": 6,
+  "reference": "hall = shelf.select('wing', 'loans').sort('loans', descending=True)\nhall.barh('wing', 'loans')\ndeliver(hall)",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["barh"],
+  "standingOrder": {"eligible": true, "ink": 5, "oil": 1},
+  "setPiece": "book-stack-bars", "hazards": ["quiet_wings_first"], "stochastic": false
+}

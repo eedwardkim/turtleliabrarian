@@ -1,0 +1,27 @@
+{
+  "id": "ch6-break-1", "chapter": 6, "kind": "break",
+  "title": "Twenty Rounds Prove Nothing", "patron": "Trustee Pellan",
+  "request": "If we pull five books at random from this cart, one at a time and putting each back, how often does at least one damaged copy turn up? Run 400 rounds and deliver the share, rounded to one decimal. A dozen rounds is a rumour, not an estimate.",
+  "objective": "Run enough repetitions for an empirical estimate to settle near the true chance.",
+  "concepts": ["simulation", "repetitions", "np.random.choice", "empirical_probability", "for"],
+  "requiredApi": ["np.random.choice", "np.count_nonzero", "column", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "np.append", "item", "sum", "np.mean", "np.std", "np.count_nonzero", "np.max", "np.min", "np.sum", "np.random.choice", "percentile", "sample_proportions", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "sample", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "are.contained_in", "barh", "hist", "scatter", "plot", "apply", "group", "pivot", "join", "read_table"],
+  "starter": "conditions = shelf.column('condition')\nround_one = np.random.choice(conditions, 5)\ndeliver(round(int(np.count_nonzero(round_one == 'damaged')) / 5, 1))",
+  "hints": ["One round answers a different question: what happened once, not what happens usually.", "Each round draws five conditions with np.random.choice and counts as a hit when at least one of them is damaged.", "Keep a running tally of hits across 400 rounds and divide that tally by 400 before rounding to one decimal."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nn = random.randint(5, 9)\ndamaged = random.randint(1, 3)\nconditions = ['damaged'] * damaged + ['fine'] * (n - damaged)\nrandom.shuffle(conditions)\nshelf = Table().with_columns('shelfmark', make_array(*[f'M-{index + 1:03d}' for index in range(n)]), 'condition', make_array(*conditions))",
+  "visibleSeed": 0,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["shelfmark", "condition"], "rows": [["M-001", "fine"], ["M-002", "damaged"], ["M-003", "fine"], ["M-004", "fine"], ["M-005", "damaged"], ["M-006", "fine"]], "totalRows": 6}},
+  "fixtures": [
+    {"name": "barely_any_damage", "inputs": {"shelf": {"kind": "table", "labels": ["shelfmark", "condition"], "rows": [["M-001", "damaged"], ["M-002", "fine"], ["M-003", "fine"], ["M-004", "fine"], ["M-005", "fine"], ["M-006", "fine"], ["M-007", "fine"], ["M-008", "fine"], ["M-009", "fine"]], "totalRows": 9}}, "predicate": "int(np.count_nonzero(shelf.column('condition') == 'damaged')) == 1 and shelf.num_rows >= 9"},
+    {"name": "half_the_cart_damaged", "inputs": {"shelf": {"kind": "table", "labels": ["shelfmark", "condition"], "rows": [["M-001", "damaged"], ["M-002", "damaged"], ["M-003", "damaged"], ["M-004", "fine"], ["M-005", "fine"]], "totalRows": 5}}, "predicate": "int(np.count_nonzero(shelf.column('condition') == 'damaged')) * 2 > shelf.num_rows"}
+  ],
+  "queueSize": 8,
+  "reference": "conditions = shelf.column('condition')\nhits = 0\nfor _ in range(400):\n    drawn = np.random.choice(conditions, 5)\n    if int(np.count_nonzero(drawn == 'damaged')) > 0:\n        hits = hits + 1\n\ndeliver(round(hits / 400, 1))",
+  "naive": [
+    {"code": "conditions = shelf.column('condition')\nhits = 0\nfor _ in range(12):\n    drawn = np.random.choice(conditions, 5)\n    if int(np.count_nonzero(drawn == 'damaged')) > 0:\n        hits = hits + 1\n\ndeliver(round(hits / 12, 1))", "fails": "silent", "hazard": "barely_any_damage"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["np.random.choice"],
+  "standingOrder": {"eligible": true, "ink": 9, "oil": 3},
+  "setPiece": "damage-bench", "hazards": ["barely_any_damage", "half_the_cart_damaged"], "stochastic": true
+}

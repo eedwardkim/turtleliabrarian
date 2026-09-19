@@ -1,0 +1,27 @@
+{
+  "id": "ch3-break-2", "chapter": 3, "kind": "break",
+  "title": "Where the Axis Begins", "patron": "Trustee Pellan",
+  "request": "The trustees want the wing loans on bars, busiest first, and the honest range for the value axis: an array holding the bottom of the axis and the tallest bar. A bar chart that starts above zero sells a story the numbers never told.",
+  "objective": "Chart categories and report an axis range anchored at zero rather than at the smallest bar.",
+  "concepts": ["barh", "misleading_axes", "axis_baseline", "np.max"],
+  "requiredApi": ["barh", "sort", "column", "np.max", "make_array", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "barh", "hist", "scatter", "plot"],
+  "starter": "hall = shelf.sort('loans', descending=True)\nhall.barh('wing', 'loans')\ndeliver(hall)",
+  "hints": ["Two wings that differ by a tenth can look like giant and dwarf if the axis starts just under the smaller bar.", "np.max finds the tallest bar; the bottom of an honest bar axis is not read off the data at all.", "Chart the sorted wings, then deliver a two-value array whose first entry is fixed and whose second is the tallest loan count."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nwings = ['Reference', 'Nature', 'Travel', 'Poetry', 'Mystery', 'Science', 'Letters']\nn = random.randint(3, 6)\npicked = random.sample(wings, n)\nloans = [random.choice([0, 0, 18, 24, 31, 37, 42, 55, 68]) for _ in range(n)]\nshelf = Table().with_columns('wing', make_array(*picked), 'loans', make_array(*loans))",
+  "visibleSeed": 16,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["wing", "loans"], "rows": [["Mystery", 42], ["Letters", 0], ["Nature", 31], ["Travel", 18]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "no_idle_wing", "inputs": {"shelf": {"kind": "table", "labels": ["wing", "loans"], "rows": [["Science", 61], ["Poetry", 58], ["Reference", 64]], "totalRows": 3}}, "predicate": "bool((shelf.column('loans') > 0).all())"},
+    {"name": "every_wing_equal", "inputs": {"shelf": {"kind": "table", "labels": ["wing", "loans"], "rows": [["Travel", 24], ["Nature", 24], ["Mystery", 24]], "totalRows": 3}}, "predicate": "int(len(set(shelf.column('loans').tolist()))) == 1"}
+  ],
+  "queueSize": 7,
+  "reference": "hall = shelf.sort('loans', descending=True)\nhall.barh('wing', 'loans')\ndeliver(make_array(0, int(np.max(hall.column('loans')))))",
+  "naive": [
+    {"code": "hall = shelf.sort('loans', descending=True)\nhall.barh('wing', 'loans')\ndeliver(make_array(int(np.min(hall.column('loans'))), int(np.max(hall.column('loans')))))", "fails": "silent", "hazard": "no_idle_wing"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["barh", "np.max"],
+  "standingOrder": {"eligible": true, "ink": 7, "oil": 2},
+  "setPiece": "trustee-wall", "hazards": ["no_idle_wing", "every_wing_equal"], "stochastic": false
+}

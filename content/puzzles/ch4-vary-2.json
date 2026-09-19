@@ -1,0 +1,27 @@
+{
+  "id": "ch4-vary-2", "chapter": 4, "kind": "vary",
+  "title": "Drawers of the Card Cabinet", "patron": "Fen",
+  "request": "Build the cabinet: one row per wing, one column per format, holding the average page count of the cards in that drawer. A drawer with no cards at all must read -1, because an empty drawer is not a drawer of nothing.",
+  "objective": "Pivot two categorical columns over an aggregated value and choose the fill for absent combinations.",
+  "concepts": ["pivot", "collect", "zero_fill", "missing_combinations"],
+  "requiredApi": ["pivot", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "barh", "hist", "scatter", "plot", "apply", "group", "pivot"],
+  "starter": "deliver(shelf.pivot('format', 'wing'))",
+  "hints": ["An empty drawer has no average at all, and a cabinet that writes 0 there claims those cards were blank.", "pivot takes the column categories first, then the row categories, then values and collect together.", "Pivot format over wing, collect the pages with np.mean, and pass the fill for absent drawers through the zero argument."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nwings = ['Nature', 'Travel', 'Mystery']\nformats = ['folio', 'paperback', 'scroll']\nn = random.randint(4, 9)\nchosen_wings = [random.choice(wings) for _ in range(n)]\nchosen_formats = [random.choice(formats) for _ in range(n)]\npages = [random.randrange(100, 400, 10) for _ in range(n)]\nshelf = Table().with_columns('wing', make_array(*chosen_wings), 'format', make_array(*chosen_formats), 'pages', make_array(*pages))",
+  "visibleSeed": 27,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["wing", "format", "pages"], "rows": [["Nature", "folio", 200], ["Nature", "scroll", 140], ["Travel", "folio", 320], ["Travel", "scroll", 260]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "empty_drawer", "inputs": {"shelf": {"kind": "table", "labels": ["wing", "format", "pages"], "rows": [["Mystery", "folio", 180], ["Mystery", "paperback", 240], ["Travel", "folio", 300]], "totalRows": 3}}, "predicate": "int(len(set(shelf.column('wing').tolist())) * len(set(shelf.column('format').tolist()))) > shelf.num_rows"},
+    {"name": "one_drawer_only", "inputs": {"shelf": {"kind": "table", "labels": ["wing", "format", "pages"], "rows": [["Nature", "scroll", 120], ["Nature", "scroll", 220]], "totalRows": 2}}, "predicate": "int(len(set(shelf.column('wing').tolist()))) == 1 and int(len(set(shelf.column('format').tolist()))) == 1"}
+  ],
+  "queueSize": 8,
+  "reference": "cabinet = shelf.pivot('format', 'wing', values='pages', collect=np.mean, zero=-1)\ndeliver(cabinet)",
+  "naive": [
+    {"code": "deliver(shelf.pivot('format', 'wing', values='pages', collect=np.mean))", "fails": "silent", "hazard": "empty_drawer"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["pivot"],
+  "standingOrder": {"eligible": true, "ink": 7, "oil": 1},
+  "setPiece": "card-cabinet", "hazards": ["empty_drawer", "one_drawer_only"], "stochastic": false
+}

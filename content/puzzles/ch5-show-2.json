@@ -1,0 +1,28 @@
+{
+  "id": "ch5-show-2", "chapter": 5, "kind": "show",
+  "title": "The Register Calls It Something Else", "patron": "Mrs. Quill",
+  "request": "Our slips say card; the old register says member_no. Same numbers, stubborn clerks. Match them anyway and deliver the title with the borrower's name, sorted by title.",
+  "objective": "Join tables whose key columns carry different labels.",
+  "concepts": ["join", "other_label", "key_labels"],
+  "requiredApi": ["join", "select", "sort", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "are.contained_in", "barh", "hist", "scatter", "plot", "apply", "group", "pivot", "join", "read_table"],
+  "starter": "deliver(slips.select('title').sort('title'))",
+  "hints": ["Nothing matches while you insist both tables spell the key the same way.", "join takes a third argument naming the key column in the other table.", "Join on card with member_no as the other label, then select the title and name columns and sort by title."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nnames = ['Gideon Plume', 'Halla Brine', 'Isolde Marrow', 'Jarek Quill', 'Kesia Ardent']\ncards = [107, 108, 109, 110, 111]\ntitles = ['Nine Ways to Fold a Map', 'Winter Comes to the Aviary', 'The Lamp Under the Stair', 'Eleven Rooms of Rain', 'Lanterns of the Slow Tide', 'A Short History of Waiting']\nsize = random.randint(3, 5)\nchosen = sorted(random.sample(range(5), size))\nregister = Table().with_columns('member_no', make_array(*[cards[index] for index in chosen]), 'name', make_array(*[names[index] for index in chosen]))\nn = random.randint(3, 6)\nshelf_titles = random.sample(titles, n)\nslips = Table().with_columns('title', make_array(*shelf_titles), 'card', make_array(*[cards[random.choice(chosen)] for _ in range(n)]))",
+  "visibleSeed": 13,
+  "visibleInputs": {
+    "slips": {"kind": "table", "labels": ["title", "card"], "rows": [["Eleven Rooms of Rain", 108], ["Nine Ways to Fold a Map", 107], ["A Short History of Waiting", 110]], "totalRows": 3},
+    "register": {"kind": "table", "labels": ["member_no", "name"], "rows": [[107, "Gideon Plume"], [108, "Halla Brine"], [110, "Jarek Quill"]], "totalRows": 3}
+  },
+  "fixtures": [
+    {"name": "register_out_of_order", "inputs": {"slips": {"kind": "table", "labels": ["title", "card"], "rows": [["Winter Comes to the Aviary", 111], ["The Lamp Under the Stair", 109]], "totalRows": 2}, "register": {"kind": "table", "labels": ["member_no", "name"], "rows": [[111, "Kesia Ardent"], [109, "Isolde Marrow"], [107, "Gideon Plume"]], "totalRows": 3}}, "predicate": "bool(register.column('member_no').item(0) > register.column('member_no').item(1))"},
+    {"name": "single_slip", "inputs": {"slips": {"kind": "table", "labels": ["title", "card"], "rows": [["Lanterns of the Slow Tide", 109]], "totalRows": 1}, "register": {"kind": "table", "labels": ["member_no", "name"], "rows": [[109, "Isolde Marrow"], [110, "Jarek Quill"]], "totalRows": 2}}, "predicate": "slips.num_rows == 1"}
+  ],
+  "queueSize": 7,
+  "reference": "matched = slips.join('card', register, 'member_no')\ndeliver(matched.select('title', 'name').sort('title'))",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["join"],
+  "standingOrder": {"eligible": true, "ink": 6, "oil": 1},
+  "setPiece": "register-desk", "hazards": ["register_out_of_order"], "stochastic": false
+}

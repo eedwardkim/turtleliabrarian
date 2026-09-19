@@ -1,0 +1,27 @@
+{
+  "id": "ch3-vary-2", "chapter": 3, "kind": "vary",
+  "title": "The Lamp-Oil Line", "patron": "Keeper Ash",
+  "request": "Trace the lamp-oil spend through the months on one line, and give me back the months in calendar order with their spend. The clerk filed the slips in whatever order they fell.",
+  "objective": "Order a table by its x column before plotting a line and deliver the ordered series.",
+  "concepts": ["plot", "line_series", "x_order", "sort"],
+  "requiredApi": ["plot", "sort", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "barh", "hist", "scatter", "plot"],
+  "starter": "shelf.plot('month', 'oil')\ndeliver(shelf.sort('oil'))",
+  "hints": ["A line drawn through shuffled slips wanders backwards in time even when every point is right.", "sort the month column upward first; plot takes the x column and then the measured column.", "Name the calendar-ordered table, plot that table, and deliver the same ordered table rather than the cart you were handed."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nmonths = random.sample(range(1, 13), random.randint(4, 8))\noil = [random.randrange(4, 60, 2) for _ in months]\nshelf = Table().with_columns('month', make_array(*months), 'oil', make_array(*oil))",
+  "visibleSeed": 14,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["month", "oil"], "rows": [[2, 18], [5, 26], [9, 12], [11, 40]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "slips_out_of_order", "inputs": {"shelf": {"kind": "table", "labels": ["month", "oil"], "rows": [[8, 22], [3, 44], [12, 10], [6, 30]], "totalRows": 4}}, "predicate": "bool((np.diff(shelf.column('month')) < 0).any())"},
+    {"name": "two_months_only", "inputs": {"shelf": {"kind": "table", "labels": ["month", "oil"], "rows": [[4, 16], [10, 52]], "totalRows": 2}}, "predicate": "shelf.num_rows == 2"}
+  ],
+  "queueSize": 6,
+  "reference": "calendar = shelf.sort('month')\ncalendar.plot('month', 'oil')\ndeliver(calendar)",
+  "naive": [
+    {"code": "shelf.plot('month', 'oil')\ndeliver(shelf)", "fails": "silent", "hazard": "slips_out_of_order"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["plot"],
+  "standingOrder": {"eligible": true, "ink": 5, "oil": 1},
+  "setPiece": "lamp-oil-line", "hazards": ["slips_out_of_order"], "stochastic": false
+}

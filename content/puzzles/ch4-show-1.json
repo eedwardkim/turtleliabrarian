@@ -1,0 +1,25 @@
+{
+  "id": "ch4-show-1", "chapter": 4, "kind": "show",
+  "title": "A Rule for the Fee Drawer", "patron": "Clerk Odo",
+  "request": "Our fee rule: 20 pennies for each of the first five late days, 45 for every later day, and never more than 600 in total. Write the rule once, run it down the whole cart, and give me the cart with a fee column.",
+  "objective": "Define a function and apply it to a column to build a new column.",
+  "concepts": ["def", "apply", "computed_columns", "caps"],
+  "requiredApi": ["apply", "with_columns", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "np.max", "np.min", "np.sum", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "barh", "hist", "scatter", "plot", "apply", "group", "pivot"],
+  "starter": "deliver(shelf.with_columns('fee', shelf.column('days_late') * 20))",
+  "hints": ["The rule bends twice: once after the fifth day and once when the total would run past the cap.", "def names a rule for one slip, and apply runs that rule down a named column and hands back an array.", "Write the rule for a single number of late days with min and max, apply it to days_late, and attach the resulting array as a new column."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ntitles = ['The Brass Hour', 'Salt and Moss and Patience', 'The Index of Small Storms', 'Harbour Lights Counted Twice', 'The Last Card in the Drawer', 'Every Ladder in the Stacks', 'A Short History of Waiting']\nn = random.randint(3, 7)\npicked = random.sample(titles, n)\nlate = [random.choice([0, 1, 3, 5, 6, 9, 14, 20, 30]) for _ in range(n)]\nshelf = Table().with_columns('title', make_array(*picked), 'days_late', make_array(*late))",
+  "visibleSeed": 21,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "days_late"], "rows": [["The Brass Hour", 3], ["Every Ladder in the Stacks", 0], ["Harbour Lights Counted Twice", 9]], "totalRows": 3}},
+  "fixtures": [
+    {"name": "past_the_cap", "inputs": {"shelf": {"kind": "table", "labels": ["title", "days_late"], "rows": [["The Last Card in the Drawer", 30], ["Salt and Moss and Patience", 20], ["The Index of Small Storms", 1]], "totalRows": 3}}, "predicate": "bool((100 + (shelf.column('days_late') - 5) * 45 > 600).any())"},
+    {"name": "no_one_is_late", "inputs": {"shelf": {"kind": "table", "labels": ["title", "days_late"], "rows": [["A Short History of Waiting", 0], ["The Brass Hour", 0]], "totalRows": 2}}, "predicate": "bool((shelf.column('days_late') == 0).all())"}
+  ],
+  "queueSize": 7,
+  "reference": "def fee(days):\n    charged = min(days, 5) * 20 + max(days - 5, 0) * 45\n    return min(charged, 600)\n\ncharges = shelf.apply(fee, 'days_late')\ndeliver(shelf.with_columns('fee', charges))",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["apply"],
+  "standingOrder": {"eligible": true, "ink": 6, "oil": 1},
+  "setPiece": "fee-drawer", "hazards": ["past_the_cap"], "stochastic": false
+}

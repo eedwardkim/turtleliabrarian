@@ -1,0 +1,29 @@
+{
+  "id": "ch2-break-1", "chapter": 2, "kind": "break",
+  "title": "The Seventies Alcove", "patron": "Mr. Heron",
+  "request": "Fill the seventies alcove: every book stamped 1970 through 1979, earliest stamp first. Some stamps were typed onto the card as text, and the alcove still wants them.",
+  "objective": "Use an interval predicate whose upper end is excluded, over a column that may hold numbers written as text.",
+  "concepts": ["are.between", "upper_bound", "text_vs_number", "sort"],
+  "requiredApi": ["with_columns", "column", "where", "are.between", "sort", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing"],
+  "starter": "alcove = shelf.where('year', are.above_or_equal_to(1970))\ndeliver(alcove)",
+  "hints": ["The alcove ends with 1979, and a stamp typed as text never compares with a number the way you expect.", "are.between keeps values from its first argument up to but not including its second; int turns one stamp into a number.", "Rebuild the year column as numbers first, then choose interval ends so that both 1970 and 1979 survive, and sort upward."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ntitles = ['A Field Guide to Patient Rain', 'The Mapmaker Who Waited', 'Notes Left Under Stones', 'Lanterns of the Slow Tide', 'Winter Comes to the Aviary', 'The Quiet Arithmetic of Bees', 'Letters to a Distant Shell', 'An Atlas of Borrowed Weather']\nn = random.randint(3, 7)\npicked = random.sample(titles, n)\nyears = [random.choice([1968, 1970, 1971, 1974, 1976, 1979, 1980, 1983, 1991]) for _ in range(n)]\nif random.random() < 0.4:\n    years = [str(year) for year in years]\nshelf = Table().with_columns('title', make_array(*picked), 'year', make_array(*years))",
+  "visibleSeed": 12,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "year"], "rows": [["Notes Left Under Stones", 1971], ["An Atlas of Borrowed Weather", 1983], ["The Mapmaker Who Waited", 1976], ["Letters to a Distant Shell", 1968]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "stamped_1979", "inputs": {"shelf": {"kind": "table", "labels": ["title", "year"], "rows": [["A Field Guide to Patient Rain", 1979], ["Winter Comes to the Aviary", 1974], ["The Quiet Arithmetic of Bees", 1988]], "totalRows": 3}}, "predicate": "any(int(stamp) == 1979 for stamp in shelf.column('year'))"},
+    {"name": "typed_stamps", "inputs": {"shelf": {"kind": "table", "labels": ["title", "year"], "rows": [["Lanterns of the Slow Tide", "1972"], ["Notes Left Under Stones", "1991"], ["The Mapmaker Who Waited", "1970"]], "totalRows": 3}}, "predicate": "all(isinstance(stamp, str) for stamp in shelf.column('year'))"},
+    {"name": "alcove_stays_empty", "inputs": {"shelf": {"kind": "table", "labels": ["title", "year"], "rows": [["An Atlas of Borrowed Weather", 1993], ["Letters to a Distant Shell", 1962]], "totalRows": 2}}, "predicate": "not any(1970 <= int(stamp) < 1980 for stamp in shelf.column('year'))"}
+  ],
+  "queueSize": 8,
+  "reference": "stamps = make_array(*[int(stamp) for stamp in shelf.column('year')])\ntidy = shelf.with_columns('year', stamps)\ndeliver(tidy.where('year', are.between(1970, 1980)).sort('year'))",
+  "naive": [
+    {"code": "stamps = make_array(*[int(stamp) for stamp in shelf.column('year')])\ntidy = shelf.with_columns('year', stamps)\ndeliver(tidy.where('year', are.between(1970, 1979)).sort('year'))", "fails": "silent", "hazard": "stamped_1979"},
+    {"code": "deliver(shelf.where('year', are.between(1970, 1980)).sort('year'))", "fails": "loud", "hazard": "typed_stamps"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["are.between"],
+  "standingOrder": {"eligible": true, "ink": 6, "oil": 1},
+  "setPiece": "seventies-alcove", "hazards": ["stamped_1979", "typed_stamps", "alcove_stays_empty"], "stochastic": false
+}

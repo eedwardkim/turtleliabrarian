@@ -1,0 +1,27 @@
+{
+  "id": "ch6-vary-1", "chapter": 6, "kind": "vary",
+  "title": "A Handful for the Display Case", "patron": "Mrs. Quill",
+  "request": "Draw k books at random for the case, and no book twice — if the cart holds fewer than k books, take the whole cart. Deliver the total loans of the books you drew.",
+  "objective": "Sample rows without replacement while respecting the size of the table.",
+  "concepts": ["sample", "with_replacement", "oversampling", "randomness"],
+  "requiredApi": ["sample", "num_rows", "column", "np.sum", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "range", "make_array", "np.arange", "np.append", "item", "sum", "np.mean", "np.std", "np.count_nonzero", "np.max", "np.min", "np.sum", "np.random.choice", "percentile", "sample_proportions", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "sample", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "are.contained_in", "barh", "hist", "scatter", "plot", "apply", "group", "pivot", "join", "read_table"],
+  "starter": "picked = shelf.sample(k)\ndeliver(int(np.sum(picked.column('loans'))))",
+  "hints": ["Left to itself, sample draws with replacement, so the same book can walk into the case twice.", "Asking for more rows than the cart holds is refused outright when repeats are forbidden.", "Take the smaller of k and the cart's row count, sample that many rows with with_replacement set to False, and total the loans column."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ntitles = ['Lanterns of the Slow Tide', 'The Brass Hour', 'Nine Ways to Fold a Map', 'Eleven Rooms of Rain', 'Winter Comes to the Aviary', 'The Index of Small Storms']\nn = random.randint(2, 6)\npicked = random.sample(titles, n)\nloans = random.sample(range(3, 60), n)\nshelf = Table().with_columns('title', make_array(*picked), 'loans', make_array(*loans))\nk = random.randint(1, 5)",
+  "visibleSeed": 7,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "loans"], "rows": [["The Brass Hour", 22], ["Eleven Rooms of Rain", 41], ["Nine Ways to Fold a Map", 9], ["Winter Comes to the Aviary", 33]], "totalRows": 4}, "k": 2},
+  "fixtures": [
+    {"name": "cart_smaller_than_request", "inputs": {"shelf": {"kind": "table", "labels": ["title", "loans"], "rows": [["The Index of Small Storms", 17], ["Lanterns of the Slow Tide", 28]], "totalRows": 2}, "k": 5}, "predicate": "k > shelf.num_rows"},
+    {"name": "the_whole_cart_exactly", "inputs": {"shelf": {"kind": "table", "labels": ["title", "loans"], "rows": [["The Brass Hour", 12], ["Nine Ways to Fold a Map", 30], ["Eleven Rooms of Rain", 6]], "totalRows": 3}, "k": 3}, "predicate": "k == shelf.num_rows"}
+  ],
+  "queueSize": 8,
+  "reference": "size = min(k, shelf.num_rows)\npicked = shelf.sample(size, with_replacement=False)\ndeliver(int(np.sum(picked.column('loans'))))",
+  "naive": [
+    {"code": "picked = shelf.sample(k, with_replacement=False)\ndeliver(int(np.sum(picked.column('loans'))))", "fails": "loud", "hazard": "cart_smaller_than_request"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["sample"],
+  "standingOrder": {"eligible": true, "ink": 7, "oil": 2},
+  "setPiece": "display-case", "hazards": ["cart_smaller_than_request", "the_whole_cart_exactly"], "stochastic": true
+}
