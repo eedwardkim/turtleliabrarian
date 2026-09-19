@@ -76,12 +76,13 @@ checks also pass, including the previously invalid constructor result.
 An additional 36 default-contract cross-runtime cases pass with instrumentation
 off/on and exact repeat traces.
 
-Optimizer failure semantics still differ from the oracle and are currently
-encoded in existing tests. For `(x-3)**2` with `maxiter=0`, the oracle returns
-3.0 (Powell) or 0.0 (BFGS) and reports `success=False`; this engine raises
-RuntimeError. With `maxfev=1`, Powell returns 0.0 while BFGS ignores the unsupported
-option with a warning; the engine raises in both cases. Correcting the existing
-test expectations requires approval before this compatibility change proceeds.
+The user approved correcting optimizer tests and implementation to match the
+oracle. Exhausted budgets now return the last accepted iterate and an
+unsuccessful log/trace result. Powell distinguishes evaluation and iteration
+limits; BFGS ignores maxfev with a warning. Six additional 500-example properties
+compare finite budget results, status/messages, callbacks and evaluation counts.
+Nonfinite results and interrupted line searches have explicit oracle regressions.
+The complete native/Pyodide gate is being rerun for this correction.
 
 ### Browser evidence
 
@@ -124,7 +125,7 @@ release gate remains in place.
   `allowedApi` is not a security boundary.
 - **E09 compatibility:** minimize supports Powell/BFGS and documented controls;
   other methods and options, including bounds/constraints/jac, remain unsupported.
-  Exhausted-budget return behavior also needs correction, as recorded above.
+  Exhausted-budget return behavior has been corrected as recorded above.
 - Director scoped binding and loop invocation/count consumption pass targeted
   replay regressions and browser checks. Multiple-series charts pass the browser
   checks above; 3D staging and further style controls remain.

@@ -3,6 +3,7 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
 from math import ceil
+from warnings import warn
 
 import numpy as np
 
@@ -76,6 +77,18 @@ class _ConvergenceError(RuntimeError):
     pass
 
 
+class _MaxFuncCallError(RuntimeError):
+    pass
+
+
+class _CallbackStop(Exception):
+    pass
+
+
+class OptimizeWarning(UserWarning):
+    pass
+
+
 def _line_minimum(evaluate, point, direction, value, tolerance):
     length = np.linalg.norm(direction)
     if length == 0:
@@ -87,6 +100,8 @@ def _line_minimum(evaluate, point, direction, value, tolerance):
 
     left, right = -1.0, 1.0
     below, above = along(left), along(right)
+    if np.isnan(value) or np.isnan(below) or np.isnan(above):
+        raise _ConvergenceError("NaN result encountered.")
     if min(below, above) < value:
         sign = -1 if below < above else 1
         previous, current = 0.0, float(sign)
@@ -124,20 +139,27 @@ def _line_minimum(evaluate, point, direction, value, tolerance):
     return point + distance * direction, best
 
 
-def _powell(evaluate, point, value, maxiter, xtol, ftol, callback):
+def _powell(evaluate, report, maxiter, maxfev, xtol, ftol, callback):
+    point, value = report.x, report.fun
     directions = np.eye(len(point))
-    for iteration in range(1, maxiter + 1):
+    while True:
         start, initial = point.copy(), value
         biggest, replaced = 0.0, 0
         for index, direction in enumerate(directions):
             previous = value
             point, value = _line_minimum(evaluate, point, direction, value, xtol)
+            report.x, report.fun = point, value
             if previous - value > biggest:
                 biggest, replaced = previous - value, index
+        report.nit += 1
         if callback is not None:
             callback(point.copy())
+        if report.nfev >= maxfev:
+            return 1
+        if report.nit >= maxiter:
+            return 2
         if 2 * (initial - value) <= ftol * (abs(initial) + abs(value)) + 1e-20:
-            return point, value, iteration
+            return 0
         displacement = point - start
         extrapolated = evaluate(point + displacement)
         if extrapolated < initial:
@@ -149,12 +171,14 @@ def _powell(evaluate, point, value, maxiter, xtol, ftol, callback):
             )
             if test < 0:
                 point, value = _line_minimum(evaluate, point, displacement, value, xtol)
+                report.x, report.fun = point, value
                 directions[replaced] = directions[-1]
                 directions[-1] = displacement / np.linalg.norm(displacement)
-    raise _ConvergenceError("Failed to converge within the iteration limit")
 
 
-def _bfgs(evaluate, point, value, maxiter, gtol, callback):
+def _bfgs(evaluate, report, maxiter, gtol, callback):
+    point, value = report.x, report.fun
+
     def gradient(at):
         step = np.cbrt(np.finfo(float).eps) * np.maximum(1, np.abs(at))
         result = np.empty(len(at))
@@ -168,26 +192,38 @@ def _bfgs(evaluate, point, value, maxiter, gtol, callback):
 
     inverse = np.eye(len(point))
     grad = gradient(point)
-    for iteration in range(maxiter):
+    previous_value = value + np.linalg.norm(grad) / 2
+    while report.nit < maxiter:
+        if not np.isfinite(value) or not np.all(np.isfinite(grad)):
+            return 3
         if np.max(np.abs(grad)) <= gtol:
-            return point, value, iteration
+            return 0
         direction = -inverse @ grad
         slope = grad @ direction
         if slope >= 0:
             inverse = np.eye(len(point))
             direction, slope = -grad, -(grad @ grad)
-        step = 1.0
+        step = min(1.0, 2.02 * (value - previous_value) / slope)
+        if step <= 0:
+            step = 1.0
+        lower, upper = 0.0, np.inf
         for _ in range(60):
             candidate = point + step * direction
             next_value = evaluate(candidate)
             if next_value <= value + 1e-4 * step * slope:
-                break
-            step *= 0.5
+                next_grad = gradient(candidate)
+                next_slope = next_grad @ direction
+                if abs(next_slope) <= -0.9 * slope:
+                    break
+                if next_slope < 0:
+                    lower = step
+                else:
+                    upper = step
+            else:
+                upper = step
+            step = 5 * step if np.isinf(upper) else (lower + upper) / 2
         else:
-            raise _ConvergenceError(
-                "Failed to converge during the gradient line search"
-            )
-        next_grad = gradient(candidate)
+            return 2
         delta, change = candidate - point, next_grad - grad
         curvature = change @ delta
         if curvature > np.finfo(float).eps * np.linalg.norm(delta) * np.linalg.norm(
@@ -197,12 +233,13 @@ def _bfgs(evaluate, point, value, maxiter, gtol, callback):
             inverse = (
                 transform @ inverse @ transform.T + np.outer(delta, delta) / curvature
             )
+        previous_value = value
         point, value, grad = candidate, next_value, next_grad
+        report.x, report.fun = point, value
+        report.nit += 1
         if callback is not None:
             callback(point.copy())
-    if np.max(np.abs(grad)) <= gtol:
-        return point, value, maxiter
-    raise _ConvergenceError("Failed to converge within the iteration limit")
+    return 1
 
 
 def minimize(f, start=None, smooth=False, log=None, array=False, **vargs):
@@ -216,8 +253,9 @@ def minimize(f, start=None, smooth=False, log=None, array=False, **vargs):
     Supports method='Powell'/'BFGS', tol, callback(x), and options containing
     maxiter, maxfev, xtol/ftol (Powell) or gtol (BFGS). Other SciPy-specific
     options raise NotImplementedError. log receives a result with x, fun,
-    success, status, message, nit and nfev. Nonfinite objectives and exhausted
-    budgets raise RuntimeError; a failed answer is never returned as a minimum.
+    success, status, message, nit and nfev. Exhausted budgets return the last
+    accepted iterate with success=False in the log and trace. BFGS ignores
+    maxfev with a warning, as the reference solver does.
     """
     check_api("minimize")
     if start is None:
@@ -244,82 +282,94 @@ def minimize(f, start=None, smooth=False, log=None, array=False, **vargs):
     )
     if vargs or options.keys() - supported:
         raise NotImplementedError("Unsupported optimization options")
-    maxiter = int(options.get("maxiter", 1000 * point.size))
-    maxfev = int(options.get("maxfev", 20000 * point.size))
+    if method == "Powell":
+        maxiter = options.get("maxiter")
+        maxfev = options.get("maxfev")
+        if maxiter is None and maxfev is None:
+            maxiter = maxfev = 1000 * point.size
+        elif maxiter is None:
+            maxiter = 1000 * point.size if np.isinf(maxfev) else np.inf
+        elif maxfev is None:
+            maxfev = 1000 * point.size if np.isinf(maxiter) else np.inf
+    else:
+        maxiter = options.get("maxiter")
+        if maxiter is None:
+            maxiter = 200 * point.size
+        maxfev = np.inf
+        if "maxfev" in options:
+            warn("Unknown solver options: maxfev", OptimizeWarning, stacklevel=2)
     xtol = float(options.get("xtol", 1e-9 if tolerance is None else tolerance))
     ftol = float(options.get("ftol", 1e-10 if tolerance is None else tolerance))
     gtol = float(options.get("gtol", 1e-5 if tolerance is None else tolerance))
     if any(not np.isfinite(t) or t <= 0 for t in (xtol, ftol, gtol)):
         raise ValueError("Optimization tolerances must be finite and positive")
-    evaluations, iterations = 0, 0
-    best_value, best_point = np.inf, point.copy()
+    report = _OptimizationResult(point, np.inf, False, 0, "", 0, 0)
 
     def completed(at):
-        nonlocal iterations
-        iterations += 1
         if callback is not None:
-            callback(at)
+            try:
+                callback(at)
+            except StopIteration as error:
+                raise _CallbackStop from error
 
     def evaluate(at):
-        nonlocal evaluations, best_value, best_point
-        if evaluations >= maxfev:
-            raise _ConvergenceError("Failed to converge within the evaluation limit")
-        evaluations += 1
+        if report.nfev >= maxfev:
+            raise _MaxFuncCallError("Too many function calls")
+        report.nfev += 1
         raw = f(at.copy()) if array else f(*at)
         scalar = np.asarray(raw).item()
         if isinstance(scalar, (str, bytes)):
             raise TypeError("Objective must return a number")
         value = float(scalar)
-        if not np.isfinite(value):
-            raise _ConvergenceError("Objective must return a finite number")
-        if value < best_value:
-            best_value, best_point = value, at.copy()
         return value
 
+    report.fun = evaluate(point)
     try:
-        value = evaluate(point)
-        if maxiter <= 0:
-            raise _ConvergenceError("Failed to converge within the iteration limit")
         if method == "Powell":
-            point, value, iterations = _powell(
-                evaluate, point, value, maxiter, xtol, ftol, completed
+            report.status = _powell(
+                evaluate, report, maxiter, maxfev, xtol, ftol, completed
             )
         else:
-            point, value, iterations = _bfgs(
-                evaluate, point, value, maxiter, gtol, completed
-            )
-    except _ConvergenceError as error:
-        report = _OptimizationResult(
-            best_point, best_value, False, 1, str(error), iterations, evaluations
-        )
-        if log is not None:
-            log(report)
-        emit(
-            "minimize",
-            (start,),
-            best_point,
-            method=method,
-            success=False,
-            message=str(error),
-            iterations=iterations,
-            evaluations=evaluations,
-            objective=best_value,
-        )
-        raise RuntimeError(str(error)) from error
-    report = _OptimizationResult(
-        point.copy(), value, True, 0, "Optimization converged", iterations, evaluations
-    )
+            report.status = _bfgs(evaluate, report, maxiter, gtol, completed)
+    except _MaxFuncCallError:
+        report.status = 1
+    except _ConvergenceError:
+        report.status = 3
+        report.x = np.full_like(point, np.nan)
+        report.fun = np.nan
+        report.nit += 1
+    except _CallbackStop:
+        report.status = 99
+    messages = {
+        0: "Optimization terminated successfully.",
+        1: (
+            "Maximum number of function evaluations has been exceeded."
+            if method == "Powell"
+            else "Maximum number of iterations has been exceeded."
+        ),
+        2: (
+            "Maximum number of iterations has been exceeded."
+            if method == "Powell"
+            else "Desired error not necessarily achieved due to precision loss."
+        ),
+        3: "NaN result encountered.",
+        99: "`callback` raised `StopIteration`.",
+    }
+    report.success = report.status == 0
+    report.message = messages[report.status]
     if log is not None:
         log(report)
-    result = float(point[0]) if len(point) == 1 else point
+    result = float(report.x[0]) if len(point) == 1 else report.x.copy()
     emit(
         "minimize",
         (start,),
         result,
         method=method,
-        success=True,
-        iterations=iterations,
-        evaluations=evaluations,
-        objective=value,
+        success=report.success,
+        status=report.status,
+        message=report.message,
+        iterations=report.nit,
+        evaluations=report.nfev,
+        objective=report.fun,
     )
     return result

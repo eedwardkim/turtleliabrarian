@@ -301,14 +301,22 @@ def test_minimize_defaults_log_and_failures(smooth):
     assert logs[0].success
     assert logs[0].nfev == len(calls)
     assert logs[0].fun < 1e-10
-    with pytest.raises(RuntimeError, match="converge"):
-        minimize(objective, smooth=smooth, options={"maxiter": 0}, log=logs.append)
+    limited = minimize(
+        objective, smooth=smooth, options={"maxiter": 0}, log=logs.append
+    )
     assert not logs[-1].success
+    np.testing.assert_allclose(limited, [0, 0] if smooth else [2, -4], atol=1e-5)
+    assert logs[-1].status == (1 if smooth else 2)
     for value in (np.nan, np.inf, -np.inf):
-        with pytest.raises(RuntimeError, match="finite"):
-            minimize(lambda x: value, smooth=smooth)
-    with pytest.raises(RuntimeError):
-        minimize(lambda x: -x, smooth=smooth, options={"maxfev": 100})
+        minimize(
+            lambda x: value,
+            smooth=smooth,
+            options={"maxiter": 2},
+            log=logs.append,
+        )
+        assert not logs[-1].success
+    minimize(lambda x: -x, smooth=smooth, options={"maxiter": 2}, log=logs.append)
+    assert not logs[-1].success
 
 
 def test_minimize_powell_correlated_regression():
@@ -382,26 +390,116 @@ def test_minimize_explicit_method_and_evaluation_budget(method):
         3,
         atol=1e-6,
     )
-    with pytest.raises(RuntimeError, match="evaluation"):
-        minimize(
-            lambda x: (x - 3) ** 2,
-            method=method,
-            options={"maxfev": 1},
-            log=report.append,
-        )
-    assert report[0].nfev == 1
-    assert report[0].success is False
+    result = minimize(
+        lambda x: (x - 3) ** 2,
+        method=method,
+        options={"maxfev": 1},
+        log=report.append,
+    )
+    if method == "Powell":
+        assert result == 0
+        assert report[0].nfev == 1
+        assert report[0].success is False
+    else:
+        assert result == pytest.approx(3)
+        assert report[0].nfev > 1
+        assert report[0].success is True
 
 
 def test_minimize_failed_trace():
     result = run(
-        {"code": IMPORTS + "minimize(lambda x: (x-3)**2, options={'maxiter': 0})"}
+        {
+            "code": IMPORTS
+            + "deliver(minimize(lambda x: (x-3)**2, options={'maxfev': 1}))"
+        }
     )
-    assert result["error"]["type"] == "RuntimeError"
+    assert result["error"] is None
+    assert result["delivered"] == 0
     failure = next(event for event in result["trace"] if event["type"] == "minimize")
     assert failure["payload"]["success"] is False
-    assert "converge" in failure["payload"]["message"]
+    assert failure["payload"]["status"] == 1
+    assert "evaluations" in failure["payload"]["message"]
     json.dumps(result, allow_nan=False)
+
+
+@pytest.mark.parametrize("method", ["Powell", "BFGS"])
+@pytest.mark.parametrize("options", [{"maxiter": 0}, {"maxiter": 1}, {"maxfev": 1}])
+@EXAMPLES
+@given(
+    start=st.lists(st.integers(-10, 10), min_size=2, max_size=2),
+    target=st.lists(st.integers(-10, 10), min_size=2, max_size=2),
+)
+def test_minimize_budget_results_differential(oracle, method, options, start, target):
+    actual, expected = results(
+        oracle,
+        "[answer, float(logs[0].fun), bool(logs[0].success), logs[0].status, "
+        "logs[0].nit == len(steps), str(logs[0].message), "
+        "logs[0].nfev == len(calls)]",
+        {"method": method, "options": options, "start": start, "target": target},
+        "logs, calls, steps = [], [], []\n"
+        "def objective(x):\n"
+        "    calls.append(x.copy())\n"
+        "    return np.sum((x - target)**2)\n"
+        "answer = minimize(objective, start, array=True, method=method, "
+        "options=options, log=logs.append, callback=steps.append)\n",
+    )
+    assert actual["result"][2:] == expected["result"][2:]
+    np.testing.assert_allclose(
+        actual["result"][0]["array"],
+        expected["result"][0]["array"],
+        rtol=2e-5,
+        atol=2e-5,
+    )
+    assert actual["result"][1] == pytest.approx(
+        expected["result"][1], rel=2e-5, abs=1e-9
+    )
+
+
+@pytest.mark.parametrize("method", ["Powell", "BFGS"])
+@pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+def test_minimize_nonfinite_result_differential(oracle, method, value):
+    actual, expected = results(
+        oracle,
+        "[answer, logs[0].fun, bool(logs[0].success), logs[0].status, logs[0].nit]",
+        {"method": method, "value": value},
+        "logs = []\n"
+        "answer = minimize(lambda x: value, method=method, "
+        "options={'maxiter': 2}, log=logs.append)\n",
+    )
+    assert actual == expected
+
+
+@pytest.mark.parametrize("budget", [1, 2, 3, 4, 5])
+def test_minimize_partial_line_search_returns_accepted_iterate(oracle, budget):
+    actual, expected = results(
+        oracle,
+        "[answer, float(logs[0].fun), bool(logs[0].success), logs[0].status, "
+        "logs[0].nit, logs[0].nfev]",
+        {"budget": budget},
+        "logs = []\n"
+        "answer = minimize(lambda x: (x-3)**2, options={'maxfev': budget}, "
+        "log=logs.append)\n",
+    )
+    assert actual == expected
+
+
+@pytest.mark.parametrize("method", ["Powell", "BFGS"])
+def test_minimize_callback_stop_is_not_an_objective_error(oracle, method):
+    actual, expected = results(
+        oracle,
+        "[bool(logs[0].success), logs[0].status, logs[0].nit]",
+        {"method": method},
+        "logs = []\n"
+        "def stop(x):\n"
+        "    raise StopIteration\n"
+        "minimize(lambda x: (x-3)**2, method=method, callback=stop, log=logs.append)\n",
+    )
+    assert actual == expected == {"result": [False, 99, 1]}
+    with pytest.raises(StopIteration):
+        minimize(
+            lambda x: 9.0 if x == 0 else next(iter([])),
+            method=method,
+        )
 
 
 @pytest.mark.parametrize(

@@ -162,9 +162,29 @@ The follow-up suite passes 530 tests in both CPython and actual Pyodide. This
 includes 39 new review regressions. The 14 M2 automated gates pass, but they do
 not erase the optimizer and opaque-callback compatibility exceptions.
 
-Direct oracle probes confirm that optimizer budget exhaustion returns a candidate
-and unsuccessful result rather than raising. Existing tests instead require
-RuntimeError for maxiter/maxfev exhaustion. These tests are left unchanged pending
-approval to correct their expectations; M2 remains open. BFGS also ignores maxfev
-with a warning in the oracle, whereas this implementation enforces it. No SciPy
-code or oracle source has been copied.
+The user approved correcting the optimizer implementation and the existing tests
+that incorrectly required RuntimeError on budget exhaustion. `minimize` now
+returns the last accepted iterate, reports failure through `log` and trace, and
+uses method-specific status/messages. Partial line searches do not return an
+unaccepted trial point. Powell runs its initial sweep even for maxiter=0; BFGS
+returns the start without an iteration and ignores maxfev with a warning.
+Default budgets follow the reference's method-specific rules. The NumPy-only
+BFGS line search enforces sufficient decrease and curvature, with safeguarded
+step expansion/bisection. Nonfinite objectives return unsuccessful results;
+objective exceptions still propagate. Callback StopIteration terminates through
+status 99. No SciPy code or oracle source has been copied.
+
+Evaluation/iteration counts describe this implementation's actual work, rather
+than promising identical internal search trajectories to SciPy. The new budget
+properties compare candidate values, objective values, status/messages and
+callback/count consistency against the independently executed oracle.
+
+### Performance and delivery priority
+
+The user's follow-ups prioritize smooth MacBook Air play and quicker delivery
+over elaborate visuals. Preserve the simple low-poly character of the game,
+favor lightweight materials and restrained effects, and measure frame times,
+draw calls and triangles before adding visual cost. Additional shader polish is
+subordinate to functional completion and responsiveness. Independent release
+work can run concurrently after the accepted M1 slice; all changes still enter
+the single consolidated PR #3.

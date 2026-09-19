@@ -137,9 +137,10 @@
     "events": ["minimize"]
   },
   {
-    "name": "minimize-convergence-error",
-    "request": {"code": "minimize(lambda x: (x-3)**2, options={'maxfev': 1})"},
-    "expectedError": {"type": "RuntimeError"}
+    "name": "minimize-budget-result",
+    "request": {"code": "logs = []\nanswer = minimize(lambda x: (x-3)**2, options={'maxfev': 1}, log=logs.append)\nassert not logs[0].success and logs[0].status == 1\ndeliver(answer)"},
+    "expected": {"delivered": 0, "error": null},
+    "events": ["minimize"]
   },
   {
     "name": "charts-multiple-series-unequal-bins-and-settings",
