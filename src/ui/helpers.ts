@@ -87,30 +87,99 @@ export function canReveal(puzzle: Puzzle, completed: string[], feature: 'queue' 
   return completed.length >= thresholds[feature];
 }
 
-export interface ChartPoint { x: number; y: number; label: string }
-export interface ChartSeries { label: string; points: ChartPoint[] }
-export interface ChartData { kind: 'barh' | 'hist' | 'scatter' | 'plot'; series: ChartSeries[] }
+export interface ChartPoint {
+  x: number; y: number; label: string;
+  end?: number;
+  size?: number;
+  breakBefore?: boolean;
+}
+export interface ChartSeries {
+  label: string;
+  points: ChartPoint[];
+  total?: number;
+  fitLine?: ChartPoint[];
+}
+export interface ChartData {
+  kind: 'barh' | 'hist' | 'scatter' | 'plot';
+  series: ChartSeries[];
+  title?: string;
+  xLabel?: string;
+  yLabel?: string;
+  overlay?: boolean;
+  sideBySide?: boolean;
+  xDomain?: [number, number];
+  yDomain?: [number, number];
+}
 
-function numericList(value: Json | undefined): number[] | null {
-  return Array.isArray(value) && value.every((entry): entry is number => typeof entry === 'number' && Number.isFinite(entry)) ? value : null;
+function chartRecord(value: Json | undefined): { [key: string]: Json } {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function chartNumbers(value: Json | undefined): (number | null)[] | null {
+  return Array.isArray(value) && value.every((entry): entry is number | null =>
+    entry === null || typeof entry === 'number' && Number.isFinite(entry)) ? value : null;
+}
+
+function chartDomain(value: Json | undefined): [number, number] | undefined {
+  const limits = chartNumbers(value);
+  return limits?.length === 2 && typeof limits[0] === 'number' && typeof limits[1] === 'number'
+    && limits[0] !== limits[1] ? [limits[0], limits[1]] : undefined;
+}
+
+function chartPoints(payload: { [key: string]: Json }, histogram = false): ChartPoint[] | null {
+  const values = chartNumbers(payload.y ?? payload.values ?? payload.counts);
+  if (!values) return null;
+  const x = chartNumbers(payload.x);
+  const bins = chartNumbers(payload.binEdges);
+  const sizes = chartNumbers(payload.sizes);
+  const labels = payload.labels;
+  let gap = false;
+  return values.flatMap((y, index): ChartPoint[] => {
+    const start = x ? x[index] : index;
+    const end = bins?.[index + 1];
+    if (typeof y !== 'number' || typeof start !== 'number' ||
+        histogram && bins && typeof end !== 'number') {
+      gap = true;
+      return [];
+    }
+    const label = Array.isArray(labels) && labels[index] !== undefined ? String(labels[index]) : String(start);
+    const size = sizes?.[index] ?? payload.sizes;
+    const point: ChartPoint = { x: start, y, label };
+    if (typeof end === 'number') point.end = end;
+    if (typeof size === 'number' && Number.isFinite(size) && size >= 0) point.size = size;
+    if (gap) point.breakBefore = true;
+    gap = false;
+    return [point];
+  });
 }
 
 export function chartFromEvent(event: TraceEvent): ChartData | null {
-  const kind = event.type.replace(/^chart[.:_]/, '');
+  const kind = event.type === 'chart' ? event.payload.kind : event.type.replace(/^chart[.:_]/, '');
   if (kind !== 'barh' && kind !== 'hist' && kind !== 'scatter' && kind !== 'plot') return null;
-  const x = numericList(event.payload.x);
-  const y = numericList(event.payload.y) ?? numericList(event.payload.values) ?? numericList(event.payload.counts);
-  if (!y) return null;
-  const labels = event.payload.labels;
-  const series: ChartSeries = {
-    label: typeof event.payload.label === 'string' ? event.payload.label : kind,
-    points: y.map((value, index) => ({
-      x: x?.[index] ?? index,
-      y: value,
-      label: Array.isArray(labels) && typeof labels[index] === 'string' ? labels[index] : String(x?.[index] ?? index),
-    })),
+  const payloads = Array.isArray(event.payload.series) ? event.payload.series.map(chartRecord) : [event.payload];
+  const series = payloads.flatMap((payload): ChartSeries[] => {
+    const points = chartPoints(payload, kind === 'hist');
+    if (!points) return [];
+    return [{
+      label: typeof payload.label === 'string' ? payload.label : kind,
+      points,
+      total: typeof payload.pointCount === 'number' ? Math.max(points.length, payload.pointCount) : points.length,
+      fitLine: chartPoints(chartRecord(payload.fitLine)) ?? [],
+    }];
+  });
+  if (!series.length) return null;
+  const axes = chartRecord(event.payload.axes);
+  const settings = chartRecord(event.payload.settings);
+  return {
+    kind, series,
+    title: typeof settings.title === 'string' ? settings.title : text.output.chart,
+    xLabel: typeof settings.xlabel === 'string' ? settings.xlabel : typeof axes.x === 'string' ? axes.x : text.output.x,
+    yLabel: typeof settings.ylabel === 'string' ? settings.ylabel : typeof axes.y === 'string' ? axes.y : text.output.y,
+    overlay: settings.overlay !== false,
+    sideBySide: settings.sideBySide === true,
+    xDomain: chartDomain(settings.xlim),
+    yDomain: chartDomain(settings.ylim),
   };
-  return { kind, series: [series] };
 }
 
 export function valueIsPresent(value: Value): boolean {
