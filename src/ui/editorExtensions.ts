@@ -1,11 +1,12 @@
 import { autocompletion } from '@codemirror/autocomplete';
 import type { Completion, CompletionContext } from '@codemirror/autocomplete';
-import { StateEffect, StateField } from '@codemirror/state';
+import { Annotation, StateEffect, StateField } from '@codemirror/state';
 import { Decoration, EditorView } from '@codemirror/view';
 import type { DecorationSet } from '@codemirror/view';
 import { text } from './text';
 
 export const highlightPlayerLine = StateEffect.define<number>();
+export const externalCodeUpdate = Annotation.define<boolean>();
 export const playerLine = StateField.define<DecorationSet>({
   create: () => Decoration.none,
   update(value, transaction) {
@@ -23,7 +24,7 @@ export const playerLine = StateField.define<DecorationSet>({
 });
 
 export function learnedCompletions(api: string[], files: string[] = []): Completion[] {
-  const labels = [...new Set([...api, 'deliver', ...files.map(file => file.replace(/\.py$/, ''))])];
+  const labels = [...new Set([...api.map(label => label.replace(/\(.*$/, '')), 'deliver', ...files.map(file => file.replace(/\.py$/, ''))])];
   return labels.filter(label => /^[\w.]+$/.test(label)).map(label => ({
     label, type: files.includes(`${label}.py`) ? 'variable' : 'function', detail: text.editor.completion,
   }));
@@ -37,7 +38,7 @@ export function completionSource(api: string[], files: string[] = []) {
     const dot = word.text.lastIndexOf('.');
     const member = dot >= 0 ? word.text.slice(0, dot) : '';
     const matching = member
-      ? options.filter(option => option.label.startsWith(`${member}.`) || (!option.label.includes('.') && !files.includes(`${option.label}.py`)))
+      ? options.filter(option => option.label.startsWith(`${member}.`) || (!['np', 'are', 'Table'].includes(member) && option.label.startsWith('Table.')))
         .map(option => ({ ...option, label: option.label.includes('.') ? option.label.slice(option.label.lastIndexOf('.') + 1) : option.label }))
       : options;
     return { from: word.from + dot + 1, options: matching, validFor: /^\w*$/ };

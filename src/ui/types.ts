@@ -48,7 +48,6 @@ export interface GameStateForUI {
   markTutorial: (id: string) => void;
   purchase: (id: string) => void;
   runScratch?: (code: string) => Promise<RunResult>;
-  replayQueue?: (index: number) => void;
   toggleStandingOrder?: (puzzleId: string) => void;
   equipHat?: (id: string) => void;
 }

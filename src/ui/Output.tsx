@@ -32,16 +32,26 @@ export function Chart({ data }: { data: ChartData }) {
   const x = (value: number) => 44 + (value - minX) / (maxX - minX) * 284;
   const y = (value: number) => 166 - (value - minY) / (maxY - minY) * 140;
   const colors = ['#4f7f60', '#3e5c8a', '#7a5c9a'];
+  const horizontal = data.kind === 'barh';
+  const barX = (value: number) => 80 + (value - minY) / (maxY - minY) * 248;
+  const barHeight = 140 / Math.max(points.length, 1);
   return <figure className="chart">
     <svg viewBox="0 0 360 200" role="img" aria-labelledby={titleId}>
       <title id={titleId}>{text.output.chart}</title>
-      <path d={`M44 24V166H338M44 ${y(0)}H338`} stroke="#b4a68f" fill="none" />
-      <text x="8" y="30">{Number(maxY.toPrecision(3))}</text>
-      <text x="8" y="170">{Number(minY.toPrecision(3))}</text>
-      <text x="44" y="190">{minX}</text><text x="310" y="190">{maxX}</text>
+      {horizontal ? <>
+        <path d={`M80 166H338M${barX(0)} 24V166`} stroke="#b4a68f" fill="none" />
+        <text x="80" y="190">{Number(minY.toPrecision(3))}</text><text x="310" y="190">{Number(maxY.toPrecision(3))}</text>
+      </> : <>
+        <path d={`M44 24V166H338M44 ${y(0)}H338`} stroke="#b4a68f" fill="none" />
+        <text x="8" y="30">{Number(maxY.toPrecision(3))}</text>
+        <text x="8" y="170">{Number(minY.toPrecision(3))}</text>
+        <text x="44" y="190">{minX}</text><text x="310" y="190">{maxX}</text>
+      </>}
       {data.series.map((series, index) => <g key={index} fill={colors[index % colors.length]} stroke={colors[index % colors.length]}>
         {data.kind === 'plot' && <polyline points={series.points.map(point => `${x(point.x)},${y(point.y)}`).join(' ')} fill="none" strokeWidth="2" />}
-        {series.points.map((point, pointIndex) => (data.kind === 'barh' || data.kind === 'hist')
+        {series.points.map((point, pointIndex) => horizontal
+          ? <g key={pointIndex}><text x="3" y={26 + pointIndex * barHeight + barHeight / 2} stroke="none">{point.label.slice(0, 11)}</text><rect x={Math.min(barX(0), barX(point.y))} y={26 + pointIndex * barHeight} width={Math.abs(barX(point.y) - barX(0))} height={Math.max(1, barHeight - 4)}><title>{`${point.label}: ${point.y}`}</title></rect></g>
+          : data.kind === 'hist'
           ? <rect key={pointIndex} x={x(point.x)} y={Math.min(y(0), y(point.y))} width={Math.max(2, 240 / Math.max(series.points.length, 1))} height={Math.max(1, Math.abs(y(point.y) - y(0)))}><title>{`${point.label}: ${point.y}`}</title></rect>
           : <circle key={pointIndex} cx={x(point.x)} cy={y(point.y)} r="3"><title>{`${point.x}, ${point.y}`}</title></circle>)}
       </g>)}
@@ -65,7 +75,7 @@ export function OutputPanel({ result, diff }: { result: RunResult | null; diff?:
       <details><summary>{text.output.raw}</summary><pre>{result.error.type}: {result.error.message}</pre></details>
     </section>}
     {result.stdout && <section><h3 className="output-label">{text.output.stdout}</h3><pre className="stdout">{result.stdout}</pre></section>}
-    <section><h3 className="output-label">{text.output.value}</h3><ValueDisplay value={result.value} /></section>
+    <section><h3 className="output-label">{text.output.value}</h3><ValueDisplay value={result.value} diff={result.delivered === null ? diff : undefined} /></section>
     {result.delivered !== null && <section><h3 className="output-label">{text.output.delivered}</h3><ValueDisplay value={result.delivered} diff={diff} /></section>}
     {diff && !diff.pass && <section className="diff-card"><h3><Icon name="book" />{text.output.diff}</h3><p>{diff.message}</p><ul>
       {diff.extraRows.length > 0 && <li>{format(text.output.extra, { count: diff.extraRows.length })}</li>}

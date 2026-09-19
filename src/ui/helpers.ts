@@ -3,6 +3,11 @@ import { text } from './text';
 
 export interface Viewport { width: number; height: number }
 export type WindowId = 'editor' | 'output' | 'request' | 'queue' | 'replay' | 'scratch';
+const PYTHON_KEYWORDS = new Set(['False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield']);
+
+function isWindowId(id: string): id is WindowId {
+  return ['editor', 'output', 'request', 'queue', 'replay', 'scratch'].includes(id);
+}
 
 export function compactNumber(value: number): string {
   if (!Number.isFinite(value)) return '0';
@@ -19,7 +24,7 @@ export function scalarText(value: Scalar): string {
 }
 
 export function validFilename(name: string, files: Record<string, string>): boolean {
-  return /^[A-Za-z_]\w*\.py$/.test(name) && !Object.hasOwn(files, name) && name !== '__init__.py';
+  return /^[A-Za-z_]\w*\.py$/.test(name) && !Object.hasOwn(files, name) && name !== '__init__.py' && !PYTHON_KEYWORDS.has(name.slice(0, -3));
 }
 
 export function isTextInput(target: EventTarget | null): boolean {
@@ -51,7 +56,7 @@ export function defaultLayout(id: string, viewport: Viewport): WindowLayout {
     replay: [width + 48, viewport.height - 166, Math.min(420, viewport.width - width - 410), 140],
     scratch: [width + 52, 106, 420, 350],
   };
-  const [x, y, w, h] = positions[id in positions ? id as WindowId : 'editor'];
+  const [x, y, w, h] = positions[isWindowId(id) ? id : 'editor'];
   return clampLayout({ x, y, width: w, height: h, minimized: false, closed: false, z: 1 }, viewport);
 }
 
@@ -77,7 +82,7 @@ export function cellState(diff: CheckDiff | null | undefined, row: number, colum
 }
 
 export function canReveal(puzzle: Puzzle, completed: string[], feature: 'queue' | 'almanac' | 'scratch' | 'replay' | 'scripts'): boolean {
-  if (puzzle.chapter > 0) return true;
+  if (puzzle.chapter > 0 || puzzle.unlocks.includes(feature)) return true;
   const thresholds = { queue: 1, almanac: 1, replay: 1, scratch: 2, scripts: 3 };
   return completed.length >= thresholds[feature];
 }

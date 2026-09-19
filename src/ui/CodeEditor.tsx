@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, drawSelection, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { bracketMatching, HighlightStyle, indentOnInput, syntaxHighlighting } from '@codemirror/language';
 import { python } from '@codemirror/lang-python';
 import { closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
 import { tags } from '@lezer/highlight';
-import { completionExtension, highlightPlayerLine, playerLine } from './editorExtensions';
+import { completionExtension, externalCodeUpdate, highlightPlayerLine, playerLine } from './editorExtensions';
 import { text } from './text';
 
 const syntax = HighlightStyle.define([
@@ -17,6 +17,7 @@ const syntax = HighlightStyle.define([
   { tag: tags.comment, color: '#a6a49d', fontStyle: 'italic' },
   { tag: tags.operator, color: '#ddc5a0' },
 ]);
+const EMPTY_FILES: string[] = [];
 
 const theme = EditorView.theme({
   '&': { height: '100%', color: '#eee7d8', backgroundColor: '#262b2a' },
@@ -46,7 +47,7 @@ export interface CodeEditorProps {
   label?: string;
 }
 
-export function CodeEditor({ value, onChange, onRun, api, files = [], line = 0, fontSize = 14, readOnly = false, label = text.editor.label }: CodeEditorProps) {
+export function CodeEditor({ value, onChange, onRun, api, files = EMPTY_FILES, line = 0, fontSize = 14, readOnly = false, label = text.editor.label }: CodeEditorProps) {
   const parent = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const callbacks = useRef({ onChange, onRun });
@@ -67,10 +68,10 @@ export function CodeEditor({ value, onChange, onRun, api, files = [], line = 0, 
           compartments.readonly.of([]), compartments.label.of([]),
           keymap.of([
             { key: 'Mod-Enter', run: () => { callbacks.current.onRun(); return true; } },
-            ...closeBracketsKeymap, ...completionKeymap, ...defaultKeymap, ...historyKeymap,
+            ...closeBracketsKeymap, ...completionKeymap, indentWithTab, ...defaultKeymap, ...historyKeymap,
           ]),
           EditorView.updateListener.of(update => {
-            if (update.docChanged) callbacks.current.onChange(update.state.doc.toString());
+            if (update.docChanged && !update.transactions.some(transaction => transaction.annotation(externalCodeUpdate))) callbacks.current.onChange(update.state.doc.toString());
           }),
         ],
       }),
@@ -80,7 +81,7 @@ export function CodeEditor({ value, onChange, onRun, api, files = [], line = 0, 
   }, [compartments]);
   useEffect(() => {
     const editor = view.current;
-    if (editor && editor.state.doc.toString() !== value) editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: value } });
+    if (editor && editor.state.doc.toString() !== value) editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: value }, annotations: externalCodeUpdate.of(true) });
   }, [value]);
   useEffect(() => {
     view.current?.dispatch({ effects: [
