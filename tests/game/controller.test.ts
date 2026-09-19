@@ -316,4 +316,24 @@ describe('runtime-backed game orchestration (controlled runtime responses)', () 
       expect(store.getState().replayElapsed).toBeGreaterThan(before);
     } finally { vi.useRealTimers(); }
   });
+  it('settles idle waiters without clock ticks after work or Stop', async () => {
+    vi.useFakeTimers();
+    try {
+      const { store } = harness();
+      store.setState({ busy: true });
+      const settled = vi.fn();
+      const pending = store.getState().waitForIdle().then(settled);
+      store.setState({ busy: false, backgroundBusy: true });
+      await Promise.resolve();
+      expect(settled).not.toHaveBeenCalled();
+      store.setState({ backgroundBusy: false });
+      await pending;
+      expect(settled).toHaveBeenCalledOnce();
+      store.setState({ busy: true });
+      const stopped = store.getState().waitForIdle();
+      store.getState().stop();
+      await stopped;
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
 });

@@ -113,7 +113,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
   let backgroundSeconds = 0;
   const references = new Map<string, RunResult>();
 
-  return create<GameState>((set, get) => {
+  return create<GameState>((set, get, store) => {
     const persist = (save: GameSave): void => {
       const next = { ...save, lastSavedAt: Date.now() };
       set({ save: next });
@@ -581,9 +581,9 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       waitForIdle() {
         if (!get().busy && !get().backgroundBusy) return Promise.resolve();
         return new Promise<void>((resolve) => {
-          const interval = setInterval(() => {
-            if (!get().busy && !get().backgroundBusy) { clearInterval(interval); resolve(); }
-          }, 10);
+          const unsubscribe = store.subscribe((state) => {
+            if (!state.busy && !state.backgroundBusy) { unsubscribe(); resolve(); }
+          });
         });
       },
       disposeGame() {
