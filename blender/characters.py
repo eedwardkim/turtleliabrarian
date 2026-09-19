@@ -1,12 +1,13 @@
-"""Shelby, Mrs. Quill, Atlas and the M1 rabbit patron."""
+"""Shelby, the hatchlings, Mrs. Quill, Atlas and the M1 rabbit patron."""
 
 import math
 
-from common import box, clips, cone, cylinder, ellipsoid, empty, merge_children, ring, wave
+from common import (box, clips, cone, cylinder, ellipsoid, empty, merge_children,
+                    rescale, ring, wave)
 
 
-def shelby():
-    root = empty("Shelby")
+def shelby(name="Shelby", saddle=True, scale=1.0):
+    root = empty(name)
     body = empty("Body", parent=root)
     ellipsoid("plastron", (0, 0.035, 0.19), (0.195, 0.235, 0.115), "belly", body)
     ellipsoid("shell_rim", (0, 0.05, 0.23), (0.23, 0.275, 0.06), "rim", body)
@@ -15,14 +16,15 @@ def shelby():
                         (0.115, 0.04, 0.41, 0.087), (-0.08, 0.17, 0.397, 0.083),
                         (0.08, 0.17, 0.397, 0.083), (0, -0.12, 0.41, 0.089)]:
         cylinder("hex_plate", (x, y, z), r, 0.03, "shell_top", body, vertices=6)
-    saddle = empty("Saddle", parent=body)
-    for x in (-0.12, 0.12):
-        box("strap", (x, 0.065, 0.42), (0.032, 0.32, 0.033), "leather", saddle)
-    box("saddle", (0, 0.15, 0.465), (0.24, 0.12, 0.018), "leather_dark", saddle)
-    for i in range(3):
-        empty(f"BookSlot_{i}", (-0.08 + i * 0.08, 0.15, 0.48), saddle)
-        box("slot", (-0.08 + i * 0.08, 0.15, 0.48), (0.009, 0.13, 0.018),
-            "brass", saddle)
+    if saddle:
+        harness = empty("Saddle", parent=body)
+        for x in (-0.12, 0.12):
+            box("strap", (x, 0.065, 0.42), (0.032, 0.32, 0.033), "leather", harness)
+        box("saddle", (0, 0.15, 0.465), (0.24, 0.12, 0.018), "leather_dark", harness)
+        for i in range(3):
+            empty(f"BookSlot_{i}", (-0.08 + i * 0.08, 0.15, 0.48), harness)
+            box("slot", (-0.08 + i * 0.08, 0.15, 0.48), (0.009, 0.13, 0.018),
+                "brass", harness)
     pocket = empty("BellyPocket", parent=body)
     box("pocket", (0, -0.15, 0.112), (0.12, 0.08, 0.015), "leather", pocket, 0.009)
     head = empty("Head", (0, -0.205, 0.27), body)
@@ -46,6 +48,8 @@ def shelby():
         feet.append(foot)
     ellipsoid("tail", (0, 0.32, 0.16), (0.035, 0.09, 0.025), "skin", body,
               segments=8, rings=4)
+    if scale != 1:
+        rescale(root, scale)
     merge_children(root)
     gait = [(foot, "rotation_euler", wave(0.34 * (-1 if i % 2 else 1)))
             for i, foot in enumerate(feet)]
@@ -55,23 +59,29 @@ def shelby():
         "carry_walk": gait + [(body, "rotation_euler", wave(0.055, 1))],
         "push_cart": gait + [(head, "rotation_euler", wave(-0.13))],
         "pull_lever": [(feet[0], "rotation_euler", wave(-0.8))],
-        "stamp": [(body, "location", wave(-0.065, 2))],
+        "stamp": [(body, "location", wave(-0.065 * scale, 2))],
         "drop_marble": [(head, "rotation_euler", wave(0.38))],
         "think": [(head, "rotation_euler", wave(0.22, 1))],
-        "cheer": [(root, "location", [(1, (0, 0, 0)), (13, (0, 0, 0.16)),
-                                     (25, (0, 0, 0)), (37, (0, 0, 0.12)), (49, (0, 0, 0))]),
+        "cheer": [(root, "location", [(1, (0, 0, 0)), (13, (0, 0, 0.16 * scale)),
+                                     (25, (0, 0, 0)), (37, (0, 0, 0.12 * scale)),
+                                     (49, (0, 0, 0))]),
                   (body, "rotation_euler", wave(0.2, 2))],
         "deliver": [(head, "rotation_euler", wave(0.24))],
         "flip": [(root, "rotation_euler", [(1, (0, 0, 0)), (25, (0, math.pi, 0)),
                                           (49, (0, math.pi, 0))]),
-                 (root, "location", [(1, (0, 0, 0)), (25, (0, 0, 0.48)),
-                                    (49, (0, 0, 0.48))])],
+                 (root, "location", [(1, (0, 0, 0)), (25, (0, 0, 0.48 * scale)),
+                                    (49, (0, 0, 0.48 * scale))])],
         "flail_loop": gait + [(body, "rotation_euler", wave(0.12, 2))],
         "get_up": [(root, "rotation_euler", [(1, (0, math.pi, 0)), (49, (0, 0, 0))]),
-                   (root, "location", [(1, (0, 0, 0.48)), (49, (0, 0, 0))])],
+                   (root, "location", [(1, (0, 0, 0.48 * scale)), (49, (0, 0, 0))])],
     }
     clips(root, specifications)
     return root
+
+
+def hatchling():
+    """Shelby's parts at 45%: tiny spectacles, no saddle, the same trip clips."""
+    return shelby(name="Hatchling", saddle=False, scale=0.45)
 
 
 def quill():

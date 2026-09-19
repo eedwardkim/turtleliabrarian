@@ -112,6 +112,22 @@ def ring(name, pos, radius, thickness, color, parent=None, half=False):
     return obj
 
 
+def rescale(root, factor):
+    """Shrink a finished hierarchy uniformly, in mesh data so scales stay applied."""
+    stack = [root]
+    meshes = set()
+    while stack:
+        obj = stack.pop()
+        obj.location = tuple(value * factor for value in obj.location)
+        if obj.type == "MESH":
+            meshes.add(obj.data)
+        stack.extend(obj.children)
+    for mesh in meshes:
+        for vertex in mesh.vertices:
+            vertex.co *= factor
+    bpy.context.view_layer.update()
+
+
 def merge_children(parent):
     """One mesh per rigid part, retaining exact palette material slots."""
     children = [o for o in parent.children if o.type == "MESH"]
