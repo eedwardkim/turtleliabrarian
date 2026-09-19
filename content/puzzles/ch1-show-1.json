@@ -1,0 +1,22 @@
+{
+  "id": "ch1-show-1", "chapter": 1, "kind": "show",
+  "title": "One Stamp, Every Slip", "patron": "Mr. Heron",
+  "request": "Each tile holds the late days for one book. Deliver a tray of fees at two ink drops per day, in the same order.",
+  "objective": "Apply arithmetic to a whole array without a loop.",
+  "concepts": ["arrays", "make_array", "elementwise_math"],
+  "requiredApi": ["deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array"],
+  "starter": "# days is an array: the stamp can sweep the entire tray.\ndeliver(days)",
+  "hints": ["Every tile needs the same rate, even when the tray grows.", "Array multiplication applies the rate to every element.", "Create a new fees name from days and the rate, then deliver that new tray."],
+  "inputCode": "import random\nfrom datascience import make_array\ndays = make_array(*[random.randint(1, 14) for _ in range(random.randint(2, 7))])",
+  "visibleSeed": 21, "visibleInputs": {"days": {"kind": "array", "values": [2, 4, 6]}},
+  "fixtures": [
+    {"name": "longer_tray", "inputs": {"days": {"kind": "array", "values": [1, 3, 5, 7]}}, "predicate": "len(days) > 3"},
+    {"name": "zero_late_days", "inputs": {"days": {"kind": "array", "values": [0, 8]}}, "predicate": "0 in days"}
+  ],
+  "queueSize": 6, "reference": "fees = days * 2\ndeliver(fees)",
+  "naive": [{"code": "deliver(make_array(4, 8, 12))", "fails": "silent", "hazard": "longer_tray"}],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["make_array", "array-math"], "standingOrder": {"eligible": true, "ink": 2, "oil": 0},
+  "setPiece": "array-stamp", "hazards": ["longer_tray"], "stochastic": false
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ch1-break-2", "chapter": 1, "kind": "break",
+  "title": "The Letter in the Number Tray", "patron": "Hazel",
+  "request": "These two whole-number readings may arrive as numbers or text. Deliver a numeric array in first, second order, adding bonus to each.",
+  "objective": "Convert numeric text before constructing a numeric array.",
+  "concepts": ["mixed_types", "string_coercion", "numeric_conversion"],
+  "requiredApi": ["int", "make_array", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero"],
+  "starter": "readings = make_array(first, second)\ndeliver(readings)",
+  "hints": ["One text value can turn a whole tray into strings; the printed digits can be deceptive.", "int converts each whole-number reading before make_array chooses a common type.", "Build the tray from two converted readings, then apply bonus to the completed numeric tray."],
+  "inputCode": "import random\nfirst = str(random.randint(1, 20)) if random.randint(0, 1) else random.randint(1, 20)\nsecond = str(random.randint(1, 20)) if random.randint(0, 1) else random.randint(1, 20)\nbonus = random.randint(1, 5)",
+  "visibleSeed": 26, "visibleInputs": {"first": 4, "second": 7, "bonus": 2},
+  "fixtures": [
+    {"name": "mixed_strings", "inputs": {"first": "12", "second": 3, "bonus": 2}, "predicate": "isinstance(first, str) and isinstance(second, int)"},
+    {"name": "both_text", "inputs": {"first": "8", "second": "2", "bonus": 1}, "predicate": "isinstance(first, str) and isinstance(second, str)"}
+  ],
+  "queueSize": 7, "reference": "readings = make_array(int(first), int(second))\ndeliver(readings + bonus)",
+  "naive": [{"code": "deliver(make_array(first, second) + bonus)", "fails": "loud", "hazard": "mixed_strings"}],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["mixed-types"], "standingOrder": {"eligible": true, "ink": 3, "oil": 0},
+  "setPiece": "array-stamp", "hazards": ["mixed_strings"], "stochastic": false
+}
