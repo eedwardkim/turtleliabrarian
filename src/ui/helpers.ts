@@ -47,7 +47,7 @@ export function clampLayout(layout: WindowLayout, viewport: Viewport): WindowLay
 
 export function defaultLayout(id: string, viewport: Viewport): WindowLayout {
   const width = Math.min(510, Math.round(viewport.width * 0.35));
-  const editorHeight = Math.round((viewport.height - 174) * 0.61);
+  const editorHeight = Math.round((viewport.height - 174) * 0.54);
   const positions: Record<WindowId, [number, number, number, number]> = {
     editor: [24, 100, width, editorHeight],
     output: [24, 114 + editorHeight, width, viewport.height - editorHeight - 164],

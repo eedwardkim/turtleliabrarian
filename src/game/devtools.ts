@@ -57,6 +57,7 @@ export const shelfApi = {
   waitForIdle: () => useGame.getState().waitForIdle(),
   getTrace: () => useGame.getState().result?.trace ?? [],
   setSpeed: (replaySpeed: number) => useGame.getState().setSettings({ replaySpeed }),
+  setCaptureMode: (enabled: boolean) => useGame.getState().setCaptureMode(enabled),
   startTour: async (name: string) => {
     if (name === 'full-campaign') return solve(puzzles.map(puzzle => puzzle.id));
     if (name === 'first-10-minutes') return solve(puzzles.filter(puzzle => puzzle.chapter < 2).map(puzzle => puzzle.id));
@@ -77,8 +78,9 @@ declare global {
 export async function initializeDevtools(): Promise<void> {
   if (!devEnabled) return;
   window.__SHELF__ = shelfApi;
-  await useGame.getState().initialize();
   const query = new URLSearchParams(location.search);
+  shelfApi.setCaptureMode(query.get('capture') === '1');
+  await useGame.getState().initialize();
   const puzzle = query.get('puzzle');
   if (puzzle && puzzles.some(entry => entry.id === puzzle)) await gotoPuzzle(puzzle);
   const speed = Number(query.get('speed'));

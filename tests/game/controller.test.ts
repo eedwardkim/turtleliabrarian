@@ -16,9 +16,12 @@ const stores: ReturnType<typeof createGame>[] = [];
 
 function harness() {
   const snapshots = new Map<number, Snapshot>();
+  let activeSlot: number | undefined;
   const persistence = createSaveService({
     read: async (slot) => snapshots.get(slot),
     write: async (slot, snapshot) => { snapshots.set(slot, snapshot); },
+    readActiveSlot: async () => activeSlot,
+    writeActiveSlot: async (slot) => { activeSlot = slot; },
   });
   const runtime = {
     init: vi.fn(async (): Promise<void> => undefined),
@@ -217,6 +220,46 @@ describe('runtime-backed game orchestration (controlled runtime responses)', () 
     store.getState().replayTutorial(id);
     expect(store.getState().activeTutorial).toBe(id);
   });
+  it('resumes the selected bookmark after importing and constructing a new game', async () => {
+    const { store, persistence, runtime } = harness();
+    await store.getState().initialize();
+    store.getState().setCode('# Bookmark 1');
+    await store.getState().saveSlot(0);
+    await store.getState().saveSlot(2);
+    const imported = freshSave('Fern');
+    imported.files['main.py'] = 'deliver(37)';
+    await store.getState().importSave(exportJSON(imported));
+    store.getState().disposeGame();
+    const reloaded = createGame(runtime, persistence);
+    stores.push(reloaded);
+    await reloaded.getState().initialize();
+    expect(reloaded.getState().activeSlot).toBe(2);
+    expect(reloaded.getState().code).toBe('deliver(37)');
+    await reloaded.getState().loadSlot(0);
+    expect(await persistence.activeSlot()).toBe(0);
+    expect(reloaded.getState().code).toBe('# Bookmark 1');
+  });
+  it('rejects invalid imports and empty slots without replacing the current library', async () => {
+    const { store, persistence } = harness();
+    await store.getState().initialize();
+    store.getState().setCode('deliver(42)');
+    await persistence.flush();
+    const before = store.getState().save;
+    await expect(store.getState().importSave('{"broken":')).rejects.toThrow();
+    expect(store.getState().save).toBe(before);
+    await expect(store.getState().loadSlot(2)).rejects.toThrow('empty');
+    expect(store.getState().save).toBe(before);
+    expect(store.getState().activeSlot).toBe(0);
+  });
+  it('propagates disk failures and preserves the library when an import cannot be saved', async () => {
+    const { store, persistence } = harness();
+    await store.getState().initialize();
+    const before = store.getState().save;
+    vi.spyOn(persistence, 'save').mockRejectedValue(new Error('Disk full'));
+    await expect(store.getState().importSave(exportJSON(freshSave('Fern')))).rejects.toThrow('Disk full');
+    expect(store.getState().save).toBe(before);
+    await expect(store.getState().saveSlot(1)).rejects.toThrow('Disk full');
+  });
   it('makes replay upgrade purchases change the reachable speed', () => {
     const { store } = harness();
     store.getState().setSpeed(8);
@@ -256,5 +299,21 @@ describe('runtime-backed game orchestration (controlled runtime responses)', () 
     await loading;
     expect(store.getState().ready).toBe(false);
     expect(runtime.run).not.toHaveBeenCalled();
+  });
+  it('advances capture replay only by explicit frame steps', async () => {
+    vi.useFakeTimers();
+    try {
+      const { store } = harness();
+      await store.getState().initialize();
+      store.getState().setScreen('game');
+      store.getState().setCaptureMode(true);
+      await store.getState().run();
+      const before = store.getState().replayElapsed;
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(store.getState().replayElapsed).toBe(before);
+      expect(store.getState().traceIndex).toBe(0);
+      store.getState().tickReplay(1000 / 30);
+      expect(store.getState().replayElapsed).toBeGreaterThan(before);
+    } finally { vi.useRealTimers(); }
   });
 });

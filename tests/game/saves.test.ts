@@ -3,9 +3,12 @@ import { createSaveService, exportJSON, freshSave, importJSON, parseSave, recove
 
 export function memoryBackend() {
   const slots = new Map<number, Snapshot>();
+  let activeSlot: number | undefined;
   const backend: SaveBackend = {
     read: async (slot) => slots.get(slot),
     write: async (slot, snapshot) => { slots.set(slot, structuredClone(snapshot)); },
+    readActiveSlot: async () => activeSlot,
+    writeActiveSlot: async (slot) => { activeSlot = slot; },
   };
   return { backend, slots };
 }
@@ -63,5 +66,16 @@ describe('save validation and recovery', () => {
     expect((await service.load(1))?.save.name).toBe('Other');
     expect(await service.load(2)).toBeNull();
     await expect(service.load(3)).rejects.toThrow();
+  });
+  it('defaults legacy databases to slot one and persists selection across service instances', async () => {
+    const { backend } = memoryBackend();
+    const service = createSaveService(backend);
+    expect(await service.activeSlot()).toBe(0);
+    await service.save(2, freshSave('Third'));
+    expect(await createSaveService(backend).activeSlot()).toBe(2);
+    await service.select(1);
+    expect(await createSaveService(backend).activeSlot()).toBe(1);
+    await expect(service.select(3)).rejects.toThrow();
+    expect(await service.activeSlot()).toBe(1);
   });
 });

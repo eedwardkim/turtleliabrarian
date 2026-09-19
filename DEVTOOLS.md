@@ -1,5 +1,19 @@
 # Developer tools
 
+## Frame capture
+
+With the app running, `node scripts/capture.mjs` captures the opening tour into
+`artifacts/V00/V00.mp4`. It uses the real title, introduction, tutorials, editor,
+Python worker, and first two request queues at 1920×1080/30fps. Captions are burned
+into the full-page frames before ffmpeg encodes silent H.264. `CAPTURE_URL` and
+`CAPTURE_OUTPUT` override the local origin and artifact directory. `--smoke`
+shortens holds for checking the pipeline.
+
+`?dev=1&capture=1` disables the controller's wall-clock advancement.
+`window.__SHELF__.stepClock(1 / 30)` advances one frame; the capture script also
+steps browser timers and animation frames. Captures use an isolated browser
+context and do not replace the player's saved library.
+
 Add `?dev=1` to the address. Press backquote while focus is outside an editor.
 The panel has searchable actions, puzzle and tutorial navigation, reference
 typing and queue execution, naive and forced failure demonstrations, resource

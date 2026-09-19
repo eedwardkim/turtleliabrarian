@@ -27,7 +27,8 @@ const theme = EditorView.theme({
   '.cm-gutters': { backgroundColor: '#262b2a', color: '#a6a79a', border: 'none', minWidth: '38px' },
   '.cm-activeLineGutter': { backgroundColor: '#343b36', color: '#efcc88' },
   '.cm-activeLine': { backgroundColor: '#313935' },
-  '.cm-player-line': { backgroundColor: '#5b512e', boxShadow: 'inset 3px 0 #e0b43a' },
+  '.cm-player-line': { backgroundColor: '#403a24', boxShadow: 'inset 3px 0 #e0b43a' },
+  '.cm-scroller:focus-visible': { outline: '2px solid #e0b43a', outlineOffset: '-2px' },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': { backgroundColor: '#526558 !important' },
   '&.cm-focused': { outline: 'none' },
   '.cm-tooltip': { backgroundColor: '#fbf8f1', color: '#2a2522', border: '1px solid #c6b48f' },
@@ -76,6 +77,8 @@ export function CodeEditor({ value, onChange, onRun, api, files = EMPTY_FILES, l
         ],
       }),
     });
+    editor.scrollDOM.tabIndex = 0;
+    editor.scrollDOM.setAttribute('role', 'region');
     view.current = editor;
     return () => { editor.destroy(); view.current = null; };
   }, [compartments]);
@@ -84,6 +87,7 @@ export function CodeEditor({ value, onChange, onRun, api, files = EMPTY_FILES, l
     if (editor && editor.state.doc.toString() !== value) editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: value }, annotations: externalCodeUpdate.of(true) });
   }, [value]);
   useEffect(() => {
+    view.current?.scrollDOM.setAttribute('aria-label', `${label} scroll area`);
     view.current?.dispatch({ effects: [
       compartments.completions.reconfigure(completionExtension(api, files)),
       compartments.appearance.reconfigure(EditorView.theme({ '&': { fontSize: `${fontSize}px` } })),

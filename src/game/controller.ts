@@ -50,7 +50,9 @@ export interface GameState {
   activeTutorial: string | null;
   tutorialQueue: string[];
   activityPaused: boolean;
+  captureMode: boolean;
   setActivityPaused(paused: boolean): void;
+  setCaptureMode(enabled: boolean): void;
   initialize(): Promise<void>;
   newGame(name: string): void;
   setScreen(screen: Screen): void;
@@ -235,8 +237,9 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       inputs: {}, result: null, expected: null, queue: [], diff: null, busy: false, backgroundBusy: false,
       status: 'Welcome to the Returns Desk.', hintLevel: 0, traceIndex: 0, replayPaused: true,
       replayElapsed: 0, currentLine: null, event: null, progress: 0, activeSlot: 0,
-      activeTutorial: null, tutorialQueue: [], activityPaused: false,
+      activeTutorial: null, tutorialQueue: [], activityPaused: false, captureMode: false,
       setActivityPaused(activityPaused) { set({ activityPaused }); },
+      setCaptureMode(captureMode) { set({ captureMode }); },
       initialize() {
         if (initializing) return initializing;
         const generation = lifecycle;
@@ -245,11 +248,13 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           let notice = '';
           const loadTicket = epoch;
           try {
-            const loaded = await persistence.load(0);
+            const slot = await persistence.activeSlot();
+            const loaded = await persistence.load(slot);
             if (generation !== lifecycle) return;
             if (loaded && loadTicket === epoch) {
               elapsed = offlineSeconds(loaded.save.lastSavedAt, Date.now());
               installSave(loaded.save);
+              set({ activeSlot: slot });
               if (loaded.recovered) notice = 'A damaged save was recovered from the last good snapshot.';
             }
           } catch (error) { notice = errorMessage(error); }
@@ -266,7 +271,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
               const now = Date.now();
               const milliseconds = Math.max(0, now - lastTick);
               lastTick = now;
-              if (get().screen === 'game' && !get().activityPaused && (typeof document === 'undefined' || !document.hidden)) {
+              if (!get().captureMode && get().screen === 'game' && !get().activityPaused && (typeof document === 'undefined' || !document.hidden)) {
                 get().tickReplay(milliseconds);
                 get().stepClock(milliseconds / 1000);
               }
@@ -436,7 +441,9 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         try {
           const loaded = await persistence.load(slot);
           if (ticket !== epoch) return;
-          if (!loaded) { set({ status: 'That slot is empty. Save here to start its ledger.' }); return; }
+          if (!loaded) throw new Error('That slot is empty. Save here to start its ledger.');
+          await persistence.select(slot);
+          if (ticket !== epoch) return;
           const elapsed = offlineSeconds(loaded.save.lastSavedAt, Date.now());
           installSave(loaded.save);
           set({ activeSlot: slot, screen: 'game' });
@@ -444,7 +451,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           get().stepClock(elapsed);
           set({ status: loaded.recovered ? 'Recovered the last good snapshot from this slot.' : 'Save loaded.' });
           tutorial('save');
-        } catch (error) { set({ status: errorMessage(error) }); }
+        } catch (error) { set({ status: errorMessage(error) }); throw error; }
       },
       async saveSlot(slot) {
         try {
@@ -454,19 +461,19 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           await persistence.save(slot, save);
           set({ status: 'Saved locally.' });
           tutorial('save');
-        } catch (error) { set({ status: errorMessage(error) }); }
+        } catch (error) { set({ status: errorMessage(error) }); throw error; }
       },
       exportSave() { tutorial('save'); return exportJSON(get().save); },
       async importSave(json) {
         try {
-          const save = importJSON(json);
+          const save = { ...importJSON(json), lastSavedAt: Date.now() };
           stop();
-          installSave({ ...save, lastSavedAt: Date.now() });
-          await persistence.save(get().activeSlot, get().save);
+          await persistence.save(get().activeSlot, save);
+          installSave(save);
           set({ screen: 'game', status: 'Save imported.' });
           await get().refreshExpected();
           tutorial('save');
-        } catch (error) { set({ status: errorMessage(error) }); }
+        } catch (error) { set({ status: errorMessage(error) }); throw error; }
       },
       reset() {
         stop();

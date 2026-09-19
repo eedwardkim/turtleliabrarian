@@ -206,15 +206,21 @@ export interface Snapshot {
 export interface SaveBackend {
   read(slot: number): Promise<Snapshot | undefined>;
   write(slot: number, snapshot: Snapshot): Promise<void>;
+  readActiveSlot(): Promise<number | undefined>;
+  writeActiveSlot(slot: number): Promise<void>;
 }
 
 interface ShelfDatabase extends DBSchema {
   slots: { key: number; value: Snapshot };
+  preferences: { key: 'activeSlot'; value: number };
 }
 
 function browserBackend(): SaveBackend {
-  const database = () => openDB<ShelfDatabase>('shelf-life', 1, {
-    upgrade(db) { if (!db.objectStoreNames.contains('slots')) db.createObjectStore('slots'); },
+  const database = () => openDB<ShelfDatabase>('shelf-life', 2, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains('slots')) db.createObjectStore('slots');
+      if (!db.objectStoreNames.contains('preferences')) db.createObjectStore('preferences');
+    },
   });
   return {
     async read(slot) {
@@ -224,6 +230,14 @@ function browserBackend(): SaveBackend {
     async write(slot, snapshot) {
       const db = await database();
       try { await db.put('slots', snapshot, slot); } finally { db.close(); }
+    },
+    async readActiveSlot() {
+      const db = await database();
+      try { return await db.get('preferences', 'activeSlot'); } finally { db.close(); }
+    },
+    async writeActiveSlot(slot) {
+      const db = await database();
+      try { await db.put('preferences', slot, 'activeSlot'); } finally { db.close(); }
     },
   };
 }
@@ -243,6 +257,18 @@ function checkSlot(slot: number): void {
 export function createSaveService(backend: SaveBackend = browserBackend()) {
   let pending: Promise<void> = Promise.resolve();
   return {
+    async activeSlot(): Promise<number> {
+      await pending;
+      const slot = await backend.readActiveSlot() ?? 0;
+      checkSlot(slot);
+      return slot;
+    },
+    async select(slot: number): Promise<void> {
+      checkSlot(slot);
+      const operation = pending.then(() => backend.writeActiveSlot(slot));
+      pending = operation.catch(() => undefined);
+      return operation;
+    },
     async load(slot: number) {
       checkSlot(slot);
       await pending;
@@ -259,6 +285,7 @@ export function createSaveService(backend: SaveBackend = browserBackend()) {
           try { lastGood = exportJSON(recoverSnapshot(previous).save); } catch { /* The new validated snapshot repairs an unusable slot. */ }
         }
         await backend.write(slot, { current, lastGood });
+        await backend.writeActiveSlot(slot);
       });
       pending = operation.catch(() => undefined);
       return operation;

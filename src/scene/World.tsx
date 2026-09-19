@@ -186,7 +186,7 @@ function Diorama({ frame, props }: { frame: WorldFrame; props: WorldProps }) {
     {motion === 'summary' && frame.loops.summarized > 0 && <Label position={[0, 2.95, 1.18]}>
       ×{frame.loops.summarized.toLocaleString()} more trips
     </Label>}
-    {props.colorblind && showOutput && <Label position={[0.93, 3.1, 0.15]}>
+    {props.colorblind && showOutput && <Label position={[0.93, 2.25, 2.3]}>
       <span>Categories use 1–5 spine stripes</span>
     </Label>}
     {hovered && hovered.row.length > 0 && <Html position={hovered.position} zIndexRange={[8, 5]} className="catalog-hover">
