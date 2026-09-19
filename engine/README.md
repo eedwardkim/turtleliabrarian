@@ -94,9 +94,11 @@ Arrays stay real `numpy.ndarray` objects; instrumentation never substitutes
 an array wrapper. Bind/unbind events include name and scope. Loop
 start/iteration/end events include a loop ID and iteration count.
 
-The trace stores at most 2000 ordinary events. A final `trace_summary` reports
-omitted event counts. An error and the summary may exceed that ordinary limit
-by at most two events.
+The trace reserves one of its 2000 event slots for the latest delivery if
+ordinary events fill the budget. That delivery retains its call-time snapshot,
+line and order relative to loop endings and errors. A final `trace_summary`
+reports omitted event counts, excluding the retained delivery. An error and
+the summary may exceed the ordinary limit by at most two events.
 
 ## Fidelity and explicit boundaries
 

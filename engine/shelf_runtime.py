@@ -164,6 +164,7 @@ class Trace:
         self.enabled = enabled
         self.allowed = None if allowed is None else set(allowed)
         self.events = []
+        self.pending_delivery = None
         self.objects = {}
         self.next_id = 1
         self.bindings = {}
@@ -209,7 +210,7 @@ class Trace:
         return self.frames[key]
 
     def has_room(self, extra=0):
-        return len(self.events) + self.reserved_ends + extra < EVENT_LIMIT
+        return len(self.events) + self.reserved_ends + extra < EVENT_LIMIT - 1
 
     def object_id(self, value):
         if not isinstance(value, (Table, np.ndarray)):
@@ -282,9 +283,11 @@ class Trace:
     def event(self, name, inputs=(), output=None, details=None, force=False):
         if not self.enabled or self.closed:
             return False
-        if not self.has_room() and not force:
+        deferred = not self.has_room() and not force
+        if deferred:
             self.omitted[name] = self.omitted.get(name, 0) + 1
-            return False
+            if name != "deliver":
+                return False
         details = {} if details is None else details
         budget, counts = [PAYLOAD_LIMIT], {}
         payload = {}
@@ -312,21 +315,23 @@ class Trace:
             payload["dtype"] = {"i": "integer", "U": "unicode", "S": "bytes"}.get(
                 output.dtype.kind, str(output.dtype)
             )
-        self.events.append(
-            {
-                "version": 1,
-                "seq": len(self.events),
-                "type": name,
-                "line": self.line,
-                "inputs": [
-                    key
-                    for item in inputs[:SNAPSHOT_LIMIT]
-                    if (key := self.object_id(item)) is not None
-                ],
-                "output": self.object_id(output),
-                "payload": payload,
-            }
-        )
+        event = {
+            "version": 1,
+            "seq": len(self.events),
+            "type": name,
+            "line": self.line,
+            "inputs": [
+                key
+                for item in inputs[:SNAPSHOT_LIMIT]
+                if (key := self.object_id(item)) is not None
+            ],
+            "output": self.object_id(output),
+            "payload": payload,
+        }
+        if deferred:
+            self.pending_delivery = event
+            return False
+        self.events.append(event)
         return True
 
     def operation(self, name, inputs, output, details):
@@ -664,6 +669,14 @@ class Trace:
                 self.reserved_ends -= 1
             self.loop_event("end", state, reason="run_end")
         self.loops.clear()
+        if self.pending_delivery is not None:
+            self.events.insert(self.pending_delivery["seq"], self.pending_delivery)
+            self.pending_delivery = None
+            for seq, event in enumerate(self.events):
+                event["seq"] = seq
+            self.omitted["deliver"] -= 1
+            if not self.omitted["deliver"]:
+                del self.omitted["deliver"]
         if self.omitted:
             self.event(
                 "trace_summary",
