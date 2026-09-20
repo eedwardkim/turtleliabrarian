@@ -88,6 +88,10 @@
     "atlas": "Atlas of wings"
   },
   "windows": {
+    "edges": {
+      "n": "Top edge", "ne": "Top right corner", "e": "Right edge", "se": "Bottom right corner",
+      "s": "Bottom edge", "sw": "Bottom left corner", "w": "Left edge", "nw": "Top left corner"
+    },
     "move": "Move window with arrow keys; hold Shift to resize",
     "resize": "Resize window with arrow keys",
     "minimize": "Minimize",
@@ -124,6 +128,7 @@
     "imports": "Your scripts can import one another. Each run starts with fresh variables.",
     "line": "Line {line}",
     "completion": "Learned API",
+    "fill": "Click to fill in",
     "escape": "Esc, then Tab · leave editor"
   },
   "request": {
@@ -152,12 +157,12 @@
     "applyMove": "Put it in my script",
     "moveDone": "Your script matches the answer. Press Run.",
     "moveDoneQueue": "Then Serve queue.",
-    "lessonSteps": [
-      "Click the blinking grey text in the editor. That makes it real code.",
-      "Press Run (the green button).",
-      "Watch Shelby carry the answer to the desk."
-    ],
-    "lessonRetry": "Not quite. The line should be exactly `{line}`. Fix it and press Run.",
+    "lessonTitle": "Your next move",
+    "lessonClick": "Click the pulsing grey text in the editor to make it real code.",
+    "lessonRun": "Now press the green Run button. Watch Shelby deliver your answer.",
+    "lessonWatching": "Shelby is running your code. Watch the desk.",
+    "lessonRetry": "Not quite yet. Fix your code, or use the answer below, then press Run.",
+    "lessonFix": "Put the answer in my script",
     "standing": "File a standing order",
     "filed": "Standing order filed",
     "learn": "On this page"
