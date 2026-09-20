@@ -65,7 +65,7 @@ export function FloatingWindow({ id, title, layout, viewport, onLayout, onFocus,
   if (layout.closed) return null;
 
   return <section
-    className={`floating-window ${dark ? 'dark-window' : 'paper-window'} ${highlight ? 'tutorial-target' : ''} ${current.minimized ? 'minimized' : ''}`}
+    className={`floating-window ${dark ? 'dark-window' : 'paper-window'} ${highlight ? 'tutorial-target' : ''} ${current.minimized ? 'minimized' : ''} ${controls && current.width < 400 ? 'compact-controls' : ''}`}
     aria-labelledby={labelId}
     data-window={id}
     onPointerDownCapture={onFocus}
@@ -77,7 +77,7 @@ export function FloatingWindow({ id, title, layout, viewport, onLayout, onFocus,
         onPointerDown={event => start(event)} onPointerMove={move} onPointerUp={end} onPointerCancel={end} onLostPointerCapture={end} onKeyDown={event => keyboard(event)}>
         <span className="grip-dots" /><span id={labelId} className="window-title">{title}</span>
       </button>
-      {controls && <div className="window-actions">{controls}</div>}
+      {controls && <div className="window-actions window-controls">{controls}</div>}
       {!essential && <div className="window-actions window-actions-end">
         <IconButton icon={current.minimized ? 'restore' : 'minus'} label={current.minimized ? text.windows.restore : text.windows.minimize}
           onClick={() => onLayout({ ...current, minimized: !current.minimized })} />

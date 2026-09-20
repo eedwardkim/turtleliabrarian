@@ -135,6 +135,10 @@ details pre{padding:10px;background:#342d2409}
 .window-actions .serve-button{border:1px solid currentColor;margin-right:3px}
 .window-actions .run-button{background:#6e8552;color:#fffcef;margin-right:3px}
 .window-actions .run-button:hover{background:#82965f}
+.compact-controls:not(.minimized) .window-bar{height:auto;flex-wrap:wrap}
+.compact-controls:not(.minimized) .window-grip{min-height:30px}
+.compact-controls:not(.minimized) .window-controls{order:3;flex-basis:100%;justify-content:flex-end;padding:2px 0}
+.minimized .window-controls{display:none}
 .window-body{flex:1;min-height:0;overflow:auto;position:relative}
 .window-resize{position:absolute;z-index:3;display:flex;align-items:center;justify-content:center;background:transparent;color:#9e947f;touch-action:none;padding:0}
 .window-resize:hover,.window-resize:focus-visible{background:#b9a46a44}
