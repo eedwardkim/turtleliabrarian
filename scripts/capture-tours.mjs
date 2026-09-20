@@ -434,7 +434,7 @@ const devtools = {
 
 const speedrun = {
   id: 'V16',
-  title: 'V16 — All 77 requests',
+  title: 'V16 — Every shipped request',
   description: 'Every request in the campaign solved with real Python and its real queue, inside an eight minute budget.',
   expectedMinutes: 8,
   requirement: puzzles => ({

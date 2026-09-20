@@ -41,10 +41,17 @@ export function shelfOrder(left, right) {
   return left.id.localeCompare(right.id);
 }
 
-export async function loadPuzzles(directory = 'content/puzzles') {
+/** Mirrors `shelvedRequestIds` in `src/game/catalog.ts`: requests kept off the shipped shelves. */
+export async function loadShelvedIds(file = 'content/calibration/stochastic-tolerances.json') {
+  const calibration = JSON.parse(await readFile(resolve(file), 'utf8'));
+  return new Set(calibration.results.filter(result => !result.independentAcceptanceAttainable).map(result => result.id));
+}
+
+export async function loadPuzzles(directory = 'content/puzzles', { includeShelved = false } = {}) {
   const files = (await readdir(directory)).filter(name => name.endsWith('.json')).sort();
   const puzzles = await Promise.all(files.map(async name => JSON.parse(await readFile(resolve(directory, name), 'utf8'))));
-  return puzzles.sort(shelfOrder);
+  const shelved = includeShelved ? new Set() : await loadShelvedIds();
+  return puzzles.filter(puzzle => !shelved.has(puzzle.id)).sort(shelfOrder);
 }
 
 export function chapterPuzzles(puzzles, chapter) {

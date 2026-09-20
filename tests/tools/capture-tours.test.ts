@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { puzzles as catalogue } from '../../src/game/catalog';
+import { authoredPuzzles, shelvedRequestIds, withoutShelved } from '../../src/game/catalog';
 import { chapterPuzzles, ffmpegArgs, holdFrames, loadPuzzles, videoSeconds } from '../../scripts/capture-lib.mjs';
 import { tourById, tours } from '../../scripts/capture-tours.mjs';
 
@@ -45,7 +45,7 @@ describe('capture tour registry', () => {
     }
   });
 
-  it('holds V13 to the capstones, the credits transition, the Sandbox, and V16 to all 77 requests in eight minutes', () => {
+  it('holds V13 to the capstones, the credits transition, the Sandbox, and V16 to every shipped request in eight minutes', () => {
     const capstones = tourById('V13').requirement(puzzles);
     expect(capstones.windows).toEqual(expect.arrayContaining(['credits', 'sandbox', 'atlas']));
     const body = tourById('V13').run.toString();
@@ -53,7 +53,8 @@ describe('capture tour registry', () => {
     expect(body).toContain('[data-window="sandbox"]');
     expect(body).not.toContain('Return to title');
     const speedrun = tourById('V16').requirement(puzzles);
-    expect(speedrun.puzzles).toHaveLength(77);
+    expect(speedrun.puzzles).toHaveLength(77 - shelvedRequestIds.size);
+    expect(speedrun.puzzles.some(id => shelvedRequestIds.has(id))).toBe(false);
     expect(speedrun.kinds).toEqual(['show', 'vary', 'break', 'capstone']);
     expect(speedrun.maxDurationSeconds).toBe(480);
     expect(videoSeconds(480 * 30, 30)).toBe(480);
@@ -80,8 +81,9 @@ describe('capture chapter titles', () => {
 });
 
 describe('capture primitives', () => {
-  it('reads requests in the order the game shelves them', async () => {
-    expect(puzzles.map(puzzle => puzzle.id)).toEqual(catalogue.map(puzzle => puzzle.id));
+  it('reads the shipped requests in the order the game shelves them', async () => {
+    expect(puzzles.map(puzzle => puzzle.id)).toEqual(withoutShelved(authoredPuzzles).map(puzzle => puzzle.id));
+    expect((await loadPuzzles('content/puzzles', { includeShelved: true })).map(puzzle => puzzle.id)).toEqual(authoredPuzzles.map(puzzle => puzzle.id));
     expect((await readdir('content/puzzles')).filter(name => name.endsWith('.json'))).toHaveLength(77);
   });
 
