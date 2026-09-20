@@ -5,6 +5,7 @@ import type {
 import { getTutorial, tutorialsFor } from '../../content/tutorials';
 import { puzzles, getPuzzle } from './catalog';
 import { automaticTutorial } from './guidance';
+import { commandTutorialId, pendingCommands } from './commands';
 import { check } from './checker';
 import {
   ARCHIVE_CHAPTER, canEnterPuzzle, completePuzzle, enterWing, equipHat, firstTryBonus, inkFor, maxReplaySpeed, offlineSeconds,
@@ -84,6 +85,7 @@ export interface GameState {
   fileStandingOrder(): void;
   stepClock(seconds: number): void;
   markTutorial(id: string): void;
+  acknowledgeCommand(id: string): void;
   purchase(id: string): void;
   equipHat(id: string): void;
   autoSolve(): Promise<void>;
@@ -176,9 +178,10 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       set({ status });
       tutorial('complete');
     };
-    const display = (result: RunResult, expected: Value): CheckDiff => {
+    const display = (result: RunResult, expected: Value, validationFailure?: string): CheckDiff => {
       const diff = check(result.delivered, expected, get().puzzle.checker);
       if (result.error) { diff.pass = false; diff.message = result.error.friendly || result.error.message; }
+      else if (validationFailure) { diff.pass = false; diff.message = validationFailure; }
       set({ ...replayFields(result), expected, inputs: result.inputs, diff, status: diff.message });
       if (!diff.pass && get().hintLevel === 0 && get().puzzle.chapter <= 1) get().hint();
       tutorial('output');
@@ -357,12 +360,27 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         if (!get().ready) { set({ status: 'Wait for the reading lamp to finish warming.' }); return; }
         const ticket = begin('Shelby is reading your script…');
         const { puzzle, code, save } = get();
+        if (puzzle.verifyOnRun) set({ diff: null });
         try {
           const expected = await reference(puzzle, puzzle.visibleSeed, puzzle.visibleInputs);
           if (ticket !== epoch) return;
           const result = await runtime.run(requestFor(puzzle, code, puzzle.visibleSeed, { ...save.files }, expected.inputs, save.settings.openStacks));
           if (ticket !== epoch) return;
-          const diff = display(result, expected.delivered);
+          let validationFailure: string | undefined;
+          if (puzzle.verifyOnRun && !result.error && check(result.delivered, expected.delivered, puzzle.checker).pass) {
+            set({ status: 'Checking your script with different inputs…' });
+            for (const entry of buildQueue(puzzle)) {
+              const otherExpected = await reference(puzzle, entry.seed, entry.inputs);
+              if (ticket !== epoch) return;
+              const otherResult = await runtime.run(requestFor(puzzle, code, entry.seed, { ...save.files }, otherExpected.inputs, save.settings.openStacks));
+              if (ticket !== epoch) return;
+              if (otherResult.error || !check(otherResult.delivered, otherExpected.delivered, puzzle.checker).pass) {
+                validationFailure = `This matches the shown example, but not different inputs. ${puzzle.hints[0]}`;
+                break;
+              }
+            }
+          }
+          const diff = display(result, expected.delivered, validationFailure);
           if (puzzle.lesson && diff.pass && !get().save.completed.includes(puzzle.id)) {
             const progress = progressFor(get().save, puzzle);
             persist({ ...get().save, progress: { ...get().save.progress, [puzzle.id]: { ...progress, attempts: progress.attempts + 1 } } });
@@ -548,6 +566,14 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         const save = get().save;
         if (!save.seenTutorials.includes(id)) persist({ ...save, seenTutorials: [...save.seenTutorials, id] });
         set({ activeTutorial: get().activeTutorial === id ? null : get().activeTutorial, tutorialQueue: [] });
+      },
+      acknowledgeCommand(id) {
+        const { puzzle, save } = get();
+        const entry = pendingCommands(puzzle, save)[0];
+        if (!entry || entry.id !== id) return;
+        const commands = [entry.id, ...(entry.comparison ? [entry.comparison.id] : [])];
+        persist({ ...save, seenTutorials: [...new Set([...save.seenTutorials, 'almanac', ...commands.map(commandTutorialId)])] });
+        set({ activeTutorial: null, tutorialQueue: [] });
       },
       purchase(id) {
         try {

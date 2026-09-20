@@ -261,6 +261,29 @@ details pre{padding:10px;background:#342d2409}
 .sandbox-inputs section{margin-top:12px}
 .paper-dialog{background:var(--paper-light);border:1px solid #bfac86;border-radius:10px;box-shadow:0 30px 120px #26382e44;width:min(540px,90vw);max-height:85vh;padding:0;color:var(--ink)}
 .paper-dialog::backdrop{background:#233d3038;backdrop-filter:blur(5px)}
+.command-unlock{width:min(620px,92vw);border:2px solid #c9a45b;box-shadow:0 0 0 6px #e2c78424,0 30px 120px #17271f88;animation:command-arrive .22s ease-out}
+.command-unlock[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 32px)}
+.command-unlock::backdrop{background:#17271fa6;backdrop-filter:blur(9px)}
+.command-unlock .dialog-header{flex-shrink:0;justify-content:center;padding:16px 24px;background:#e5d5aa44}
+.command-unlock .dialog-header h2{font-size:22px}
+.command-unlock .dialog-content{padding:20px 26px;min-height:0}
+.command-unlock .dialog-footer{padding:14px 26px;flex-shrink:0;border-top:1px solid var(--line)}
+.command-heading{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.command-heading h3{font-size:clamp(15px,2vw,21px);overflow-wrap:anywhere}
+.command-badge{display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border:1px solid #bb9650;border-radius:50%;background:#eee0b5;color:#6f5728}
+.command-badge .icon{width:25px;height:25px}
+.command-parameters{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+.command-parameters>div{background:#e5eadf;border-radius:6px;padding:10px}
+.command-parameters dt{color:var(--green);font-weight:600;margin-bottom:5px}
+.command-parameters dd{margin:0;font-size:12px;line-height:1.5}
+.command-example{display:flex;align-items:center;gap:12px;background:#262b2a;color:#f4eee2;border-radius:6px;padding:12px;margin:10px 0}
+.command-example pre{font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.command-example>span{color:#d0b577}
+.command-comparison{border-top:1px solid var(--line);margin:16px 0;padding-top:12px}
+.command-comparison p{font-size:13px;line-height:1.65}
+.command-unlock .command-note{font-size:12px;line-height:1.6;padding-left:12px;border-left:3px solid #c9a45b}
+.command-unlock .command-bookmark{font-size:11px;line-height:1.5;text-align:center;margin:12px 0 0}
+@keyframes command-arrive{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 .dialog-header{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:23px 25px 19px;border-bottom:1px solid var(--line)}
 .dialog-header h2{font-size:25px;line-height:1.2}
 .dialog-content{padding:23px 25px 28px;overflow:auto}

@@ -272,6 +272,11 @@
     "confirmSave": "Replace this bookmark",
     "overwrite": "Saving here replaces this slot’s previous bookmark."
   },
+  "commandUnlock": {
+    "title": "New command unlocked",
+    "continue": "Got it — add to my Almanac",
+    "bookmark": "This explanation stays in your function booklet. Open the book to read it again."
+  },
   "almanac": {
     "title": "For the curious librarian",
     "search": "Find a tool or a topic",
