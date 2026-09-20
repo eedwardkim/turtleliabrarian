@@ -350,7 +350,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
         <h3 className="solved-puzzle">{game.puzzle.title}</h3>
         <p>{format(text.solved.used, { objective: game.puzzle.objective })}</p>
         <div className="button-row">
-          <button className="button primary wide" onClick={() => { setSolvedFor(null); game.nextPuzzle(); }}>{text.solved.next}<Icon name="arrow" /></button>
+          <button className="button primary wide" onClick={() => { setSolvedFor(null); if (demoStep !== null) finishDemo(); game.nextPuzzle(); }}>{text.solved.next}<Icon name="arrow" /></button>
           <button className="text-button" onClick={() => setSolvedFor(null)}>{text.solved.stay}</button>
         </div>
       </Dialog>}
