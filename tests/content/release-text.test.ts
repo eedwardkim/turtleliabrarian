@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 // @ts-expect-error - the release text gate is a plain Node script with no type declarations.
-import { PLAYER_STRING_SOURCES, collectPlayerStrings, findUnfinishedMarkers, looksLikeProse, missingSources, spellCheck } from '../../scripts/check-release-text.mjs';
+import { PLAYER_STRING_SOURCES, collectPlayerStrings, findUnfinishedMarkers, looksLikePlayerLabel, looksLikeProse, missingSources, spellCheck } from '../../scripts/check-release-text.mjs';
 
 interface PlayerString { source: string; file: string; line: number; path: string; text: string }
 interface Marker { marker: string; file: string; line: number; text: string }
@@ -14,6 +14,7 @@ const markers = findUnfinishedMarkers as (root?: string, strings?: PlayerString[
 const spell = spellCheck as (strings: Pick<PlayerString, 'source' | 'file' | 'line' | 'text'>[]) => Misspelling[];
 const missing = missingSources as (root?: string, strings?: PlayerString[]) => { id: string }[];
 const prose = looksLikeProse as (value: unknown) => boolean;
+const label = looksLikePlayerLabel as (value: unknown) => boolean;
 
 function fixtureRoot(): string {
   const root = mkdtempSync(join(tmpdir(), 'shelf-life-text-fixture-'));
@@ -34,7 +35,11 @@ function fixtureRoot(): string {
   writeFileSync(join(root, 'content/tutorials/index.ts'), "export const tutorials = [{ steps: ['Press Run to send the script to Shelby.'] }];\n");
   writeFileSync(join(root, 'content/almanac/index.ts'), "export const almanac = [{ id: 'np.arange', explanation: 'Build evenly spaced numbers with np.arange, excluding the stop value.' }];\n");
   writeFileSync(join(root, 'src/App.tsx'), "export const App = () => <Panel />;\n");
-  writeFileSync(join(root, 'src/ui/Panel.tsx'), "export const Panel = () => <p className=\"muted\">Every patron must pass before the request is complete.</p>;\n");
+  writeFileSync(join(root, 'src/ui/Panel.tsx'), [
+    'export const Panel = () => <p className="muted">Every patron must pass before the request is complete.</p>;',
+    'export const Serve = () => <button aria-label="Serve queeu" className="button primary">Serve queue</button>;',
+    'export const Count = ({ n }: { n: number }) => <p>{`${n} patrons are waitng at the desk.`}</p>;',
+  ].join('\n') + '\n');
   writeFileSync(join(root, 'src/game/store.ts'), "export const failure = 'No request files were found.';\n");
   writeFileSync(join(root, 'src/runtime/client.ts'), "export const busy = 'Shelby is walking in circles. Check your loop and try a smaller task.';\n");
   writeFileSync(join(root, 'src/scene/world.tsx'), "export const missingModel = 'The cart model is missing from the asset manifest.';\n");
@@ -66,6 +71,15 @@ describe('release text gate', () => {
     expect(texts.some((text) => text.startsWith('deliver('))).toBe(false);
   });
 
+  it('checks short player labels and interpolated sentences instead of skipping them', () => {
+    const texts = strings.map((entry) => entry.text);
+    expect(texts).toContain('Serve queue');
+    expect(texts).toContain('Serve queeu');
+    expect(texts.some((text) => text.includes('patrons are waitng at the desk.'))).toBe(true);
+    expect(texts).not.toContain('button primary');
+    expect(texts).not.toContain('muted');
+  });
+
   it('reports a surface that stops producing player text', () => {
     const empty = strings.filter((entry) => entry.source !== 'tutorials');
     expect(missing(root, empty).map((source) => source.id)).toEqual(['tutorials']);
@@ -75,6 +89,8 @@ describe('release text gate', () => {
     const found = spell(strings).map((finding) => finding.word);
     expect(found).toContain('recieved');
     expect(found).toContain('libary');
+    expect(found).toContain('queeu');
+    expect(found).toContain('waitng');
     expect(found).not.toContain('np');
     expect(found).not.toContain('arange');
     expect(found).not.toContain('Shelby');
@@ -123,6 +139,18 @@ describe('release text gate', () => {
     expect(prose("deliver(shelf.select('title', 'pages'))")).toBe(false);
     expect(prose('content/puzzles/ch1-show-1.json')).toBe(false);
     expect(prose('orbit')).toBe(false);
+    expect(prose('Viewing {name} on the cart')).toBe(true);
+  });
+
+  it('accepts short authored labels and still refuses identifiers and code', () => {
+    expect(label('Serve queue')).toBe(true);
+    expect(label('Run')).toBe(true);
+    expect(label('Shop & unlocks')).toBe(true);
+    expect(label('Viewing {name}')).toBe(true);
+    expect(label('main.py')).toBe(false);
+    expect(label('content/puzzles/ch1-show-1.json')).toBe(false);
+    expect(label('() => setOpen(true)')).toBe(false);
+    expect(label('')).toBe(false);
   });
 
   it('keeps the shipped product free of misspellings and unfinished writing', () => {

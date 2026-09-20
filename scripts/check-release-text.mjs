@@ -101,18 +101,50 @@ function listFiles(root, { dir, pattern, shallow = false }) {
   return found;
 }
 
+/** `{count}` and `${name}` are interpolation slots in otherwise ordinary sentences. */
+export function withoutInterpolations(value) {
+  return value.replace(/\$\{[^{}]*\}/g, ' ').replace(/\{[^{}]*\}/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function isWord(token) {
+  return /^[“‘(]?[A-Za-z][A-Za-z'’-]*[.,;:!?”’)]{0,2}$/.test(token);
+}
+
 /**
  * Prose test: player writing is several real words, so code, identifiers, paths, SVG path data
- * and format keys never reach the spell checker as if they were sentences.
+ * and format keys never reach the spell checker as if they were sentences. Interpolation slots
+ * are removed first, so an interpolated sentence is still checked as the sentence it is.
  */
 export function looksLikeProse(value) {
   if (typeof value !== 'string') return false;
-  const collapsed = value.replace(/\s+/g, ' ').trim();
+  const collapsed = withoutInterpolations(value);
   if (collapsed.length < 12 || /[{}<>|]|=>|\bfunction\b|;\s*$/.test(collapsed)) return false;
   const tokens = collapsed.split(' ');
-  const words = tokens.filter(token => /^[A-Za-z][A-Za-z'’-]*[.,;:!?”)]?$/.test(token));
+  const words = tokens.filter(isWord);
   return words.length >= 3 && words.length / tokens.length >= 0.6 && words.some(word => word.length >= 4);
 }
+
+/**
+ * Label test for text the player definitely reads: JSX text and the accessible attributes below.
+ * A button reading `Serve queue` is too short for the prose test but is still authored writing,
+ * so labels are accepted from one real word upwards while identifiers, paths, class lists and
+ * code fragments are still refused.
+ */
+export function looksLikePlayerLabel(value) {
+  if (typeof value !== 'string') return false;
+  const collapsed = withoutInterpolations(value);
+  if (!collapsed || /[{}<>|]|=>|;\s*$/.test(collapsed)) return false;
+  const tokens = collapsed.split(' ');
+  if (!tokens.every(token => isWord(token) || /^[&·—–-]$/.test(token) || /^\d+%?$/.test(token))) return false;
+  const words = tokens.filter(isWord);
+  return words.some(word => word.length >= 3);
+}
+
+/** Attributes whose values are read out or shown to the player. */
+export const PLAYER_ATTRIBUTES = new Set([
+  'aria-label', 'aria-description', 'aria-placeholder', 'aria-roledescription', 'aria-valuetext',
+  'alt', 'label', 'placeholder', 'title',
+]);
 
 function lineOf(content, index) {
   return content.slice(0, index).split('\n').length;
@@ -140,17 +172,32 @@ function jsonStrings(content, keep) {
 function typescriptStrings(content, file) {
   const source = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, /\.tsx$/.test(file) ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
   const entries = [];
-  const add = (text, node) => {
-    if (!looksLikeProse(text)) return;
-    entries.push({ path: '', text, line: source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1 });
+  const labelled = new Set();
+  const add = (text, node, accept = looksLikeProse) => {
+    if (!accept(text)) return;
+    entries.push({ path: '', text: text.replace(/\s+/g, ' ').trim(), line: source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1 });
+  };
+  /** Every literal inside a player-facing JSX attribute, including both halves of a conditional. */
+  const attributeLiterals = (node, found = []) => {
+    if (!node) return found;
+    if (ts.isStringLiteralLike(node)) found.push(node);
+    else if (ts.isTemplateExpression(node)) found.push(node.head, ...node.templateSpans.map(span => span.literal));
+    else ts.forEachChild(node, child => attributeLiterals(child, found));
+    return found;
   };
   const visit = (node) => {
     if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) return;
-    if (ts.isStringLiteralLike(node)) add(node.text, node);
-    else if (ts.isJsxText(node)) add(node.text, node);
+    if (ts.isJsxAttribute(node) && PLAYER_ATTRIBUTES.has(node.name.getText(source))) {
+      for (const literal of attributeLiterals(node.initializer)) {
+        labelled.add(literal);
+        add(literal.text, literal, looksLikePlayerLabel);
+      }
+    } else if (ts.isJsxText(node)) add(node.text, node, looksLikePlayerLabel);
+    else if (ts.isStringLiteralLike(node)) { if (!labelled.has(node)) add(node.text, node); }
     else if (ts.isTemplateExpression(node)) {
-      add(node.head.text, node.head);
-      node.templateSpans.forEach(span => add(span.literal.text, span.literal));
+      for (const part of [node.head, ...node.templateSpans.map(span => span.literal)]) {
+        if (!labelled.has(part)) add(part.text, part);
+      }
     }
     ts.forEachChild(node, visit);
   };
@@ -187,7 +234,7 @@ export function collectPlayerStrings(root = REPO_ROOT) {
         entries = typescriptStrings(content, file);
       }
       for (const entry of entries) {
-        if (source.id === 'ui-strings' || source.id === 'puzzles' || looksLikeProse(entry.text)) {
+        if (source.id === 'ui-strings' || source.id === 'puzzles' || looksLikeProse(entry.text) || looksLikePlayerLabel(entry.text)) {
           strings.push({ source: source.id, file: where, line: entry.line, path: entry.path, text: entry.text });
         }
       }
@@ -231,7 +278,7 @@ export function spellCheck(playerStrings, { root = REPO_ROOT, cacheDir } = {}) {
   const directory = cacheDir ?? join(tmpdir(), `shelf-life-release-text-${process.pid}`);
   mkdirSync(directory, { recursive: true });
   const document = join(directory, 'player-strings.md');
-  writeFileSync(document, `${playerStrings.map(entry => entry.text.replace(/\s+/g, ' ').trim()).join('\n')}\n`);
+  writeFileSync(document, `${playerStrings.map(entry => withoutInterpolations(entry.text)).join('\n')}\n`);
   const cspell = join(REPO_ROOT, 'node_modules', '.bin', 'cspell');
   const binary = existsSync(cspell) ? cspell : 'cspell';
   const result = spawnSync(binary, [

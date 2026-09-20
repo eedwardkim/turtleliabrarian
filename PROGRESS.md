@@ -219,3 +219,23 @@ draw calls / ~22.7k triangles in the heaviest staged view.
 - Inspected the full inventory and Atlas, geese and hatchling four-angle sheets.
   Geometry budgets are validated; real browser frame-time measurements remain
   pending and are not inferred from the static budget model.
+
+## Release integration
+
+- Merged the release head (audio fixes, the post-capstone Sandbox, the chapter-6
+  `accumulation` counterexamples and the window-body focus fix) with the Q10
+  calibration, text-gate, capture-tour and launch-documentation branches.
+- Wired `make calibrate`, `make check-text` and `make check-captures`, added the
+  calibration freshness, player text, curriculum freshness and capture coverage
+  rows to `make verify`, extended the Ruff file list with the calibration script
+  and its tests, and gave the summary table per-check exit codes.
+- Regenerated `CURRICULUM.md`: with the new counterexamples it reports no
+  coverage gaps. Updated the stale `COMPLIANCE.md` rows (tutorial count, Sandbox,
+  K14, scanners, Q10) to the measured state.
+- Node checks in this session: `npm run typecheck`, `npm run lint` and
+  `npm test` (330 tests) pass; `node scripts/check-release-text.mjs` passes over
+  1649 player strings. `make verify` was NOT run here: this machine has no
+  `.venv` (its snapshot build failed), so every Python row would fail for
+  environment reasons. `node scripts/check-captures.mjs` correctly fails: all 17
+  tours are unrecorded. No browser, capture, deployment or clean-clone run was
+  performed in this session.

@@ -48,6 +48,19 @@ export async function lockWingsFrom(chapter: number): Promise<void> {
   }));
 }
 
+/**
+ * Marks requests complete without playing them. A capture that is about one chapter can
+ * reach a state the game gates on the whole campaign — the credits transition and the
+ * post-capstone Sandbox — while still playing the requests the capture is about. It writes
+ * completions only; resources, results and grants are untouched.
+ */
+export async function grantCompleted(ids: readonly string[]): Promise<void> {
+  const known = new Set(puzzles.map(puzzle => puzzle.id));
+  if (!Array.isArray(ids) || ids.some(id => !known.has(id))) throw new Error('grantCompleted takes known request ids.');
+  const game = useGame.getState();
+  await game.importSave(JSON.stringify({ ...game.save, completed: [...new Set([...game.save.completed, ...ids])] }));
+}
+
 export async function gotoPuzzle(id: string): Promise<void> {
   await unlockAll();
   useGame.getState().gotoPuzzle(id);
@@ -108,6 +121,7 @@ export const shelfApi = {
   setResource,
   unlockAll,
   lockWingsFrom,
+  grantCompleted,
   setSettings: (partial: Partial<Settings>) => useGame.getState().setSettings(partial),
   playNaive: () => useGame.getState().playNaive(),
   setCode: (code: string) => useGame.getState().setCode(code),

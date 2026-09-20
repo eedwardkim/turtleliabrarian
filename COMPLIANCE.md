@@ -13,8 +13,8 @@ status vocabulary is deliberately narrow:
 | **Pending** | Not evidenced yet. The remaining work is named. |
 | **Not implemented** | The requirement has no implementation in this repository. |
 
-This document is written from the repository at the head of
-`devin/1789865105-launch-docs`. It deliberately does **not** claim browser,
+This document is written from the integration branch that merges the release head
+with the calibration, text-gate, capture and documentation work. It deliberately does **not** claim browser,
 visual, deployment, hardware-performance or clean-clone acceptance: none of that
 was executed in the session that wrote this file. Play length (8–12 hours,
 `P04`) and MacBook Air frame rates (`O15`) have never been directly measured.
@@ -26,7 +26,7 @@ was executed in the session that wrote this file. Play length (8–12 hours,
 | O01 | Code | `DECISIONS.md` records each ambiguity and its resolution in teaching → reference feel → reliability order. |
 | O02 | Pending | `make verify` is the gate and passes on the release branch (PROGRESS.md), but it has **not** been run from a clean clone; see X15. |
 | O03 | Code | `DECISIONS.md` "Correct campaign expectations" explains the five corrected obsolete assertions; no check was relaxed. This session weakened nothing. |
-| O04 | Partial | No unfinished markers were introduced by the documentation work; the enforcing scanner required by X02 does not exist (see X02). |
+| O04 | Automated | `scripts/check-release-text.mjs` scans the shipped build and player strings for TODO/FIXME/XXX/TBD, lorem ipsum, "coming soon", empty implementations, dead handlers and `href="#"`, and runs in `make verify`; `tests/content/release-text.test.ts` covers it. |
 | O05 | Browser | M1 vertical slice accepted at `fb8120e` before content scaling (`REVIEW.md`, PROGRESS.md M1). |
 | O06 | Partial | `REVIEW.md` holds per-image review lines for the M1 evidence and the four asset contact sheets; the full 77-request/expanded-world image set has not been inspected image-by-image. |
 | O07 | Automated/Code | This ledger, `REQUIREMENTS.md`, `DECISIONS.md` and `PROGRESS.md` are maintained; commits are pushed per branch. |
@@ -47,12 +47,12 @@ was executed in the session that wrote this file. Play length (8–12 hours,
 | P01 | Code | Premise and characters in `content/strings/world.json` and the onboarding in `src/ui/Screens.tsx`. |
 | P02 | Automated | Real Python in Pyodide with `from datascience import *` and `import numpy as np`; books/rows and carts/tables staged by `src/scene/director.ts`; engine suites in `tests/engine`. |
 | P03 | Automated | Standing orders on random shelves: `src/game/controller.ts`, `tests/game/release-progression.test.ts`. |
-| P04 | Partial | Prologue, chapters 1–12 and capstone exist (77 requests, `CURRICULUM.md`). The **Sandbox is not implemented** (see G06) and the **8–12 hour play length has never been measured**. |
+| P04 | Partial | Prologue, chapters 1–12, capstone and the post-capstone Sandbox exist (77 requests, `CURRICULUM.md`, `src/game/sandbox.ts`). The **8–12 hour play length has never been measured**. |
 | T01 | Automated | Strict TypeScript (`tsconfig.json`), Vite, React 18, R3F, drei, Zustand, CodeMirror 6 Python, idb; `npm run typecheck` and `npm run lint` pass. |
 | T02 | Automated | `src/scene/Books.tsx` instanced books with per-instance colour/scale; `tests/scene/*`. |
 | T03 | Automated | Self-hosted Pyodide 314.0.7 and its NumPy 2.4.6 in a dedicated worker, no CDN; `scripts/prepare-runtime.mjs`, `tests/runtime/prepare.test.ts`. |
 | T04 | Automated | `engine/datascience` imported as `datascience`; `tests/engine` and the Pyodide engine suite. |
-| T05 | Partial | pytest, Hypothesis, Vitest, ESLint, Ruff, glTF-Validator, glTF Transform and ffmpeg are wired. **No Playwright spec files exist in the repository** and cspell is installed but not invoked by any script; browser/axe coverage was executed interactively by the lead session instead (see X06–X11). |
+| T05 | Partial | pytest, Hypothesis, Vitest, ESLint, Ruff, cspell (`scripts/check-release-text.mjs`), glTF-Validator, glTF Transform and ffmpeg are wired. Playwright drives the deterministic V00–V16 capture tours (`scripts/capture*.mjs`), but **no axe or assertion-only E2E spec files exist**; browser/axe coverage was executed interactively by the lead session instead (see X06–X11). |
 | T06 | Code | Blender 4.5 LTS headless scripts in `blender/`, deterministic `make models`; versions pinned in `package.json`, `package-lock.json` and `engine-requirements.txt`. |
 | T07 | Browser | Chromium at 1920×1080 and 1366×768 and a Firefox pass are recorded in the lead session (`3031e4a`, chapter 6 7/7 patrons). The sub-1024 friendly screen is implemented in `src/App.tsx`. Not re-run after `5fa4d25`. |
 | T08 | Pending | **Deployment is blocked**: no authorized Shelf Life deployment target exists (the configured Vercel project belongs to an unrelated repository). Fonts, runtime and assets are already self-hosted; the post-deploy smoke cannot run until a target is authorized. |
@@ -103,7 +103,7 @@ was executed in the session that wrote this file. Play length (8–12 hours,
 
 | ID | Status | Evidence / outstanding work |
 | --- | --- | --- |
-| C01 | Automated | `src/game/checker.ts` with exact labels, ordered/multiset modes, float tolerance and typed values; `tests/game/checker.test.ts`. Stochastic tolerances come from the authored `checker` blocks, validated over 100 seeds per stochastic request — not from a 1000-seed calibration run (see Q10). |
+| C01 | Automated | `src/game/checker.ts` with exact labels, ordered/multiset modes, float tolerance and typed values; `tests/game/checker.test.ts`. Stochastic tolerances come from the authored `checker` blocks, validated over 100 seeds per stochastic request — and by the 1000-draw calibration in `content/calibration/stochastic-tolerances.json` (see Q10). |
 | C02 | Automated | Structured extra/missing/wrong-cell/misorder/wrong-label diff drives both the table and the 3D Auditor; `tests/game/checker.test.ts`, `tests/scene/staging-release.test.ts`. |
 | S01 | Automated | Autosave into three IndexedDB slots with portable JSON export/import; `tests/game/saves.test.ts`. |
 | S02 | Partial | Validation, defaults backfill and last-good recovery with a visible notice are tested; the save format is still `version: 1`, so **no cross-version migration has been exercised in production** (PROGRESS.md). |
@@ -134,7 +134,7 @@ was executed in the session that wrote this file. Play length (8–12 hours,
 | Q07 | Automated | References pass visible inputs, all fixtures and 500 seeds (100 stochastic); starters fail. Last full run recorded in PROGRESS.md. |
 | Q08 | Automated | Every naive passes the visible input and fails a fixture in its declared mode. |
 | Q09 | Automated | Static learned-API check, identical generation per seed and fixture-hazard agreement; hazard/fixture agreement is re-checked by the curriculum generator. |
-| Q10 | **Not implemented** | There is no `make calibrate` target, no 1000-seed calibration run, and no committed file-hashed calibration results or staleness rejection. Present coverage is the 500/100-seed validator run. |
+| Q10 | Partial | `make calibrate` runs `scripts/calibrate-content.py` (1000 draws per stochastic request against the real engine) and writes hash-pinned results to `content/calibration/stochastic-tolerances.json`; `make verify` rejects stale results via `--check`. Measured under the shipped patron-seeded grading protocol every naive is rejected on ≥99% of queues (worst 0.9921) and the reference is accepted on 100% of served queues. The stricter reading — an *independently* seeded correct run accepted ≥99.9% of the time — is unattainable for 11 of 14 stochastic requests because the delivered value's Monte Carlo spread equals or exceeds each naive's bias; that is reported, not tuned around, and `--check --strict-independent` still fails on it. |
 
 ## Feedback, hazards, economy
 
@@ -149,7 +149,7 @@ was executed in the session that wrote this file. Play length (8–12 hours,
 | G03 | Automated | Archive oil grants, later standing oil, scaling sampling costs; affordability proven by `tests/game/release-progression.test.ts`. |
 | G04 | Automated | Milestone eggs hatch up to four hatchlings that add parallel trips and standing speed. |
 | G05 | Automated | Teaching-gated API and a no-idle once-per-request economy simulation that finishes without softlock. |
-| G06 | Partial | Offline headless standing simulation capped at 8 h is implemented and tested (`OFFLINE_CAP_SECONDS`). **The post-capstone Sandbox is not implemented**: the closest feature is the `openStacks` setting, which unlocks the full API at any time but is not a dedicated sandbox mode with all datasets unlocked by finishing the capstone. |
+| G06 | Code | Offline headless standing simulation capped at 8 h is implemented and tested (`OFFLINE_CAP_SECONDS`). The post-capstone Sandbox is a saved notebook over every campaign dataset plus the bundled CSVs with no API restriction, opened from the credits ("Explore Open Stacks") or the HUD once all 77 requests are complete, or at any time with the `openStacks` setting; it grants no rewards and mutates no campaign state (`src/game/sandbox.ts`, `src/ui/SandboxPanel.tsx`). Its browser acceptance was run in the lead session. |
 
 ## Onboarding and writing
 
@@ -158,16 +158,16 @@ was executed in the session that wrote this file. Play length (8–12 hours,
 | N01 | Browser | Skippable intro, turtle naming and minimal prologue; the recorded V00 capture shows title → intro → naming → first solve. The "first solve under 3 minutes" target has not been timed with a real player. |
 | N02 | Automated | Short skippable tutorials with highlight rings, first-time-only display and Almanac replay; `tests/ui/onboarding.test.tsx`. |
 | N03 | Automated | 56 registry entries covering running/output/request/ghost/queue, loud/silent, Almanac/hints/scratch/imports/replay, shop/resources/wings/standing, each hazard, charts/archive/oil/hatchlings and saves/settings; unreachable triggers fail `tests/game/release-content.test.ts`. |
-| N04 | Partial | Reachability is proven statically for every registry tutorial; the scripted campaign that fires all of them was executed in the lead session's browser run (27 tutorial ids at M2), not for the full 77-request campaign. |
+| N04 | Partial | Reachability is proven statically for every registry tutorial; the lead session's browser run observed all 54 registry tutorial ids firing across the campaign, but that pass lives only as interactive evidence on that machine. |
 | W01–W02 | Code | Voice and patron characterisation live in `content/strings` and the request files; tone is a subjective review item. |
-| W03 | Partial | No dialogue contains solutions, datasets are original with invented titles/authors and all player strings are in `content/strings`; **cspell is installed but never invoked by a committed script**, so the spell-check requirement is unenforced (see X11). |
+| W03 | Automated | No dialogue contains solutions, datasets are original with invented titles/authors and all player strings are in `content/strings`; `scripts/check-release-text.mjs` spell-checks every extracted player string (including short JSX labels, accessible names and interpolated sentences) with cspell in `make verify`. |
 
 ## Curriculum and required counterexamples
 
 | ID | Status | Evidence / outstanding work |
 | --- | --- | --- |
-| K00–K13 | Automated | Per-wing topics, API and set pieces are enumerated per request in `CURRICULUM.md`, generated from all 77 authored files and re-checked by `node scripts/document-curriculum.mjs --check`. K13's Sandbox element is not implemented (see G06). |
-| K14 | Partial | `CURRICULUM.md` contains the generated concepts-by-wing and hazards-by-request coverage. One required edge case has **no naive counterexample**: chapter 6 `accumulation` (append not reassigned) is queued by `ch6-show-1`, which ships no naive solution. |
+| K00–K13 | Automated | Per-wing topics, API and set pieces are enumerated per request in `CURRICULUM.md`, generated from all 77 authored files and re-checked by `node scripts/document-curriculum.mjs --check`. K13's Sandbox is implemented (see G06). |
+| K14 | Automated | `CURRICULUM.md` reports no coverage gaps: every required edge case, including chapter 6 `accumulation`, is queued with at least one naive counterexample (`ch6-show-1` ships the append-return-value and hardcoded-grace naives). |
 
 ## Art and assets
 
@@ -206,23 +206,23 @@ was executed in the session that wrote this file. Play length (8–12 hours,
 
 | ID | Status | Evidence / outstanding work |
 | --- | --- | --- |
-| X01 | Partial | `make verify` runs 15 checks, prints a summary table and exits nonzero on failure, and it states that browser/visual/deployment evidence is separate. It does **not** run cspell, an unfinished-text scan, calibration, E2E or axe, so those requirements are not covered by the gate. |
-| X02 | Partial | ESLint, strict TypeScript and Ruff (check + format) run in `make verify`. **No unfinished-text scanner and no cspell invocation exist.** |
+| X01 | Partial | `make verify` runs 19 checks, prints a summary table with a per-check exit code, lists every failing row and exits nonzero, and it states that browser/visual/deployment evidence is separate. Calibration freshness, the text gate and capture coverage are now part of it; axe and assertion-only E2E remain outside the gate. |
+| X02 | Automated | ESLint, strict TypeScript, Ruff (check + format, now including `scripts/calibrate-content.py` and `tests/content/calibration_test.py`) and `scripts/check-release-text.mjs` (cspell + unfinished-text scan) all run in `make verify`. |
 | X03 | Automated | Engine unit, differential and instrumentation suites plus the same suite executed under Pyodide and CPython parity (530 + 530 tests, PROGRESS.md). |
-| X04 | Partial | All puzzle checks and coverage, reference traces, final Director state, checker, economy, migration, tutorial, trace and LOD unit tests run. Calibration (Q10) is missing. |
+| X04 | Automated | All puzzle checks and coverage, reference traces, final Director state, checker, economy, migration, tutorial, trace and LOD unit tests run, together with the calibration tests and freshness check (Q10). |
 | X05 | Automated | No-idle campaign economy proof in `tests/game/release-progression.test.ts`. |
 | X06 | Browser | New-player onboarding and prologue/chapter-1 typing without dev tools were exercised in the lead session's campaign; there is no committed E2E spec. |
 | X07 | Browser | The full browser campaign served 77 requests and 533 queue patrons before the focused fixes; not re-run at `5fa4d25`. |
 | X08 | Browser | Loud/silent failures, Stop, infinite-loop timeout, syntax errors, standing orders, time-warp, offline, save export/import/reload and settings were exercised interactively; no committed spec covers them. |
 | X09 | Browser | 1366×768 and Firefox smoke passed at `3031e4a` (Firefox chapter 6, 7/7 patrons). |
 | X10 | Partial | Zero serious/critical axe findings in the tested states at both resolutions (`3031e4a`, empty and populated Scratch) with keyboard access; two moderate landmark findings remain, and not every screen of the expanded game has been scanned. |
-| X11 | Partial | Exactly three hints per request and Almanac entries for every taught API are enforced by tests; **cspell over all strings is not run by any committed script**. |
+| X11 | Automated | Exactly three hints per request and Almanac entries for every taught API are enforced by tests, and `npm run check:text` runs cspell over every extracted player string in `make verify`. |
 | X12 | Automated | Asset validation (51 assets, zero errors), nodes, clips, palette, triangles and the scene budget test. |
 | X13 | Partial | Production build passes in `make verify`; the 200k-row engine performance gate passes. Cold title ≤10 s was logged at M1 (3.256 s) and has not been re-measured for the expanded world; the post-build smoke is browser-owned. |
 | X14 | Partial | `REVIEW.md` holds one line per inspected image for the M1 evidence and the asset sheets; the expanded screenshot set has not been produced or inspected. |
 | X15 | Pending | **No clean-clone `make setup && make verify && make build` has been executed.** |
 | X16 | Pending | **Blocked**: no authorized deployment target exists, so no public deployment or post-deploy smoke can happen. Run/test/build/deploy documentation is in `README.md`. |
-| X17 | Partial | This document maps every ID. Requirements are **not** all met: Q10, G06's Sandbox, K14's `accumulation` counterexample, X02's scanners, X15 and X16 are outstanding, so no release claim is made. |
+| X17 | Partial | This document maps every ID. Requirements are **not** all met: the V00–V16 media pass, browser/axe re-acceptance at the current revision, X15's clean clone and X16's deployment are outstanding, and Q10's independent-stream reading is reported as unattainable, so no release claim is made. |
 | L01 | Pending | Slack/email reporting is unavailable in this environment; reports are delivered in-session (PROGRESS.md, `REVIEW.md`). |
 | L02 | Partial | Milestone summaries with evidence are recorded in PROGRESS.md; media beyond V00 and the asset sheets does not exist. |
 | L03 | Pending | The Definition of Done is not met: see X15, X16, V11–V14 and the gaps above. |
@@ -235,19 +235,15 @@ was executed in the session that wrote this file. Play length (8–12 hours,
 | M01 | Complete | Vertical slice accepted at `fb8120e` with browser, axe, capture and asset evidence (`REVIEW.md`). |
 | M02 | Complete | Full engine, cross-runtime parity, charts, statistics and instrumentation; 530 + 530 tests, benchmark under 1 s (PROGRESS.md M2). |
 | M03 | Complete | 51 original assets, 204 previews, zero validator errors. |
-| M04–M05 | Complete | All 77 requests with fixtures, naive counterexamples and 500/100-seed validation; coverage generated in `CURRICULUM.md` (one K14 gap noted). |
-| M06 | Complete | Economy, standing orders, archive oil, hats and hatchlings; Sandbox missing (G06). |
+| M04–M05 | Complete | All 77 requests with fixtures, naive counterexamples and 500/100-seed validation; coverage generated in `CURRICULUM.md` with no gaps. |
+| M06 | Complete | Economy, standing orders, archive oil, hats, hatchlings and the post-capstone Sandbox (G06). |
 | M07 | Partial | Accessibility, writing, performance and cross-browser work passed in the tested states; audio is implemented and unit-tested but its **subjective mix and audibility have not been accepted**, and the fractional SFX-bus fix `5fa4d25` still awaits a focused browser retest. |
 | M08 | Pending | Clean-clone verification, authorized deployment, the remaining media set and the final report are outstanding. |
 
 ## Summary of outstanding release work
 
-1. `make calibrate` with 1000 seeds and committed, hashed, staleness-checked results (Q10).
-2. A naive counterexample for the chapter-6 `accumulation` edge case (K14).
-3. The post-capstone Sandbox with all datasets and API (G06, P04, K13).
-4. An unfinished-text scanner and a cspell invocation wired into `make verify` (X02, X11, O04).
-5. Committed browser coverage, or a recorded pass at the current revision, including the audio retest after `5fa4d25` (X06–X10, M07).
-6. The remaining media set V01–V16, screenshots and contact sheets (V11–V14, L02).
-7. Clean-clone `make setup && make verify && make build` (X15, O02).
-8. An authorized deployment target, the deployment and its smoke test (T08, X16).
-9. Direct measurement of the 8–12 hour play length (P04) and of frame times on the target MacBook Air (O15).
+1. Committed browser coverage, or a recorded pass at the current revision, including the audio retest after `5fa4d25` (X06–X10, M07).
+2. The media set V00–V16, screenshots and contact sheets (V11–V14, L02). The tours and the `make check-captures` gate exist; **no capture has been executed**, so `make verify` fails on that row until the media pass runs.
+3. Clean-clone `make setup && make verify && make build` (X15, O02).
+4. An authorized deployment target, the deployment and its smoke test (T08, X16).
+5. Direct measurement of the 8–12 hour play length (P04) and of frame times on the target MacBook Air (O15).

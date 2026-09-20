@@ -237,3 +237,42 @@ Browser verification found that the Sound effects slider only suppressed cues at
 zero; fractional values never reached the SFX gain bus. Apply the clamped SFX
 setting to that bus, before the independently controlled master gain. Regression
 tests cover restored fractional settings, routing, live changes and invalid levels.
+
+### Release gates: calibration freshness, player text and capture coverage
+
+`make verify` now runs the stochastic calibration freshness check, the player
+text gate (cspell plus the unfinished-text and dead-control scan) and the
+capture coverage gate, and its summary table carries each check's exit code
+with an explicit list of failing rows. The gates fail closed: a missing
+`.venv/bin/python`, an unreadable calibration file, a manifest that does not
+match its tour's declared coverage and a tour that was never recorded are all
+visible failures rather than skipped rows. `make verify --milestone=m1/m2`
+passes `--pending-ok` to the capture gate only, since a milestone run predates
+the media pass; artifacts that exist but are damaged still fail there.
+
+Q10 is measured under the shipped patron-seeded grading protocol, which is what
+the game actually grades. The stricter reading — an independently seeded correct
+run accepted at least 99.9% of the time — is unattainable for 11 of the 14
+stochastic requests, because the delivered value's Monte Carlo spread equals or
+exceeds each naive's bias. No tolerance was widened to hide that;
+`--check --strict-independent` still fails on it and the limit is documented.
+
+### Player text extraction covers short labels and interpolated sentences
+
+The first text gate only accepted strings of three or more words with no braces,
+which silently excluded every button, tab and accessible name, and every
+interpolated sentence. Interpolation slots are now removed before the prose test,
+and JSX text plus the accessible attributes (`aria-label`, `alt`, `placeholder`,
+`title` and friends) are accepted from a single real word upwards while class
+lists, identifiers, paths and code fragments are still refused.
+
+### Capture tours name the shipped wings and reach the credits by playing
+
+Chapter tour titles are read from `content/strings/world.json`, so a tour cannot
+claim a wing name the game does not use. V13 finishes the last request and
+asserts the game rolls its own credits, then clicks "Explore Open Stacks",
+inspects and runs a dataset in the Sandbox window and asserts that no resource
+or completion changed. Reaching that gate needs the earlier 77 requests
+completed, so `window.__SHELF__.grantCompleted(ids)` grants prior completions
+only — it touches no resources, wings or settings, and the capstone chapter is
+still played through the real queue.

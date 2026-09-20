@@ -1,22 +1,26 @@
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { chapterPuzzles } from './capture-lib.mjs';
 import {
   bootstrap, captureUrl, closeDialog, dismissTutorials, editor, nextRequest, openTool,
   playRequest, run, serveQueue, setCode, startNewGame, typeReference,
 } from './capture-steps.mjs';
 
+const world = createRequire(import.meta.url)('../content/strings/world.json');
+
 const TOOL = {
   shop: 'Shop & unlocks', orders: 'Standing orders', atlas: 'Atlas of wings', almanac: 'Almanac',
   settings: 'Settings', scratch: 'Scratch console', windows: 'Windows & layout', menu: 'Pause menu',
 };
-const CHAPTER_NAMES = [
-  'The Returns Desk', 'Tables', 'Selecting and sorting', 'Grouping', 'Joins and pivots',
-  'Charts', 'Sampling', 'Chance', 'Simulation', 'Confidence', 'Testing', 'Association', 'Prediction',
-  'The Archive capstones',
-];
+/** The shipped wing catalogue, read from the same strings the game renders. */
+const CHAPTER_NAMES = Object.fromEntries(
+  Object.entries(world.wings).map(([chapter, wing]) => [Number(chapter), wing.name]),
+);
 
 function chapterTitle(chapter) {
-  return CHAPTER_NAMES[chapter] ?? `Chapter ${chapter}`;
+  const name = CHAPTER_NAMES[chapter];
+  assert(name, `Chapter ${chapter} has no wing in content/strings/world.json.`);
+  return name;
 }
 
 /** Opens a wing the way a player does: finish the previous request, then pay its stars. */
@@ -155,43 +159,76 @@ const prologue = {
 const capstones = {
   ...chapterTour(13, 'V13'),
   title: 'V13 — Capstones, credits and Open Stacks',
-  description: 'The Archive capstones played end to end, then the credits page and Open Stacks in the Atlas.',
+  description: 'The Archive capstones played end to end, the campaign\u2019s own credits transition, and the post-capstone Sandbox opened from the credits and used on a real dataset.',
   expectedMinutes: 11,
   requirement: puzzles => ({
     ...chapterRequirement(13, puzzles),
-    windows: ['atlas', 'queue', 'output', 'credits', 'settings'],
+    windows: ['atlas', 'queue', 'output', 'credits', 'sandbox'],
     screenshots: { puzzle: chapterPuzzles(puzzles, 13).length, tutorial: 1, window: 4 },
   }),
   async run(context) {
     const { recorder, puzzles } = context;
-    await recorder.hold('The Archive — capstone requests, the credits and Open Stacks.', 3);
+    const { page } = recorder;
+    await recorder.hold('The Grand Reopening — capstone requests, the credits and Open Stacks.', 3);
     await openWing(recorder, 13, puzzles);
+
+    // The credits and the Sandbox are gated on the whole campaign. The tour plays chapter 13
+    // for real and grants the earlier requests, so the end of the campaign is the game's own.
+    const earlier = puzzles.filter(puzzle => puzzle.chapter !== 13).map(puzzle => puzzle.id);
+    await page.evaluate(ids => window.__SHELF__.grantCompleted(ids), earlier);
+    await recorder.settle(0.3);
+    const granted = await recorder.state();
+    assert.equal(granted.openStacks, false, 'Open Stacks must stay off so the campaign itself unlocks the Sandbox.');
+    assert.equal(await page.locator('[data-window="sandbox"]').count(), 0, 'The Sandbox must be closed until the campaign is finished.');
+    await recorder.hold('A developer control marks the earlier chapters done; the capstones below are played.', 2);
+
     await playChapter(recorder, 13, puzzles);
 
-    await openTool(recorder, TOOL.settings);
-    await recorder.page.getByLabel('Open Stacks').check();
-    await recorder.settle(0.3);
-    assert.equal((await recorder.state()).openStacks, true, 'Open Stacks must be switched on through Settings.');
-    await recorder.hold('Open Stacks hands over the full Python API; the requests stay the same.', 3);
-    await recorder.shot('window', 'settings-open-stacks', 'Open Stacks enabled');
-    recorder.record('windows', 'settings');
-    await closeDialog(recorder);
-
     await openTool(recorder, TOOL.atlas);
-    await recorder.hold('With Open Stacks on, every wing and request in the Atlas is reachable.', 3);
-    await recorder.shot('window', 'atlas-open-stacks', 'Atlas with Open Stacks');
+    await recorder.hold('The Atlas at the end of the campaign: every wing opened and every request answered.', 3);
+    await recorder.shot('window', 'atlas-complete', 'Atlas with the campaign finished');
     recorder.record('windows', 'atlas');
     await closeDialog(recorder);
 
-    await openTool(recorder, TOOL.menu);
-    await recorder.click('Return to title');
+    await recorder.click('Next request');
     await recorder.settle(0.5);
-    await recorder.click('Credits');
-    await recorder.settle(0.5);
-    assert.equal((await recorder.state()).screen, 'credits', 'The credits page must open from the title screen.');
+    assert.equal((await recorder.state()).screen, 'credits', 'Finishing the last request must roll the credits by itself.');
     await recorder.hold('Credits: original writing, original art, original puzzles.', 5);
-    await recorder.shot('window', 'credits', 'Credits page');
+    await recorder.shot('window', 'credits', 'Credits after the last request');
     recorder.record('windows', 'credits');
+
+    await recorder.click('Explore Open Stacks');
+    await recorder.settle(0.5);
+    const sandbox = page.locator('[data-window="sandbox"]');
+    assert(await sandbox.count(), 'The credits must open the Sandbox in its own window.');
+    const beforeSandbox = await recorder.state();
+    await recorder.hold('Open Stacks: the full Python API, every campaign shelf and every bundled file, ungraded.', 4);
+
+    const dataset = sandbox.getByLabel('Dataset');
+    const csv = (await dataset.locator('option').allInnerTexts()).find(label => label.endsWith('.csv'));
+    assert(csv, 'The Sandbox must offer the bundled CSV files.');
+    await dataset.selectOption({ label: csv });
+    await recorder.settle(0.3);
+    await sandbox.getByRole('button', { name: 'Inspect dataset', exact: true }).click({ force: true });
+    await recorder.settle();
+    const inspected = await sandbox.locator('.scratch-output').innerText();
+    assert(inspected.trim().length > 0, 'Inspecting a dataset must print the table.');
+    await recorder.hold(`${csv} opened on the sandbox desk.`, 3);
+
+    await page.evaluate(() => window.__SHELF__.getState().setSandbox({
+      code: 'from datascience import *\n\nprint(shelf.num_rows, "rows")\nprint(shelf.labels)\n',
+    }));
+    await recorder.settle(0.3);
+    await sandbox.getByRole('button', { name: 'Run notebook', exact: true }).click({ force: true });
+    await recorder.settle();
+    const output = await sandbox.locator('.scratch-output').innerText();
+    assert(/\d+ rows/.test(output), `The sandbox notebook must run real Python; output was: ${output.slice(0, 200)}`);
+    const after = await recorder.state();
+    assert.deepEqual(after.resources, beforeSandbox.resources, 'The Sandbox must not pay resources.');
+    assert.deepEqual(after.completed, beforeSandbox.completed, 'The Sandbox must not complete requests.');
+    await recorder.hold('Own questions, own answers: the Sandbox grades nothing and pays nothing.', 4);
+    await recorder.shot('window', 'sandbox', 'Sandbox notebook on a bundled dataset');
+    recorder.record('windows', 'sandbox');
   },
 };
 

@@ -99,7 +99,7 @@ derived from that course or the `datascience` package; see `CREDITS.md`.
 
 | Request | Kind | Title | Patron | New API | Concepts | Queue hazards | Naive counterexamples |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `ch6-show-1` | show | The Grace Days Ledger | Clerk Odo | `np.append`, `make_array`, `column`, `with_columns`, `deliver` | for, if, np.append, accumulation, iteration | all_within_grace, no_grace_at_all | — |
+| `ch6-show-1` | show | The Grace Days Ledger | Clerk Odo | `np.append`, `make_array`, `column`, `with_columns`, `deliver` | for, if, np.append, accumulation, iteration | all_within_grace, no_grace_at_all | all_within_grace (loud), no_grace_at_all (silent) |
 | `ch6-show-2` | show | Turns of the Return Wheel | Fen | `np.random.choice`, `np.count_nonzero`, `deliver` | np.random.choice, simulation, empirical_proportion, randomness | only_two_chutes | — |
 | `ch6-vary-1` | vary | A Handful for the Display Case | Mrs. Quill | `sample`, `num_rows`, `column`, `np.sum`, `deliver` | sample, with_replacement, oversampling, randomness | cart_smaller_than_request, the_whole_cart_exactly | cart_smaller_than_request (loud) |
 | `ch6-vary-2` | vary | A Model Week at the Desk | Dr. Newt | `sample_proportions`, `make_array`, `deliver` | sample_proportions, probability_model, counts_vs_proportions, simulation | one_chute_never_used, one_chute_almost_always | — |
@@ -408,7 +408,7 @@ lists requests whose naive solution is aimed at that fixture.
 | alcove_stays_empty | `ch2-break-1` | — |
 | all_at_mean | `ch1-vary-2` | `ch1-vary-2` |
 | all_slips_unknown | `ch5-vary-1` | `ch5-vary-1` |
-| all_within_grace | `ch6-show-1` | — |
+| all_within_grace | `ch6-show-1` | `ch6-show-1` |
 | asked_height_is_above_every_shelf | `ch10-vary-1` | `ch10-vary-1` |
 | asked_height_sits_on_the_edge | `ch10-vary-1` | — |
 | barely_any_damage | `ch6-break-1` | `ch6-break-1` |
@@ -455,7 +455,7 @@ lists requests whose naive solution is aimed at that fixture.
 | magpies_and_bookworms | `capstone-1` | `capstone-1` |
 | mixed_strings | `ch1-break-2` | `ch1-break-2` |
 | most_slips_never_go_left | `ch12-show-1` | `ch12-show-1` |
-| no_grace_at_all | `ch6-show-1` | — |
+| no_grace_at_all | `ch6-show-1` | `ch6-show-1` |
 | no_idle_wing | `ch3-break-2` | `ch3-break-2` |
 | no_simulated_result_is_as_extreme | `capstone-3` | — |
 | no_wing_repeats | `ch4-show-2` | — |
@@ -553,7 +553,7 @@ lists requests whose naive solution is aimed at that fixture.
 | 5 | unmatched_rows | `ch5-vary-1`, `capstone-2` | `ch5-vary-1`, `capstone-2` |
 | 5 | row_multiplication | `ch5-break-1` | `ch5-break-1` |
 | 5 | key_type_mismatch | `ch5-break-2` | `ch5-break-2` |
-| 6 | accumulation | `ch6-show-1` | **none** |
+| 6 | accumulation | `ch6-show-1` | `ch6-show-1` |
 | 6 | with_replacement | `ch6-vary-1`, `ch6-break-2`, `ch8-show-2` | `ch6-vary-1`, `ch6-break-2`, `ch8-show-2` |
 | 6 | oversampling | `ch6-vary-1` | `ch6-vary-1` |
 | 6 | repetitions | `ch6-break-1` | `ch6-break-1` |
@@ -576,4 +576,4 @@ lists requests whose naive solution is aimed at that fixture.
 
 ## Coverage gaps
 
-- Wing 6 edge case `accumulation` is queued by `ch6-show-1` but no request that teaches it ships a naive counterexample (REQUIREMENTS K14).
+None. Every required edge case is queued with at least one naive counterexample.

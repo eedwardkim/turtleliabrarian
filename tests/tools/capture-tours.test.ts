@@ -45,9 +45,13 @@ describe('capture tour registry', () => {
     }
   });
 
-  it('holds V13 to the capstones, credits and Open Stacks, and V16 to all 77 requests in eight minutes', () => {
+  it('holds V13 to the capstones, the credits transition, the Sandbox, and V16 to all 77 requests in eight minutes', () => {
     const capstones = tourById('V13').requirement(puzzles);
-    expect(capstones.windows).toEqual(expect.arrayContaining(['credits', 'settings', 'atlas']));
+    expect(capstones.windows).toEqual(expect.arrayContaining(['credits', 'sandbox', 'atlas']));
+    const body = tourById('V13').run.toString();
+    expect(body).toContain('Explore Open Stacks');
+    expect(body).toContain('[data-window="sandbox"]');
+    expect(body).not.toContain('Return to title');
     const speedrun = tourById('V16').requirement(puzzles);
     expect(speedrun.puzzles).toHaveLength(77);
     expect(speedrun.kinds).toEqual(['show', 'vary', 'break', 'capstone']);
@@ -62,6 +66,16 @@ describe('capture tour registry', () => {
     expect(tourById('V15').requirement(puzzles).windows).toEqual(expect.arrayContaining([
       'devtools', 'devtools-fixtures', 'devtools-trace', 'devtools-scene', 'deep-link',
     ]));
+  });
+});
+
+describe('capture chapter titles', () => {
+  it('names each chapter with the wing the game shows', async () => {
+    const world = JSON.parse(await readFile('content/strings/world.json', 'utf8')) as { wings: Record<string, { name: string }> };
+    for (let chapter = 1; chapter <= 12; chapter++) {
+      const tour = tourById(`V${String(chapter).padStart(2, '0')}`);
+      expect(tour.title).toContain(world.wings[String(chapter)].name);
+    }
   });
 });
 
@@ -104,7 +118,7 @@ describe('public test API contract', () => {
 
   it('keeps the controls the tours depend on', async () => {
     const source = await readFile('src/game/devtools.ts', 'utf8');
-    for (const name of ['gotoPuzzle', 'lockWingsFrom', 'setResource', 'setSettings', 'getPuzzles', 'getTutorials', 'stepClock', 'waitForIdle']) {
+    for (const name of ['gotoPuzzle', 'lockWingsFrom', 'grantCompleted', 'setResource', 'setSettings', 'getPuzzles', 'getTutorials', 'stepClock', 'waitForIdle']) {
       expect(source).toContain(name);
     }
   });
