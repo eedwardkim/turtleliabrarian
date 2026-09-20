@@ -5,7 +5,7 @@
   "objective": "Construct an array whose length matches its partner before element-wise multiplication.",
   "concepts": ["array_length", "broadcasting", "length_mismatch"],
   "requiredApi": ["np.arange", "len", "deliver"],
-  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "sort", "item", "sum", "np.mean", "np.count_nonzero"],
   "starter": "import numpy as np\nfees = rates\ndeliver(fees)",
   "hints": ["Compute one fee for each rate in rates, using day numbers that match the length of the rates array.", "Use np.arange(1, len(rates) + 1) to make 1 through the number of rates, then multiply arrays with *.", "Write days = np.arange(1, len(rates) + 1), then fees = rates * ___ and deliver(fees)."],
   "inputCode": "import random\nfrom datascience import make_array\nrates = make_array(*[random.randint(1, 6) for _ in range(random.randint(2, 8))])",

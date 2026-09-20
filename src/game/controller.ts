@@ -6,7 +6,7 @@ import { getTutorial, tutorialsFor } from '../../content/tutorials';
 import { puzzles, getPuzzle } from './catalog';
 import { automaticTutorial } from './guidance';
 import { commandTutorialId, pendingCommands } from './commands';
-import { check } from './checker';
+import { answerFor, check } from './checker';
 import {
   ARCHIVE_CHAPTER, canEnterPuzzle, completePuzzle, enterWing, equipHat, firstTryBonus, inkFor, maxReplaySpeed, offlineSeconds,
   OFFLINE_CAP_SECONDS, orderCapacity, orderTrips, purchaseItem, scriptCapacity, shareTrips, spendOil, tripSeconds, wingUnlocked,
@@ -124,6 +124,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
   let timer: ReturnType<typeof setInterval> | undefined;
   let initializing: Promise<void> | undefined;
   let backgroundSeconds = 0;
+  let completeAfterReplay: (() => void) | undefined;
   const references = new Map<string, RunResult>();
 
   return create<GameState>((set, get, store) => {
@@ -146,6 +147,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       currentLine: result.trace[index]?.line ?? null, event: result.trace[index] ?? null, progress: 0,
     });
     const stop = (): void => {
+      completeAfterReplay = undefined;
       epoch++;
       runtime.stop();
       set((state) => ({
@@ -154,6 +156,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       }));
     };
     const begin = (status: string): number => {
+      completeAfterReplay = undefined;
       if (get().busy || get().backgroundBusy) stop();
       epoch++;
       set({ busy: true, status, replayPaused: true });
@@ -179,7 +182,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       tutorial('complete');
     };
     const display = (result: RunResult, expected: Value, validationFailure?: string): CheckDiff => {
-      const diff = check(result.delivered, expected, get().puzzle.checker);
+      const diff = check(answerFor(get().puzzle, result), expected, get().puzzle.checker);
       if (result.error) { diff.pass = false; diff.message = result.error.friendly || result.error.message; }
       else if (validationFailure) { diff.pass = false; diff.message = validationFailure; }
       set({ ...replayFields(result), expected, inputs: result.inputs, diff, status: diff.message });
@@ -229,7 +232,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
             if (ticket !== epoch) return;
             const result = await runtime.run(requestFor(puzzle, order.code, seed, get().save.orderFiles[order.puzzleId] ?? {}, expected.inputs));
             if (ticket !== epoch) return;
-            const diff = check(result.delivered, expected.delivered, puzzle.checker);
+            const diff = check(answerFor(puzzle, result), answerFor(puzzle, expected), puzzle.checker);
             if (result.error) { diff.pass = false; diff.message = result.error.friendly || result.error.message; }
             if (result.error || !diff.pass) {
               const failure: QueueEntry = { name: 'Standing-order shelf', seed, inputs: result.inputs, status: 'failed', result, diff };
@@ -351,7 +354,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         try {
           const expected = await reference(puzzle, puzzle.visibleSeed, puzzle.visibleInputs);
           if (ticket !== epoch) return;
-          set({ expected: expected.delivered, inputs: expected.inputs, status: 'The visible shelf is ready.' });
+          set({ expected: answerFor(puzzle, expected), inputs: expected.inputs, status: 'The visible shelf is ready.' });
           tutorial('preview');
         } catch (error) { if (ticket === epoch) set({ status: errorMessage(error) }); }
         finally { if (ticket === epoch) { set({ busy: false }); void runOrders(); } }
@@ -367,24 +370,27 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           const result = await runtime.run(requestFor(puzzle, code, puzzle.visibleSeed, { ...save.files }, expected.inputs, save.settings.openStacks));
           if (ticket !== epoch) return;
           let validationFailure: string | undefined;
-          if (puzzle.verifyOnRun && !result.error && check(result.delivered, expected.delivered, puzzle.checker).pass) {
+          if (puzzle.verifyOnRun && !result.error && check(answerFor(puzzle, result), answerFor(puzzle, expected), puzzle.checker).pass) {
             set({ status: 'Checking your script with different inputs…' });
             for (const entry of buildQueue(puzzle)) {
               const otherExpected = await reference(puzzle, entry.seed, entry.inputs);
               if (ticket !== epoch) return;
               const otherResult = await runtime.run(requestFor(puzzle, code, entry.seed, { ...save.files }, otherExpected.inputs, save.settings.openStacks));
               if (ticket !== epoch) return;
-              if (otherResult.error || !check(otherResult.delivered, otherExpected.delivered, puzzle.checker).pass) {
+              if (otherResult.error || !check(answerFor(puzzle, otherResult), answerFor(puzzle, otherExpected), puzzle.checker).pass) {
                 validationFailure = `This matches the shown example, but not different inputs. ${puzzle.hints[0]}`;
                 break;
               }
             }
           }
-          const diff = display(result, expected.delivered, validationFailure);
+          const diff = display(result, answerFor(puzzle, expected), validationFailure);
           if (puzzle.lesson && diff.pass && !get().save.completed.includes(puzzle.id)) {
             const progress = progressFor(get().save, puzzle);
             persist({ ...get().save, progress: { ...get().save.progress, [puzzle.id]: { ...progress, attempts: progress.attempts + 1 } } });
-            finish(puzzle, code, get().save.files, 'Delivered. Shelby stamped it: request complete.');
+            if (puzzle.setPiece === 'bookcase-sort' && result.trace.length) {
+              const files = { ...get().save.files };
+              completeAfterReplay = () => finish(puzzle, code, files, 'Your code put the shelf in order.');
+            } else finish(puzzle, code, get().save.files, 'Delivered. Shelby stamped it: request complete.');
           }
         } catch (error) { if (ticket === epoch) set({ status: errorMessage(error) }); }
         finally { if (ticket === epoch) { set({ busy: false }); void runOrders(); } }
@@ -409,7 +415,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
             if (ticket !== epoch) return;
             const result = await runtime.run(requestFor(puzzle, code, entry.seed, { ...save.files }, expected.inputs, save.settings.openStacks));
             if (ticket !== epoch) return;
-            const diff = display(result, expected.delivered);
+            const diff = display(result, answerFor(puzzle, expected));
             set({ queue: get().queue.map((item, i) => i === index ?
               { ...item, inputs: result.inputs, result, diff, status: diff.pass ? 'passed' : 'failed' } : item) });
             if (diff.pass) rewardPatrons(puzzle, 1);
@@ -600,7 +606,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         const ticket = begin('Inspecting this patron’s shelf…');
         try {
           const expected = await reference(get().puzzle, entry.seed, entry.inputs);
-          if (ticket === epoch && entry.result) { display(entry.result, expected.delivered); set({ replayPaused: false }); }
+          if (ticket === epoch && entry.result) { display(entry.result, answerFor(get().puzzle, expected)); set({ replayPaused: false }); }
         } catch (error) { if (ticket === epoch) set({ status: errorMessage(error) }); }
         finally { if (ticket === epoch) set({ busy: false }); }
       },
@@ -611,7 +617,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         const ticket = begin('Inspecting the paused order…');
         try {
           const expected = await reference(getPuzzle(puzzleId), failure.seed, failure.inputs);
-          if (ticket === epoch) { set({ queue: [failure] }); display(failure.result!, expected.delivered); }
+          if (ticket === epoch) { set({ queue: [failure] }); display(failure.result!, answerFor(getPuzzle(puzzleId), expected)); }
         } catch (error) { if (ticket === epoch) set({ status: errorMessage(error) }); }
         finally { if (ticket === epoch) set({ busy: false }); }
       },
@@ -665,6 +671,11 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         const next = advanceReplay(state, trace, milliseconds, state.save.settings.replaySpeed);
         if (next === state) return;
         set({ ...next, currentLine: currentLine(next, trace), event: trace[next.traceIndex] ?? null, progress: replayProgress(next, trace) });
+        if (next.replayPaused && next.traceIndex === trace.length - 1 && completeAfterReplay) {
+          const complete = completeAfterReplay;
+          completeAfterReplay = undefined;
+          complete();
+        }
       },
       stepReplay() { get().setReplay(get().traceIndex + 1); },
       skipReplay() {
@@ -672,6 +683,9 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         if (!trace.length) return;
         get().setReplay(trace.length - 1);
         set({ replayElapsed: eventDuration(trace[trace.length - 1]), progress: 1 });
+        const complete = completeAfterReplay;
+        completeAfterReplay = undefined;
+        complete?.();
       },
       replay() { get().setReplay(0); set({ replayPaused: false }); },
       triggerTutorial(trigger) {

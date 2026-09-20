@@ -1,0 +1,24 @@
+{
+  "id": "ch1-show-3", "chapter": 1, "kind": "show", "lesson": true, "answer": "value",
+  "title": "A Shelf in Order", "patron": "Shelby",
+  "request": "Put these books in order from shortest to tallest. books is this shelf; sort('height') arranges it by each book's height.",
+  "objective": "Sort the books by height, from smallest to largest.",
+  "concepts": ["sort", "tables"],
+  "requiredApi": ["sort"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "sort"],
+  "starter": "books.sort(___)",
+  "hints": ["Choose the height of each book to sort by.", "Put the column name in quotes: 'height'.", "books.sort('height')"],
+  "inputCode": "import random\nfrom datascience import Table\nnames = ['Cloud', 'Fern', 'Moss', 'Sun', 'Moon', 'Rain', 'Seed']\nheights = random.sample(range(10, 29), len(names))\nbooks = Table().with_columns('title', names, 'height', heights)",
+  "visibleSeed": 27,
+  "visibleInputs": {"books": {"kind": "table", "labels": ["title", "height"], "rows": [["Cloud", 24], ["Fern", 10], ["Moss", 20], ["Sun", 14], ["Moon", 28], ["Rain", 12], ["Seed", 17]], "totalRows": 7}},
+  "fixtures": [
+    {"name": "equal_heights", "inputs": {"books": {"kind": "table", "labels": ["title", "height"], "rows": [["Cloud", 20], ["Fern", 10], ["Moss", 20]], "totalRows": 3}}, "predicate": "books.num_rows > len(set(books.column('height')))"},
+    {"name": "reverse_heights", "inputs": {"books": {"kind": "table", "labels": ["title", "height"], "rows": [["Moon", 28], ["Sun", 14], ["Fern", 10]], "totalRows": 3}}, "predicate": "bool((books.column('height')[:-1] > books.column('height')[1:]).all())"}
+  ],
+  "queueSize": 5, "reference": "books.sort('height')",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["sort"],
+  "standingOrder": {"eligible": false, "ink": 0, "oil": 0},
+  "setPiece": "bookcase-sort", "hazards": ["equal_heights", "reverse_heights"], "stochastic": false
+}

@@ -7,11 +7,11 @@ import { parsePuzzle } from '../../src/game/validation';
 
 describe('authored campaign content', () => {
   it('contains the exact progression and individual validated metadata', () => {
-    expect(puzzles).toHaveLength(78);
+    expect(puzzles).toHaveLength(79);
     expect(puzzles.filter((puzzle) => puzzle.chapter === 0)).toHaveLength(5);
-    for (const kind of ['show', 'vary', 'break']) expect(puzzles.filter((puzzle) => puzzle.chapter === 1 && puzzle.kind === kind)).toHaveLength(2);
+    for (const kind of ['show', 'vary', 'break']) expect(puzzles.filter((puzzle) => puzzle.chapter === 1 && puzzle.kind === kind)).toHaveLength(kind === 'show' ? 3 : 2);
     expect(puzzles.filter((puzzle) => puzzle.chapter === 2 && puzzle.kind === 'show')).toHaveLength(2);
-    expect(new Set(puzzles.map((puzzle) => puzzle.id)).size).toBe(78);
+    expect(new Set(puzzles.map((puzzle) => puzzle.id)).size).toBe(79);
     const learned = new Set<string>();
     for (const puzzle of puzzles) {
       expect(parsePuzzle(puzzle)).toBe(puzzle);

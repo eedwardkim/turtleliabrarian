@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import World from './scene/World';
+import { Bookcase } from './scene/Bookcase';
 import { useGame } from './game/store';
 import { getTutorial } from '../content/tutorials';
 import { blankAnswer } from '../content/tutorials/demo';
@@ -84,6 +85,9 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   const reducedMotion = settings.reducedMotion || systemReducedMotion;
   const scale = Math.max(0.8, Math.min(1.25, settings.uiScale));
   const deskViewport = { width: viewport.width / scale, height: viewport.height / scale };
+  const bookcase = game.screen === 'game' && game.puzzle.setPiece === 'bookcase-sort';
+  const bookcasePanelHeight = Math.min(290, deskViewport.height * 0.39);
+  const layoutKey = (id: string) => bookcase ? `bookcase:${id}` : id;
   const queueEntry = queueIndex === null ? undefined : game.queue[queueIndex];
   const result = queueEntry?.result ?? game.result;
   const diff = queueEntry?.diff ?? game.diff;
@@ -169,9 +173,12 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   }, [onIntroBeat]);
   function layoutFor(id: string): WindowLayout {
     const lesson = !!game.puzzle.lesson && ['editor', 'request'].includes(id);
-    const saved = useGame.getState().save.layouts[id];
+    const saved = useGame.getState().save.layouts[layoutKey(id)];
     if (saved) return clampLayout(lesson ? { ...saved, closed: false, minimized: false } : saved, deskViewport);
     const layout = defaultLayout(id, deskViewport);
+    if (bookcase && lesson) return clampLayout({ ...layout, x: id === 'editor' ? 24 : deskViewport.width * 0.5 + 8,
+      y: deskViewport.height - bookcasePanelHeight - 40, height: bookcasePanelHeight,
+      width: deskViewport.width * 0.5 - 32 }, deskViewport);
     if (lesson) return clampLayout({ ...layout, y: 100, height: Math.min(420, deskViewport.height - 170),
       ...(id === 'request' ? { width: 350, x: deskViewport.width - 374 } : {}) }, deskViewport);
     if (id.startsWith('script:')) return { ...layout, x: layout.x + 30, y: layout.y + 30, closed: game.activeFile !== id.slice(7) };
@@ -180,7 +187,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   function focus(id: string) {
     const highest = Math.max(1, ...Object.values(useGame.getState().save.layouts).map(layout => layout.z));
     const layout = layoutFor(id);
-    if (layout.z < highest || layout.z === 1) game.setLayout(id, { ...layout, z: highest + 1 });
+    if (layout.z < highest || layout.z === 1) game.setLayout(layoutKey(id), { ...layout, z: highest + 1 });
   }
   function openWindow(id: string) {
     const highest = Math.max(1, ...Object.values(useGame.getState().save.layouts).map(layout => layout.z));
@@ -229,7 +236,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   }
   function floating(id: string, children: ReactNode, controls?: ReactNode, dark = false) {
     return <FloatingWindow key={id} id={id} title={titleFor(id)} layout={layoutFor(id)} viewport={deskViewport} scale={scale} dark={dark}
-      onLayout={layout => game.setLayout(id, layout)} onFocus={() => focus(id)} controls={controls} highlight={tourTarget === id}
+      onLayout={layout => game.setLayout(layoutKey(id), layout)} onFocus={() => focus(id)} controls={controls} highlight={tourTarget === id}
       essential={!!game.puzzle.lesson}>
       {children}
     </FloatingWindow>;
@@ -252,12 +259,15 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   return <>
     <DesktopGate />
     <div className={`app ${reducedMotion ? 'reduced-motion' : ''} ${settings.colorblind ? 'colorblind' : ''}`}>
-      {viewport.width >= 1024 && <div className="world-backdrop" aria-hidden="true">
-        <World inputs={visibleInputs} result={result} event={event} progress={queueEntry ? 1 : event ? game.replayElapsed / eventDuration(event) : 0} feedback={feedback} diff={diff}
+      {viewport.width >= 1024 && <div className="world-backdrop" aria-hidden={bookcase ? undefined : true}>
+        {bookcase ? <Bookcase inputs={visibleInputs} result={result} event={event}
+          progress={event ? game.replayElapsed / eventDuration(event) : 0} reducedMotion={reducedMotion}
+          settled={game.save.completed.includes(game.puzzle.id) ? game.expected : undefined}
+          bottom={(bookcasePanelHeight + 52) * scale} /> : <World inputs={visibleInputs} result={result} event={event} progress={queueEntry ? 1 : event ? game.replayElapsed / eventDuration(event) : 0} feedback={feedback} diff={diff}
           chapter={game.puzzle.chapter} reducedMotion={reducedMotion} colorblind={settings.colorblind} hat={game.save.hat} hatchlings={game.save.hatchlings} setPiece={game.puzzle.setPiece}
           cameraPreset={game.screen === 'title' ? 'overview' : game.screen === 'intro' ? ['overview', 'returns', 'stacks'][introBeat] : cameraPreset}
-          wireframe={wireframe} showGrid={showGrid} />
-        <div className="world-vignette" />
+          wireframe={wireframe} showGrid={showGrid} />}
+        {!bookcase && <div className="world-vignette" />}
       </div>}
       {game.screen === 'title' && <TitleScreen game={game} openDialog={setDialog} onNew={() => game.setScreen('intro')} error={initError} retry={retry} />}
       {game.screen === 'intro' && <IntroScreen onFinish={name => { game.newGame(name); game.setScreen('game'); setQueueIndex(null); startTour(); }} onBeat={handleIntroBeat} reducedMotion={reducedMotion} />}

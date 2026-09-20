@@ -11,7 +11,7 @@ const KIND_ORDER = { show: 0, vary: 1, break: 2, capstone: 3 };
  */
 const TOPICS = {
   0: 'Expressions, names, calls, types, comparisons',
-  1: 'Arrays and ranges',
+  1: 'Arrays, ranges, and a book-sorting demonstration',
   2: 'Tables, sorting, selecting rows',
   3: 'Visualization',
   4: 'Functions and tables',
@@ -48,7 +48,7 @@ const REQUIRED_EDGE_CASES = {
   13: ['data_cleaning'],
 };
 
-const EXPECTED_CHAPTERS = { 0: 5, ...Object.fromEntries([...Array(11)].map((_, index) => [index + 1, 6])), 12: 3, 13: 4 };
+const EXPECTED_CHAPTERS = { 0: 5, ...Object.fromEntries([...Array(11)].map((_, index) => [index + 1, 6])), 1: 7, 12: 3, 13: 4 };
 
 function sequence(id) {
   const digits = id.match(/\d+/g);

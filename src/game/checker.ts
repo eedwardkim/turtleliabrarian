@@ -1,4 +1,8 @@
-import type { CheckDiff, CheckerSettings, Scalar, Value } from '../contracts';
+import type { CheckDiff, CheckerSettings, Puzzle, RunResult, Scalar, Value } from '../contracts';
+
+export function answerFor(puzzle: Puzzle, result: RunResult): Value {
+  return puzzle.answer === 'value' ? result.value : result.delivered;
+}
 
 export const defaultChecker: CheckerSettings = { ordered: true, absoluteTolerance: 1e-9, relativeTolerance: 1e-9 };
 

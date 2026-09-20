@@ -7,6 +7,7 @@ export interface ReplayState {
 }
 
 export function eventDuration(event: TraceEvent): number {
+  if (event.type === 'sort') return 2400;
   if (event.type === 'bind' || event.type === 'unbind' || event.type === 'line') return 180;
   if (event.type === 'error' || event.type === 'deliver') return 900;
   if (event.type === 'loop_iteration') {

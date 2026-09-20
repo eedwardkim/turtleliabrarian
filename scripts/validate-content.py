@@ -12,9 +12,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_SIZE = 78
+RELEASE_SIZE = 79
 KIND_ORDER = {"show": 0, "vary": 1, "break": 2, "capstone": 3}
-ID_PATTERN = re.compile(r"^(p0-\d{2}-[a-z]+|ch([1-9]|1[0-2])-(show|vary|break)-[12]|capstone-[1-4])$")
+ID_PATTERN = re.compile(r"^(p0-\d{2}-[a-z]+|ch1-show-3|ch([1-9]|1[0-2])-(show|vary|break)-[12]|capstone-[1-4])$")
 
 
 def require(condition, message):
@@ -34,8 +34,8 @@ def shelf_order(puzzle):
 
 
 def campaign(puzzles):
-    expected = {0: 5, **dict.fromkeys(range(1, 12), 6), 12: 3, 13: 4}
-    require(Counter(puzzle["chapter"] for puzzle in puzzles) == expected, "campaign chapter distribution must be 5, 11×6, 3, 4")
+    expected = {0: 5, 1: 7, **dict.fromkeys(range(2, 12), 6), 12: 3, 13: 4}
+    require(Counter(puzzle["chapter"] for puzzle in puzzles) == expected, "campaign chapter distribution must be 5, 7, 10×6, 3, 4")
     learned = set()
     for puzzle in sorted(puzzles, key=shelf_order):
         missing = learned - set(puzzle["learnedApi"])
@@ -44,11 +44,14 @@ def campaign(puzzles):
     for chapter in range(1, 13):
         counts = Counter(puzzle["kind"] for puzzle in puzzles if puzzle["chapter"] == chapter)
         expected_kinds = dict.fromkeys(("show", "vary", "break"), 1 if chapter == 12 else 2)
+        if chapter == 1:
+            expected_kinds["show"] = 3
         require(counts == expected_kinds, f"chapter {chapter} needs Show, Vary and Break requests")
     require(all(puzzle["kind"] == "capstone" for puzzle in puzzles if puzzle["chapter"] == 13), "chapter 13 is the capstone")
 
 
 def metadata(puzzle):
+    require(puzzle.get("answer") in (None, "value"), "invalid answer mode")
     require(bool(ID_PATTERN.match(puzzle["id"])), f"unrecognized shelf identity {puzzle['id']}")
     require(puzzle["kind"] in KIND_ORDER, "unknown shelf kind")
     request_text = re.sub(r"\b(?:Dr|Mr|Mrs)\.", "", puzzle["request"])
@@ -158,6 +161,9 @@ def request(puzzle, code, seed, inputs=None, learned=True):
 
 
 def validate_engine(puzzle, runner, seed_count):
+    def answer(result):
+        return result[puzzle.get("answer", "delivered")]
+
     def run(code, seed, inputs=None, learned=True):
         result = runner(request(puzzle, code, seed, inputs, learned))
         require(isinstance(result, dict) and "error" in result and "delivered" in result, "engine must return RunResult dict")
@@ -167,7 +173,7 @@ def validate_engine(puzzle, runner, seed_count):
     visible = run(puzzle["reference"], seed, puzzle["visibleInputs"])
     require(visible["error"] is None, f"reference failed visible shelf: {visible['error']}")
     starter = run(puzzle["starter"], seed, visible["inputs"])
-    require(starter["error"] is not None or not matches(starter["delivered"], visible["delivered"], puzzle["checker"]), "starter already solves visible shelf")
+    require(starter["error"] is not None or not matches(answer(starter), answer(visible), puzzle["checker"]), "starter already solves visible shelf")
     expected = {}
     for fixture in puzzle["fixtures"]:
         result = run(puzzle["reference"], seed, fixture["inputs"])
@@ -177,19 +183,19 @@ def validate_engine(puzzle, runner, seed_count):
         require(predicate["error"] is None and predicate["delivered"] is True, f"false fixture predicate {fixture['name']}: {predicate['error']}")
     for naive in puzzle["naive"]:
         shown = run(naive["code"], seed, visible["inputs"])
-        require(shown["error"] is None and matches(shown["delivered"], visible["delivered"], puzzle["checker"]), "naive fails visible shelf")
+        require(shown["error"] is None and matches(answer(shown), answer(visible), puzzle["checker"]), "naive fails visible shelf")
         counterexample = expected[naive["hazard"]]
         failed = run(naive["code"], seed, counterexample["inputs"])
         if naive["fails"] == "loud":
             require(failed["error"] is not None, f"naive must fail loudly on {naive['hazard']}")
         else:
-            require(failed["error"] is None and not matches(failed["delivered"], counterexample["delivered"], puzzle["checker"]), f"naive must fail silently on {naive['hazard']}")
+            require(failed["error"] is None and not matches(answer(failed), answer(counterexample), puzzle["checker"]), f"naive must fail silently on {naive['hazard']}")
     for random_seed in range(seed_count):
         first = run(puzzle["reference"], random_seed)
         second = run(puzzle["reference"], random_seed)
         require(first["error"] is None and second["error"] is None, f"reference error on seed {random_seed}: {first['error']}")
         require(first["inputs"] == second["inputs"], f"nondeterministic input seed {random_seed}")
-        require(matches(first["delivered"], second["delivered"], puzzle["checker"]), f"nondeterministic reference seed {random_seed}")
+        require(matches(answer(first), answer(second), puzzle["checker"]), f"nondeterministic reference seed {random_seed}")
     return {"puzzle": puzzle["id"], "seeds": seed_count, "fixtures": len(expected), "naive": len(puzzle["naive"])}
 
 

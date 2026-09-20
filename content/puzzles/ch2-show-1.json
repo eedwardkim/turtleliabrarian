@@ -5,7 +5,7 @@
   "objective": "Select named columns and keep the new table returned by an operation.",
   "concepts": ["tables", "column_labels", "select", "immutable_results"],
   "requiredApi": ["select", "deliver"],
-  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "sort", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns"],
   "starter": "catalog = shelf\ndeliver(catalog.column('title'))",
   "hints": ["The patron wants a table with two named columns, not one loose tray.", "select returns a new table; it does not trim the original cart.", "Assign shelf.select(...) to a name, listing the two requested labels in order, then deliver that name."],
   "inputCode": "import random\nfrom datascience import Table, make_array\nn = random.randint(2, 7)\ntitles = make_array(*[random.choice(['Moss Almanac', 'Cloud Atlas', 'Fern Letters', 'Rain Ledger']) + ' ' + str(i + 1) for i in range(n)])\npages = make_array(*[random.randint(24, 340) for _ in range(n)])\nauthors = make_array(*[random.choice(['Ada Reed', 'Orin Bell', 'Lena Moss']) for _ in range(n)])\nshelf = Table().with_columns('title', titles, 'pages', pages, 'author', authors)",

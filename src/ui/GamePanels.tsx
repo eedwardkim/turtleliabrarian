@@ -9,7 +9,10 @@ import { applyMove, nextMove } from '../../content/tutorials/demo';
 import type { GameStateForUI } from './types';
 
 export function LessonPanel({ game }: { game: GameStateForUI }) {
-  const completed = game.save.completed.includes(game.puzzle.id);
+  const bookcase = game.puzzle.setPiece === 'bookcase-sort';
+  const watching = bookcase && !!game.result && !game.replayPaused;
+  const completed = game.save.completed.includes(game.puzzle.id) && !watching
+    && (!bookcase || !game.result || !!game.diff?.pass && !game.busy);
   const code = game.save.files['main.py'] ?? game.code;
   const inputs = Object.entries(game.puzzle.visibleInputs ?? {});
   const failed = !game.busy && (game.result?.error || game.diff && !game.diff.pass);
@@ -17,23 +20,23 @@ export function LessonPanel({ game }: { game: GameStateForUI }) {
     <span className="eyebrow">{game.puzzle.title}</span>
     {completed ? <div className="lesson-celebration" role="status">
       <Icon name="check" /><h2>{text.solved.title}</h2>
-      <p>{text.request.completeLessonNote}</p>
+      <p>{bookcase ? text.request.bookcaseSolved : text.request.completeLessonNote}</p>
       <button className="button primary wide" disabled={game.busy} onClick={game.nextPuzzle}>{text.request.next}<Icon name="arrow" /></button>
     </div> : <>
       <p className="request-message">{game.puzzle.request}</p>
-      {inputs.length > 0 && <p className="lesson-inputs">{inputs.map(([name, value]) =>
+      {!bookcase && inputs.length > 0 && <p className="lesson-inputs">{inputs.map(([name, value]) =>
         `${name} = ${typeof value === 'string' ? JSON.stringify(value) : value === null || typeof value !== 'object' ? scalarText(value) : '…'}`).join(' · ')}</p>}
       <div className="lesson-instruction" aria-live="polite">
-        {failed ? <>
+        {watching ? <p>{text.request.bookcaseWatching}</p> : failed ? <>
           <p>{text.request.lessonRetry}</p>
           {game.result?.error && <p className="lesson-error">{game.result.error.friendly || game.result.error.message}</p>}
           <button className="button wide" onClick={() => {
             game.showMove(); game.setActiveFile('main.py'); game.setCode(game.puzzle.reference);
           }}>{text.request.lessonFix}</button>
-        </> : <p>{game.busy ? text.request.lessonWatching
-          : code.includes('___') ? text.request.lessonClick : text.request.lessonRun}</p>}
+        </> : <p>{game.busy ? (bookcase ? text.request.bookcaseWatching : text.request.lessonWatching)
+          : code.includes('___') ? text.request.lessonClick : bookcase ? text.request.bookcaseRun : text.request.lessonRun}</p>}
       </div>
-      {!failed && !game.busy && <button className="text-button" onClick={() => {
+      {!failed && !game.busy && !watching && <button className="text-button" onClick={() => {
         game.showMove(); game.setActiveFile('main.py'); game.setCode(game.puzzle.reference);
       }}>{text.request.showMove}</button>}
     </>}
