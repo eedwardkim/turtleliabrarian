@@ -196,6 +196,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     catch (failure) { setActionError(failure instanceof Error ? failure.message : text.error.body); setDialog('alerts'); }
   }
   function openDemoStep(step: number) {
+    demoWaitSeen.current = null;
     setDemoStep(step);
     const entry = demo[step];
     if (!entry) return;
