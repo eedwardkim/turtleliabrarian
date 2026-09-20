@@ -1,7 +1,7 @@
 import { CompletionContext } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
 import { describe, expect, it } from 'vitest';
-import { completionSource, externalCodeUpdate, highlightPlayerLine, learnedCompletions, playerLine } from '../../src/ui/editorExtensions';
+import { completionSource, externalCodeUpdate, ghostDecorations, ghostReplacement, ghostTarget, ghostText, highlightPlayerLine, learnedCompletions, playerLine, setGhost } from '../../src/ui/editorExtensions';
 
 describe('learned Python completion', () => {
   const api = ['Table.where', 'Table.sort', 'np.mean', 'are.above', 'print'];
@@ -44,5 +44,33 @@ describe('execution-line decoration', () => {
     expect(saved.state.doc.toString()).toBe('saved code');
     const typed = state.update({ changes: { from: 3, insert: ' + 1' } });
     expect(typed.annotation(externalCodeUpdate)).toBeUndefined();
+  });
+});
+
+describe('ghost text', () => {
+  it('finds the first blank and the replacement for it', () => {
+    const doc = 'fee = ___\ndeliver(fee)';
+    let state = EditorState.create({ doc, extensions: [ghostText] });
+    expect(ghostTarget(state)).toEqual({ from: 6, to: 9 });
+    expect(ghostReplacement(state)).toBeNull();
+    state = state.update({ effects: setGhost.of('days * rate') }).state;
+    expect(ghostReplacement(state)).toEqual({ from: 6, to: 9, insert: 'days * rate' });
+    expect(state.field(ghostDecorations).size).toBeGreaterThan(0);
+  });
+  it('renders nothing when the doc has no blank or no ghost', () => {
+    let state = EditorState.create({ doc: 'deliver(6)', extensions: [ghostText] });
+    state = state.update({ effects: setGhost.of('days * rate') }).state;
+    expect(ghostReplacement(state)).toBeNull();
+    expect(state.field(ghostDecorations).size).toBe(0);
+    state = state.update({ changes: { from: 8, to: 9, insert: 'answer = ___' }, effects: setGhost.of(null) }).state;
+    expect(ghostReplacement(state)).toBeNull();
+    expect(state.field(ghostDecorations).size).toBe(0);
+  });
+  it('clears once the blank is gone, so the ghost never persists alone', () => {
+    let state = EditorState.create({ doc: 'fee = ___', extensions: [ghostText] });
+    state = state.update({ effects: setGhost.of('days * rate') }).state;
+    state = state.update({ changes: { from: 6, to: 9, insert: 'days * rate' }, effects: setGhost.of(null) }).state;
+    expect(ghostReplacement(state)).toBeNull();
+    expect(state.field(ghostDecorations).size).toBe(0);
   });
 });

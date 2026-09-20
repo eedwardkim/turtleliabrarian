@@ -252,6 +252,44 @@ export const OUTPUT_CART: Position = [0.93, 1.98, 0.5];
 export const SIEVE: Position = [0.03, 2.83, -0.62];
 export const STAMP: Position = [-1.72, 3.0, 0.67];
 export const PATRON: Position = [1.4, 1.98, 1.65];
+export const SHELBY_HOME: Position = [0.02, 1.98, 1.24];
+export const WALK_FRACTION = 0.35;
+
+const STACKS_STAND: Position = [-0.9, 1.98, -1.0];
+const STACKS_FACE: Position = [-0.9, 2.8, -1.68];
+const STATIONS: Partial<Record<Motion, { stand: Position; face: Position }>> = {
+  stamp: { stand: [-1.3, 1.98, 0.85], face: [-1.45, 2.83, 0.95] },
+  create: { stand: STACKS_STAND, face: STACKS_FACE },
+  reshuffle: { stand: STACKS_STAND, face: STACKS_FACE },
+  tray: { stand: STACKS_STAND, face: STACKS_FACE },
+  bins: { stand: STACKS_STAND, face: STACKS_FACE },
+  drawers: { stand: STACKS_STAND, face: STACKS_FACE },
+  sample: { stand: STACKS_STAND, face: STACKS_FACE },
+  sieve: { stand: [0.3, 1.98, -0.25], face: SIEVE },
+};
+
+export interface ShelbyPose {
+  position: Position;
+  /** Yaw in radians; 0 faces +z, matching the model's resting rotation of -0.25. */
+  yaw: number;
+  clip: string;
+  clipProgress: number;
+}
+
+export function shelbyPose(animation: AnimationSpec, progress: number, reducedMotion = false): ShelbyPose {
+  const p = reducedMotion ? 1 : clampProgress(progress);
+  const { motion, clip } = animation;
+  if (motion === 'trip') return { position: [Math.sin(p * Math.PI * 2) * 0.7, 1.98, 1.24], yaw: -0.25, clip, clipProgress: p };
+  if (motion === 'deliver') return { position: [0.2 + p * 0.7, 1.98, 1.25], yaw: -0.25, clip, clipProgress: p };
+  const station = STATIONS[motion];
+  if (!station) return { position: [...SHELBY_HOME], yaw: -0.25, clip, clipProgress: p };
+  if (reducedMotion || p >= WALK_FRACTION) {
+    const yaw = Math.atan2(station.face[0] - station.stand[0], station.face[2] - station.stand[2]);
+    return { position: [...station.stand], yaw, clip, clipProgress: reducedMotion ? p : (p - WALK_FRACTION) / (1 - WALK_FRACTION) };
+  }
+  const yaw = Math.atan2(station.stand[0] - SHELBY_HOME[0], station.stand[2] - SHELBY_HOME[2]);
+  return { position: mix(SHELBY_HOME, station.stand, p / WALK_FRACTION), yaw, clip: 'walk', clipProgress: p / WALK_FRACTION };
+}
 
 export function bookPosition(index: number, origin: Position): Position {
   const i = Math.min(BOOK_LIMIT - 1, Math.max(0, Math.floor(Number.isFinite(index) ? index : 0)));

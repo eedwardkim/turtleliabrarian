@@ -71,8 +71,15 @@ export function ReplayPanel({ result, index, paused, speed, onIndex, onPaused, o
   </div>;
 }
 
-export function ScratchPanel({ game, runScratch }: { game: GameStateForUI; runScratch: (code: string) => Promise<RunResult | null> }) {
-  const [code, setCode] = useState('');
+export function ScratchPanel({ game, runScratch, preset, ghost, onRun, stage }: {
+  game: GameStateForUI;
+  runScratch: (code: string, options?: { stage?: boolean }) => Promise<RunResult | null>;
+  preset?: { key: string; code: string };
+  ghost?: string;
+  onRun?: (code: string, result: RunResult | null) => void;
+  stage?: boolean;
+}) {
+  const [code, setCode] = useState(preset?.code ?? '');
   const [result, setResult] = useState<RunResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -80,13 +87,17 @@ export function ScratchPanel({ game, runScratch }: { game: GameStateForUI; runSc
     if (busy || game.busy) return;
     setBusy(true);
     setError('');
-    try { setResult(await runScratch(code)); }
+    try {
+      const outcome = await runScratch(code, { stage });
+      setResult(outcome);
+      onRun?.(code, outcome);
+    }
     catch (failure) { setError(failure instanceof Error ? failure.message : text.error.body); }
     finally { setBusy(false); }
   }
   return <div className="scratch-body">
     <p className="scratch-intro">{text.scratch.intro}</p>
-    <CodeEditor value={code} onChange={setCode} onRun={() => { void run(); }} api={game.puzzle.learnedApi} files={Object.keys(game.save.files)} fontSize={game.save.settings.editorFontSize} label={text.scratch.label} readOnly={busy} />
+    <CodeEditor value={code} onChange={setCode} onRun={() => { void run(); }} api={game.puzzle.learnedApi} files={Object.keys(game.save.files)} fontSize={game.save.settings.editorFontSize} label={text.scratch.label} readOnly={busy} ghost={ghost} />
     <div className="scratch-actions"><button className="button primary" onClick={() => { void run(); }} disabled={busy || game.busy}><Icon name="play" />{text.scratch.run}</button><button className="button" onClick={() => { setCode(''); setResult(null); setError(''); }}>{text.scratch.clear}</button></div>
     <div className="scratch-output" tabIndex={0} role="region" aria-label={`${text.windows.scratch}: ${text.windows.output}`}>
       {error && <p className="error-card" role="alert">{error}</p>}<OutputPanel result={result} />

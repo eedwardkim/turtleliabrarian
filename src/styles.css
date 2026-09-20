@@ -318,6 +318,14 @@ details pre{padding:10px;background:#342d2409}
 .tutorial-dialog .eyebrow{font-size:9px;margin-bottom:12px}
 .tutorial-dialog .button{font-size:11px}
 .tutorial-dialog .text-button{font-size:10px}
+.demo-dialog{width:min(640px,calc(100vw - 32px));max-height:72vh}
+.demo-dialog .dialog-header h2{font-size:28px}
+.demo-dialog .dialog-content>p{font-size:16px;line-height:1.65}
+.demo-dialog .eyebrow{font-size:11px}
+.demo-dialog .button{font-size:13px}
+.demo-dialog .text-button{font-size:12px}
+.demo-dialog .demo-code{margin:10px 0 2px;padding:9px 12px;border:1px solid #d5c9ae;border-radius:5px;background:#fffdf7;font:600 15px 'IBM Plex Mono',monospace;color:#424d35;white-space:pre-wrap;word-break:break-word}
+.cm-ghost{opacity:.45;font-style:italic;cursor:pointer}
 .tutorial-count{font:10px 'IBM Plex Mono',monospace;color:var(--muted);margin-left:auto}
 .dock-button{display:flex;align-items:center;gap:6px}
 .dock-button .icon{width:12px;height:12px}
