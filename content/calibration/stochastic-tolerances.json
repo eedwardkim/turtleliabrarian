@@ -1,0 +1,1320 @@
+{
+  "protocol": {
+    "coverage": "generated-shelf and patron-seed rates are reported for context and are not the gate",
+    "independent": "expected value and candidate run on identical inputs from disjoint seed blocks",
+    "independentAcceptance": "queue acceptance of an independent correct run is measured and reported but is not a gate: these puzzles deliver Monte Carlo estimates whose sampling spread exceeds each naive's bias, so no absolute tolerance both accepts an independently seeded correct run 99.9% of the time and rejects the naive 99% of the time. toleranceFloor above toleranceCeiling records that gap.",
+    "instrumented": false,
+    "naiveGate": "queue rejection of each naive under both protocols, hazard fixture plus generated shelves, other fixtures ignored",
+    "naiveRejection": 0.99,
+    "patronSeed": "candidate and reference at the patron seed, as src/game/controller.ts serves the queue",
+    "queueModel": "patrons are independent draws; the queue is every curated fixture plus queueSize minus fixtures generated shelves",
+    "referenceAcceptance": 0.999,
+    "referenceGate": "queue acceptance of the reference replayed at the patron seed, which also proves the engine is deterministic",
+    "seedBlocks": {
+      "candidate": 2000000,
+      "expected": 1000000,
+      "fixtureCandidate": 4000000,
+      "fixtureExpected": 3000000,
+      "shelf": 0
+    }
+  },
+  "protocolVersion": 1,
+  "puzzles": {
+    "capstone-4": "78fb48fe31f9f5da0066eea4fce25439142f53f958f52406a5426207a4a1b6d8",
+    "ch6-break-1": "b7e9201242728d6214daf0e053ee9cc41d663bfea436d9f216e55b8281f16d9e",
+    "ch6-break-2": "dff3f8986645065988c3479382c179747bd5ee5a5813351e971761a004a943a1",
+    "ch6-show-2": "92c4f90c4ecf0228ebea01bb62e6f8e6a3b8d95cd677dd9de8e41ccf6d37ff5d",
+    "ch6-vary-1": "113569cdacc4c207a0bf6df169cb3c70e4fd64c06899db3cf07463e40ba0ca40",
+    "ch6-vary-2": "6015172f9b0b64c4a9932d750eb5bfc540e8395448d91f6acf432d8f05051b11",
+    "ch7-break-1": "fe80ffab62a674ee87cc75e78edd2a2e37369f3811aa65e3b8f58c3a3539594a",
+    "ch7-show-2": "89ff66c9206cd9660335d5969ae4b5878192d47fdb34c6dd4b19de60aaf3eeb1",
+    "ch7-vary-1": "89981fb31241b7f2b0ade4deaae4de0f06b9f75651e0ea0a517617019f6c8ff9",
+    "ch8-break-1": "c9efe7ce3bd9158524ed7afe639e6f96a31dff7fbfa3c6a6f32ba60edd43afb0",
+    "ch8-break-2": "e8188ec1ae772b98e49882e8bd9066b1289c19e840a658f5664a9531ebec5d7b",
+    "ch8-show-2": "ffb3e92adfb7e683db248c6421a42013d2f8681e1566b7fd5f70aee074daa8d1",
+    "ch8-vary-1": "b8fda95015586153aa5a22e07312a3656fde8d5427d332c3b28dc095d30398dc",
+    "ch8-vary-2": "d8f602d6896cc7085c2c5c327c000dcec468ade9c6b0f7cbfdf2811b6c793eee"
+  },
+  "results": [
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 0.6,
+        "ordered": true,
+        "relativeTolerance": 0.0
+      },
+      "draws": 1000,
+      "fixtures": [
+        "constant_loans",
+        "the_cart_holds_only_two_heights",
+        "the_cart_is_noisy",
+        "the_rope_runs_downhill"
+      ],
+      "id": "capstone-4",
+      "independentAcceptanceAttainable": false,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "the_cart_is_noisy",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 1.0,
+            "0.0001": 1.0,
+            "0.001": 1.0,
+            "0.002": 1.0,
+            "0.005": 1.0,
+            "0.01": 1.0,
+            "0.02": 1.0,
+            "0.03": 1.0,
+            "0.05": 1.0,
+            "0.08": 1.0,
+            "0.1": 1.0,
+            "0.15": 1.0,
+            "0.2": 1.0,
+            "0.3": 1.0,
+            "0.5": 1.0,
+            "0.6": 1.0,
+            "0.75": 1.0,
+            "1.0": 1.0,
+            "1.5": 0.991,
+            "10.0": 0.0,
+            "1e-06": 1.0,
+            "1e-09": 1.0,
+            "2.0": 0.388,
+            "5.0": 0.0
+          },
+          "patronRejection": {
+            "generatedShelf": 0.432,
+            "generatedShelfPatronSeed": 0.415,
+            "hazardFixture": 1.0,
+            "hazardFixturePatronSeed": 1.0
+          },
+          "queueRejection": 1.0,
+          "queueRejectionPatronSeed": 1.0
+        }
+      ],
+      "queueSize": 6,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "constant_loans": 1.0,
+            "the_cart_holds_only_two_heights": 1.0,
+            "the_cart_is_noisy": 0.924,
+            "the_rope_runs_downhill": 1.0
+          },
+          "generatedShelf": 0.966
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 0.862236144,
+        "queueAcceptanceByTolerance": {
+          "0.0": 0.0,
+          "0.0001": 0.0,
+          "0.001": 0.0,
+          "0.002": 0.0,
+          "0.005": 0.0,
+          "0.01": 3.4406400000000006e-08,
+          "0.02": 3.2894955360000003e-06,
+          "0.03": 3.7933243592e-05,
+          "0.05": 0.000931910564442,
+          "0.08": 0.010645786044607999,
+          "0.1": 0.028147931737344,
+          "0.15": 0.108809378418528,
+          "0.2": 0.20677326767987403,
+          "0.3": 0.428350075,
+          "0.5": 0.7782638719999999,
+          "0.6": 0.862236144,
+          "0.75": 0.9383137389999999,
+          "1.0": 0.974191712,
+          "1.5": 0.994009,
+          "10.0": 1.0,
+          "1e-06": 0.0,
+          "1e-09": 0.0,
+          "2.0": 0.994009,
+          "5.0": 0.998001
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 1.5,
+      "toleranceFloor": 10.0
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 1e-09,
+        "ordered": true,
+        "relativeTolerance": 1e-09
+      },
+      "draws": 1000,
+      "fixtures": [
+        "barely_any_damage",
+        "half_the_cart_damaged"
+      ],
+      "id": "ch6-break-1",
+      "independentAcceptanceAttainable": false,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "barely_any_damage",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 0.776,
+            "0.0001": 0.776,
+            "0.001": 0.776,
+            "0.002": 0.776,
+            "0.005": 0.776,
+            "0.01": 0.776,
+            "0.02": 0.776,
+            "0.03": 0.776,
+            "0.05": 0.776,
+            "0.08": 0.776,
+            "0.1": 0.394,
+            "0.15": 0.394,
+            "0.2": 0.121,
+            "0.3": 0.018,
+            "0.5": 0.0,
+            "0.75": 0.0,
+            "1.0": 0.0,
+            "1.5": 0.0,
+            "10.0": 0.0,
+            "1e-06": 0.776,
+            "1e-09": 0.776,
+            "2.0": 0.0,
+            "5.0": 0.0
+          },
+          "patronRejection": {
+            "generatedShelf": 0.617,
+            "generatedShelfPatronSeed": 0.604,
+            "hazardFixture": 0.776,
+            "hazardFixturePatronSeed": 0.761
+          },
+          "queueRejection": 0.9992929654083788,
+          "queueRejectionPatronSeed": 0.9990783436566247
+        }
+      ],
+      "queueSize": 8,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "barely_any_damage": 0.51,
+            "half_the_cart_damaged": 1.0
+          },
+          "generatedShelf": 0.796
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 0.12973243885727137,
+        "queueAcceptanceByTolerance": {
+          "0.0": 0.12973243885727137,
+          "0.0001": 0.12973243885727137,
+          "0.001": 0.12973243885727137,
+          "0.002": 0.12973243885727137,
+          "0.005": 0.12973243885727137,
+          "0.01": 0.12973243885727137,
+          "0.02": 0.12973243885727137,
+          "0.03": 0.12973243885727137,
+          "0.05": 0.12973243885727137,
+          "0.08": 0.12973243885727137,
+          "0.1": 0.994014980014994,
+          "0.15": 0.994014980014994,
+          "0.2": 1.0,
+          "0.3": 1.0,
+          "0.5": 1.0,
+          "0.75": 1.0,
+          "1.0": 1.0,
+          "1.5": 1.0,
+          "10.0": 1.0,
+          "1e-06": 0.12973243885727137,
+          "1e-09": 0.12973243885727137,
+          "2.0": 1.0,
+          "5.0": 1.0
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 0.08,
+      "toleranceFloor": 0.2
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 1e-09,
+        "ordered": true,
+        "relativeTolerance": 1e-09
+      },
+      "draws": 1000,
+      "fixtures": [
+        "one_wing_doubled",
+        "wings_all_different"
+      ],
+      "id": "ch6-break-2",
+      "independentAcceptanceAttainable": true,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "wings_all_different",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 1.0,
+            "0.0001": 1.0,
+            "0.001": 1.0,
+            "0.002": 1.0,
+            "0.005": 1.0,
+            "0.01": 1.0,
+            "0.02": 1.0,
+            "0.03": 1.0,
+            "0.05": 1.0,
+            "0.08": 1.0,
+            "0.1": 1.0,
+            "0.15": 1.0,
+            "0.2": 0.974,
+            "0.3": 0.024,
+            "0.5": 0.0,
+            "0.75": 0.0,
+            "1.0": 0.0,
+            "1.5": 0.0,
+            "10.0": 0.0,
+            "1e-06": 1.0,
+            "1e-09": 1.0,
+            "2.0": 0.0,
+            "5.0": 0.0
+          },
+          "patronRejection": {
+            "generatedShelf": 0.702,
+            "generatedShelfPatronSeed": 0.7,
+            "hazardFixture": 1.0,
+            "hazardFixturePatronSeed": 1.0
+          },
+          "queueRejection": 1.0,
+          "queueRejectionPatronSeed": 1.0
+        }
+      ],
+      "queueSize": 8,
+      "recommendedAbsoluteTolerance": 0.15,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "one_wing_doubled": 0.171,
+            "wings_all_different": 1.0
+          },
+          "generatedShelf": 0.398
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 0.0006796644315132783,
+        "queueAcceptanceByTolerance": {
+          "0.0": 0.0006796644315132783,
+          "0.0001": 0.0006796644315132783,
+          "0.001": 0.0006796644315132783,
+          "0.002": 0.0006796644315132783,
+          "0.005": 0.0006796644315132783,
+          "0.01": 0.013466087096727902,
+          "0.02": 0.07024740999598103,
+          "0.03": 0.2118963168002099,
+          "0.05": 0.6342449862308974,
+          "0.08": 0.9472005180612374,
+          "0.1": 0.9880598402398081,
+          "0.15": 1.0,
+          "0.2": 1.0,
+          "0.3": 1.0,
+          "0.5": 1.0,
+          "0.75": 1.0,
+          "1.0": 1.0,
+          "1.5": 1.0,
+          "10.0": 1.0,
+          "1e-06": 0.0006796644315132783,
+          "1e-09": 0.0006796644315132783,
+          "2.0": 1.0,
+          "5.0": 1.0
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 0.15,
+      "toleranceFloor": 0.15
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 1e-09,
+        "ordered": true,
+        "relativeTolerance": 1e-09
+      },
+      "draws": 1000,
+      "fixtures": [
+        "every_chute_open",
+        "only_two_chutes"
+      ],
+      "id": "ch6-show-2",
+      "independentAcceptanceAttainable": true,
+      "naive": [],
+      "queueSize": 7,
+      "recommendedAbsoluteTolerance": 0.15,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "every_chute_open": 0.022,
+            "only_two_chutes": 0.019
+          },
+          "generatedShelf": 0.022
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 2.1542181759999994e-12,
+        "queueAcceptanceByTolerance": {
+          "0.0": 2.1542181759999994e-12,
+          "0.0001": 2.1542181759999994e-12,
+          "0.001": 5.357635301700001e-11,
+          "0.002": 9.458979600000006e-09,
+          "0.005": 5.786613043199998e-06,
+          "0.01": 0.00030922905974290003,
+          "0.02": 0.01586235817335242,
+          "0.03": 0.12236931818416662,
+          "0.05": 0.6298328329151557,
+          "0.08": 0.9635750451253832,
+          "0.1": 0.994014980014994,
+          "0.15": 1.0,
+          "0.2": 1.0,
+          "0.3": 1.0,
+          "0.5": 1.0,
+          "0.75": 1.0,
+          "1.0": 1.0,
+          "1.5": 1.0,
+          "10.0": 1.0,
+          "1e-06": 2.1542181759999994e-12,
+          "1e-09": 2.1542181759999994e-12,
+          "2.0": 1.0,
+          "5.0": 1.0
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 10.0,
+      "toleranceFloor": 0.15
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 1e-09,
+        "ordered": true,
+        "relativeTolerance": 1e-09
+      },
+      "draws": 1000,
+      "fixtures": [
+        "cart_smaller_than_request",
+        "the_whole_cart_exactly"
+      ],
+      "id": "ch6-vary-1",
+      "independentAcceptanceAttainable": false,
+      "naive": [
+        {
+          "fails": "loud",
+          "hazard": "cart_smaller_than_request",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 1.0,
+            "0.0001": 1.0,
+            "0.001": 1.0,
+            "0.002": 1.0,
+            "0.005": 1.0,
+            "0.01": 1.0,
+            "0.02": 1.0,
+            "0.03": 1.0,
+            "0.05": 1.0,
+            "0.08": 1.0,
+            "0.1": 1.0,
+            "0.15": 1.0,
+            "0.2": 1.0,
+            "0.3": 1.0,
+            "0.5": 1.0,
+            "0.75": 1.0,
+            "1.0": 1.0,
+            "1.5": 1.0,
+            "10.0": 1.0,
+            "1e-06": 1.0,
+            "1e-09": 1.0,
+            "2.0": 1.0,
+            "5.0": 1.0
+          },
+          "patronRejection": {
+            "generatedShelf": 0.706,
+            "generatedShelfPatronSeed": 0.245,
+            "hazardFixture": 1.0,
+            "hazardFixturePatronSeed": 1.0
+          },
+          "queueRejection": 1.0,
+          "queueRejectionPatronSeed": 1.0
+        }
+      ],
+      "queueSize": 8,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "cart_smaller_than_request": 1.0,
+            "the_whole_cart_exactly": 1.0
+          },
+          "generatedShelf": 0.539
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 0.02452068459509077,
+        "queueAcceptanceByTolerance": {
+          "0.0": 0.02452068459509077,
+          "0.0001": 0.02452068459509077,
+          "0.001": 0.02452068459509077,
+          "0.002": 0.02452068459509077,
+          "0.005": 0.02452068459509077,
+          "0.01": 0.02452068459509077,
+          "0.02": 0.02452068459509077,
+          "0.03": 0.02452068459509077,
+          "0.05": 0.02452068459509077,
+          "0.08": 0.02452068459509077,
+          "0.1": 0.02452068459509077,
+          "0.15": 0.02452068459509077,
+          "0.2": 0.02452068459509077,
+          "0.3": 0.02452068459509077,
+          "0.5": 0.02452068459509077,
+          "0.75": 0.02452068459509077,
+          "1.0": 0.03018597399899656,
+          "1.5": 0.03018597399899656,
+          "10.0": 0.09799832340789197,
+          "1e-06": 0.02452068459509077,
+          "1e-09": 0.02452068459509077,
+          "2.0": 0.03652034743605656,
+          "5.0": 0.05846935190027069
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 10.0,
+      "toleranceFloor": null
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 1e-09,
+        "ordered": true,
+        "relativeTolerance": 1e-09
+      },
+      "draws": 1000,
+      "fixtures": [
+        "one_chute_almost_always",
+        "one_chute_never_used"
+      ],
+      "id": "ch6-vary-2",
+      "independentAcceptanceAttainable": false,
+      "naive": [],
+      "queueSize": 8,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "one_chute_almost_always": 0.001,
+            "one_chute_never_used": 0.027
+          },
+          "generatedShelf": 0.006
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 1.2597120000000002e-18,
+        "queueAcceptanceByTolerance": {
+          "0.0": 1.2597120000000002e-18,
+          "0.0001": 1.2597120000000002e-18,
+          "0.001": 1.2597120000000002e-18,
+          "0.002": 1.2597120000000002e-18,
+          "0.005": 1.2597120000000002e-18,
+          "0.01": 1.2597120000000002e-18,
+          "0.02": 1.2597120000000002e-18,
+          "0.03": 1.2597120000000002e-18,
+          "0.05": 1.2597120000000002e-18,
+          "0.08": 1.2597120000000002e-18,
+          "0.1": 1.2597120000000002e-18,
+          "0.15": 1.2597120000000002e-18,
+          "0.2": 1.2597120000000002e-18,
+          "0.3": 1.2597120000000002e-18,
+          "0.5": 1.2597120000000002e-18,
+          "0.75": 1.2597120000000002e-18,
+          "1.0": 2.3865102122399995e-13,
+          "1.5": 2.3865102122399995e-13,
+          "10.0": 0.0004205328282684807,
+          "1e-06": 1.2597120000000002e-18,
+          "1e-09": 1.2597120000000002e-18,
+          "2.0": 2.7324400021632013e-11,
+          "5.0": 1.5045978933888704e-07
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 10.0,
+      "toleranceFloor": null
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 0.02,
+        "ordered": true,
+        "relativeTolerance": 0.0
+      },
+      "draws": 1000,
+      "fixtures": [
+        "every_slip_on_time",
+        "observed_sits_at_the_middle"
+      ],
+      "id": "ch7-break-1",
+      "independentAcceptanceAttainable": false,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "observed_sits_at_the_middle",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 1.0,
+            "0.0001": 1.0,
+            "0.001": 1.0,
+            "0.002": 1.0,
+            "0.005": 1.0,
+            "0.01": 1.0,
+            "0.02": 1.0,
+            "0.03": 1.0,
+            "0.05": 0.999,
+            "0.08": 0.998,
+            "0.1": 0.994,
+            "0.15": 0.95,
+            "0.2": 0.691,
+            "0.3": 0.071,
+            "0.5": 0.0,
+            "0.75": 0.0,
+            "1.0": 0.0,
+            "1.5": 0.0,
+            "10.0": 0.0,
+            "1e-06": 1.0,
+            "1e-09": 1.0,
+            "2.0": 0.0,
+            "5.0": 0.0
+          },
+          "patronRejection": {
+            "generatedShelf": 0.692,
+            "generatedShelfPatronSeed": 0.719,
+            "hazardFixture": 1.0,
+            "hazardFixturePatronSeed": 1.0
+          },
+          "queueRejection": 1.0,
+          "queueRejectionPatronSeed": 1.0
+        }
+      ],
+      "queueSize": 7,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "every_slip_on_time": 1.0,
+            "observed_sits_at_the_middle": 0.28
+          },
+          "generatedShelf": 0.567
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 0.016408667919729954,
+        "queueAcceptanceByTolerance": {
+          "0.0": 1.1840000000000002e-05,
+          "0.0001": 1.1840000000000002e-05,
+          "0.001": 1.1840000000000002e-05,
+          "0.002": 1.1840000000000002e-05,
+          "0.005": 5.739562800000002e-05,
+          "0.01": 0.0008992778369583851,
+          "0.02": 0.016408667919729954,
+          "0.03": 0.06942104327865056,
+          "0.05": 0.30279270628691735,
+          "0.08": 0.7456309719325729,
+          "0.1": 0.9037659104939212,
+          "0.15": 0.991029950044979,
+          "0.2": 1.0,
+          "0.3": 1.0,
+          "0.5": 1.0,
+          "0.75": 1.0,
+          "1.0": 1.0,
+          "1.5": 1.0,
+          "10.0": 1.0,
+          "1e-06": 1.1840000000000002e-05,
+          "1e-09": 1.1840000000000002e-05,
+          "2.0": 1.0,
+          "5.0": 1.0
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 0.15,
+      "toleranceFloor": 0.2
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 0.02,
+        "ordered": true,
+        "relativeTolerance": 0.0
+      },
+      "draws": 1000,
+      "fixtures": [
+        "east_heavy_night",
+        "ordinary_even_night"
+      ],
+      "id": "ch7-show-2",
+      "independentAcceptanceAttainable": false,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "ordinary_even_night",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 0.989,
+            "0.0001": 0.989,
+            "0.001": 0.989,
+            "0.002": 0.989,
+            "0.005": 0.989,
+            "0.01": 0.978,
+            "0.02": 0.914,
+            "0.03": 0.86,
+            "0.05": 0.767,
+            "0.08": 0.612,
+            "0.1": 0.526,
+            "0.15": 0.367,
+            "0.2": 0.192,
+            "0.3": 0.051,
+            "0.5": 0.001,
+            "0.75": 0.0,
+            "1.0": 0.0,
+            "1.5": 0.0,
+            "10.0": 0.0,
+            "1e-06": 0.989,
+            "1e-09": 0.989,
+            "2.0": 0.0,
+            "5.0": 0.0
+          },
+          "patronRejection": {
+            "generatedShelf": 0.7,
+            "generatedShelfPatronSeed": 0.705,
+            "hazardFixture": 0.914,
+            "hazardFixturePatronSeed": 0.913
+          },
+          "queueRejection": 0.99979102,
+          "queueRejectionPatronSeed": 0.9998056299562094
+        }
+      ],
+      "queueSize": 7,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "east_heavy_night": 1.0,
+            "ordinary_even_night": 0.27
+          },
+          "generatedShelf": 0.534
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 0.011723844494364484,
+        "queueAcceptanceByTolerance": {
+          "0.0": 1.1933238912000004e-06,
+          "0.0001": 1.1933238912000004e-06,
+          "0.001": 1.1933238912000004e-06,
+          "0.002": 1.1933238912000004e-06,
+          "0.005": 1.368458602684853e-05,
+          "0.01": 0.0004940671888998595,
+          "0.02": 0.011723844494364484,
+          "0.03": 0.06695440684189165,
+          "0.05": 0.29730961542768225,
+          "0.08": 0.7278369221054686,
+          "0.1": 0.9001381137087924,
+          "0.15": 0.9860797603996481,
+          "0.2": 1.0,
+          "0.3": 1.0,
+          "0.5": 1.0,
+          "0.75": 1.0,
+          "1.0": 1.0,
+          "1.5": 1.0,
+          "10.0": 1.0,
+          "1e-06": 1.1933238912000004e-06,
+          "1e-09": 1.1933238912000004e-06,
+          "2.0": 1.0,
+          "5.0": 1.0
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 0.05,
+      "toleranceFloor": 0.2
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 0.02,
+        "ordered": true,
+        "relativeTolerance": 0.0
+      },
+      "draws": 1000,
+      "fixtures": [
+        "labels_make_no_difference",
+        "uneven_shelf_sizes"
+      ],
+      "id": "ch7-vary-1",
+      "independentAcceptanceAttainable": false,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "labels_make_no_difference",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 0.989,
+            "0.0001": 0.989,
+            "0.001": 0.989,
+            "0.002": 0.989,
+            "0.005": 0.976,
+            "0.01": 0.961,
+            "0.02": 0.9,
+            "0.03": 0.83,
+            "0.05": 0.66,
+            "0.08": 0.35,
+            "0.1": 0.193,
+            "0.15": 0.024,
+            "0.2": 0.0,
+            "0.3": 0.0,
+            "0.5": 0.0,
+            "0.75": 0.0,
+            "1.0": 0.0,
+            "1.5": 0.0,
+            "10.0": 0.0,
+            "1e-06": 0.989,
+            "1e-09": 0.989,
+            "2.0": 0.0,
+            "5.0": 0.0
+          },
+          "patronRejection": {
+            "generatedShelf": 0.345,
+            "generatedShelfPatronSeed": 0.346,
+            "hazardFixture": 0.9,
+            "hazardFixturePatronSeed": 0.904
+          },
+          "queueRejection": 0.9921032607120609,
+          "queueRejectionPatronSeed": 0.9924883088539458
+        }
+      ],
+      "queueSize": 8,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "labels_make_no_difference": 0.363,
+            "uneven_shelf_sizes": 0.76
+          },
+          "generatedShelf": 0.733
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 0.04279017524943338,
+        "queueAcceptanceByTolerance": {
+          "0.0": 1.274518902179854e-07,
+          "0.0001": 1.274518902179854e-07,
+          "0.001": 1.274518902179854e-07,
+          "0.002": 1.274518902179854e-07,
+          "0.005": 9.958130441413438e-05,
+          "0.01": 0.0023676438891238557,
+          "0.02": 0.04279017524943338,
+          "0.03": 0.17363430222047077,
+          "0.05": 0.5595002841380912,
+          "0.08": 0.866509208518412,
+          "0.1": 0.9692867032752517,
+          "0.15": 0.999,
+          "0.2": 1.0,
+          "0.3": 1.0,
+          "0.5": 1.0,
+          "0.75": 1.0,
+          "1.0": 1.0,
+          "1.5": 1.0,
+          "10.0": 1.0,
+          "1e-06": 1.274518902179854e-07,
+          "1e-09": 1.274518902179854e-07,
+          "2.0": 1.0,
+          "5.0": 1.0
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 0.02,
+      "toleranceFloor": 0.15
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 0.0,
+        "ordered": true,
+        "relativeTolerance": 0.0
+      },
+      "draws": 1000,
+      "fixtures": [
+        "claim_is_far_outside",
+        "claim_sits_on_the_left_bookend"
+      ],
+      "id": "ch8-break-1",
+      "independentAcceptanceAttainable": false,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "claim_sits_on_the_left_bookend",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 1.0,
+            "0.0001": 1.0,
+            "0.001": 1.0,
+            "0.002": 1.0,
+            "0.005": 1.0,
+            "0.01": 1.0,
+            "0.02": 1.0,
+            "0.03": 1.0,
+            "0.05": 1.0,
+            "0.08": 1.0,
+            "0.1": 1.0,
+            "0.15": 1.0,
+            "0.2": 1.0,
+            "0.3": 1.0,
+            "0.5": 1.0,
+            "0.75": 1.0,
+            "1.0": 1.0,
+            "1.5": 1.0,
+            "10.0": 1.0,
+            "1e-06": 1.0,
+            "1e-09": 1.0,
+            "2.0": 1.0,
+            "5.0": 1.0
+          },
+          "patronRejection": {
+            "generatedShelf": 0.073,
+            "generatedShelfPatronSeed": 0.071,
+            "hazardFixture": 1.0,
+            "hazardFixturePatronSeed": 1.0
+          },
+          "queueRejection": 1.0,
+          "queueRejectionPatronSeed": 1.0
+        }
+      ],
+      "queueSize": 6,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "claim_is_far_outside": 1.0,
+            "claim_sits_on_the_left_bookend": 1.0
+          },
+          "generatedShelf": 0.984
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 0.937519681536,
+        "queueAcceptanceByTolerance": {
+          "0.0": 0.937519681536,
+          "0.0001": 0.937519681536,
+          "0.001": 0.937519681536,
+          "0.002": 0.937519681536,
+          "0.005": 0.937519681536,
+          "0.01": 0.937519681536,
+          "0.02": 0.937519681536,
+          "0.03": 0.937519681536,
+          "0.05": 0.937519681536,
+          "0.08": 0.937519681536,
+          "0.1": 0.937519681536,
+          "0.15": 0.937519681536,
+          "0.2": 0.937519681536,
+          "0.3": 0.937519681536,
+          "0.5": 0.937519681536,
+          "0.75": 0.937519681536,
+          "1.0": 0.937519681536,
+          "1.5": 0.937519681536,
+          "10.0": 0.937519681536,
+          "1e-06": 0.937519681536,
+          "1e-09": 0.937519681536,
+          "2.0": 0.937519681536,
+          "5.0": 0.937519681536
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 10.0,
+      "toleranceFloor": null
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 1e-09,
+        "ordered": true,
+        "relativeTolerance": 1e-09
+      },
+      "draws": 1000,
+      "fixtures": [
+        "archive_is_quicker_than_the_hall",
+        "wings_differ_in_size_and_spread"
+      ],
+      "id": "ch8-break-2",
+      "independentAcceptanceAttainable": false,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "wings_differ_in_size_and_spread",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 1.0,
+            "0.0001": 1.0,
+            "0.001": 1.0,
+            "0.002": 1.0,
+            "0.005": 1.0,
+            "0.01": 1.0,
+            "0.02": 1.0,
+            "0.03": 1.0,
+            "0.05": 0.998,
+            "0.08": 0.997,
+            "0.1": 0.997,
+            "0.15": 0.995,
+            "0.2": 0.986,
+            "0.3": 0.981,
+            "0.5": 0.938,
+            "0.75": 0.892,
+            "1.0": 0.817,
+            "1.5": 0.653,
+            "10.0": 0.04,
+            "1e-06": 1.0,
+            "1e-09": 1.0,
+            "2.0": 0.455,
+            "5.0": 0.042
+          },
+          "patronRejection": {
+            "generatedShelf": 0.68,
+            "generatedShelfPatronSeed": 0.681,
+            "hazardFixture": 1.0,
+            "hazardFixturePatronSeed": 1.0
+          },
+          "queueRejection": 1.0,
+          "queueRejectionPatronSeed": 1.0
+        }
+      ],
+      "queueSize": 6,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "archive_is_quicker_than_the_hall": 1.0,
+            "wings_differ_in_size_and_spread": 0.015
+          },
+          "generatedShelf": 0.334
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 0.00018667111704000005,
+        "queueAcceptanceByTolerance": {
+          "0.0": 0.00018667111704000005,
+          "0.0001": 0.00018667111704000005,
+          "0.001": 0.00018667111704000005,
+          "0.002": 0.00018667111704000005,
+          "0.005": 0.00018667111704000005,
+          "0.01": 0.00018667111704000005,
+          "0.02": 0.00018891675937500005,
+          "0.03": 0.00019810254361500007,
+          "0.05": 0.00024093020543999996,
+          "0.08": 0.000350589002415,
+          "0.1": 0.00050334566784,
+          "0.15": 0.0012754584000000003,
+          "0.2": 0.018958432414375004,
+          "0.3": 0.041143926864375006,
+          "0.5": 0.35367927887999995,
+          "0.75": 0.625574743638016,
+          "1.0": 0.857,
+          "1.5": 0.981,
+          "10.0": 1.0,
+          "1e-06": 0.00018667111704000005,
+          "1e-09": 0.00018667111704000005,
+          "2.0": 1.0,
+          "5.0": 1.0
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 0.3,
+      "toleranceFloor": 2.0
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 1e-09,
+        "ordered": true,
+        "relativeTolerance": 1e-09
+      },
+      "draws": 1000,
+      "fixtures": [
+        "one_slip_only",
+        "waits_are_not_all_equal"
+      ],
+      "id": "ch8-show-2",
+      "independentAcceptanceAttainable": false,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "waits_are_not_all_equal",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 0.963,
+            "0.0001": 0.963,
+            "0.001": 0.963,
+            "0.002": 0.963,
+            "0.005": 0.963,
+            "0.01": 0.963,
+            "0.02": 0.963,
+            "0.03": 0.963,
+            "0.05": 0.963,
+            "0.08": 0.963,
+            "0.1": 0.963,
+            "0.15": 0.963,
+            "0.2": 0.919,
+            "0.3": 0.919,
+            "0.5": 0.792,
+            "0.75": 0.752,
+            "1.0": 0.649,
+            "1.5": 0.512,
+            "10.0": 0.0,
+            "1e-06": 0.963,
+            "1e-09": 0.963,
+            "2.0": 0.404,
+            "5.0": 0.026
+          },
+          "patronRejection": {
+            "generatedShelf": 0.679,
+            "generatedShelfPatronSeed": 0.672,
+            "hazardFixture": 0.963,
+            "hazardFixturePatronSeed": 0.966
+          },
+          "queueRejection": 0.9998738965738928,
+          "queueRejectionPatronSeed": 0.9998709232161915
+        }
+      ],
+      "queueSize": 7,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "one_slip_only": 1.0,
+            "waits_are_not_all_equal": 0.02
+          },
+          "generatedShelf": 0.297
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 4.6218116425139986e-05,
+        "queueAcceptanceByTolerance": {
+          "0.0": 4.6218116425139986e-05,
+          "0.0001": 4.6218116425139986e-05,
+          "0.001": 4.6218116425139986e-05,
+          "0.002": 4.6218116425139986e-05,
+          "0.005": 4.6218116425139986e-05,
+          "0.01": 4.6218116425139986e-05,
+          "0.02": 4.6218116425139986e-05,
+          "0.03": 4.6218116425139986e-05,
+          "0.05": 4.6218116425139986e-05,
+          "0.08": 4.6218116425139986e-05,
+          "0.1": 7.709203065298002e-05,
+          "0.15": 0.00015030354378752,
+          "0.2": 0.0008526489694,
+          "0.3": 0.0018861693171793924,
+          "0.5": 0.014853143662755844,
+          "0.75": 0.03823564738062944,
+          "1.0": 0.08808980500633336,
+          "1.5": 0.20146554286882898,
+          "10.0": 1.0,
+          "1e-06": 4.6218116425139986e-05,
+          "1e-09": 4.6218116425139986e-05,
+          "2.0": 0.34744556506451685,
+          "5.0": 0.8609684243737576
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 0.3,
+      "toleranceFloor": 10.0
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 1e-09,
+        "ordered": true,
+        "relativeTolerance": 1e-09
+      },
+      "draws": 1000,
+      "fixtures": [
+        "cart_is_longer_than_ten_slips",
+        "two_slips_far_apart"
+      ],
+      "id": "ch8-vary-1",
+      "independentAcceptanceAttainable": false,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "cart_is_longer_than_ten_slips",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 0.998,
+            "0.0001": 0.998,
+            "0.001": 0.998,
+            "0.002": 0.998,
+            "0.005": 0.998,
+            "0.01": 0.998,
+            "0.02": 0.997,
+            "0.03": 0.997,
+            "0.05": 0.988,
+            "0.08": 0.985,
+            "0.1": 0.973,
+            "0.15": 0.956,
+            "0.2": 0.932,
+            "0.3": 0.866,
+            "0.5": 0.637,
+            "0.75": 0.347,
+            "1.0": 0.155,
+            "1.5": 0.016,
+            "10.0": 0.0,
+            "1e-06": 0.998,
+            "1e-09": 0.998,
+            "2.0": 0.0,
+            "5.0": 0.0
+          },
+          "patronRejection": {
+            "generatedShelf": 0.742,
+            "generatedShelfPatronSeed": 0.653,
+            "hazardFixture": 0.998,
+            "hazardFixturePatronSeed": 1.0
+          },
+          "queueRejection": 0.999991138467808,
+          "queueRejectionPatronSeed": 1.0
+        }
+      ],
+      "queueSize": 6,
+      "recommendedAbsoluteTolerance": null,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "cart_is_longer_than_ten_slips": 0.006,
+            "two_slips_far_apart": 1.0
+          },
+          "generatedShelf": 0.32
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 6.291456e-05,
+        "queueAcceptanceByTolerance": {
+          "0.0": 6.291456e-05,
+          "0.0001": 6.291456e-05,
+          "0.001": 6.291456e-05,
+          "0.002": 6.291456e-05,
+          "0.005": 6.291456e-05,
+          "0.01": 6.291456e-05,
+          "0.02": 6.291456e-05,
+          "0.03": 6.291456e-05,
+          "0.05": 6.291456e-05,
+          "0.08": 0.00014167574937600002,
+          "0.1": 0.005041464548832001,
+          "0.15": 0.011204231470592001,
+          "0.2": 0.054758437562565,
+          "0.3": 0.180130588674051,
+          "0.5": 0.644131405505536,
+          "0.75": 0.9037338348625761,
+          "1.0": 0.976,
+          "1.5": 1.0,
+          "10.0": 1.0,
+          "1e-06": 6.291456e-05,
+          "1e-09": 6.291456e-05,
+          "2.0": 1.0,
+          "5.0": 1.0
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 0.15,
+      "toleranceFloor": 1.5
+    },
+    {
+      "authoredChecker": {
+        "absoluteTolerance": 1e-09,
+        "ordered": true,
+        "relativeTolerance": 1e-09
+      },
+      "draws": 1000,
+      "fixtures": [
+        "coins_are_spread_wide",
+        "one_huge_donation"
+      ],
+      "id": "ch8-vary-2",
+      "independentAcceptanceAttainable": true,
+      "naive": [
+        {
+          "fails": "silent",
+          "hazard": "one_huge_donation",
+          "hazardFixtureRejectionByTolerance": {
+            "0.0": 1.0,
+            "0.0001": 1.0,
+            "0.001": 1.0,
+            "0.002": 1.0,
+            "0.005": 1.0,
+            "0.01": 1.0,
+            "0.02": 1.0,
+            "0.03": 1.0,
+            "0.05": 1.0,
+            "0.08": 1.0,
+            "0.1": 1.0,
+            "0.15": 1.0,
+            "0.2": 1.0,
+            "0.3": 1.0,
+            "0.5": 1.0,
+            "0.75": 1.0,
+            "1.0": 1.0,
+            "1.5": 1.0,
+            "10.0": 1.0,
+            "1e-06": 1.0,
+            "1e-09": 1.0,
+            "2.0": 1.0,
+            "5.0": 1.0
+          },
+          "patronRejection": {
+            "generatedShelf": 0.735,
+            "generatedShelfPatronSeed": 0.732,
+            "hazardFixture": 1.0,
+            "hazardFixturePatronSeed": 1.0
+          },
+          "queueRejection": 1.0,
+          "queueRejectionPatronSeed": 1.0
+        }
+      ],
+      "queueSize": 6,
+      "recommendedAbsoluteTolerance": 10.0,
+      "reference": {
+        "patronAcceptance": {
+          "fixtures": {
+            "coins_are_spread_wide": 0.421,
+            "one_huge_donation": 0.414
+          },
+          "generatedShelf": 0.797
+        },
+        "patronSeedNote": "measured, not assumed: the game replays the reference at the patron seed, so this also checks the engine is deterministic; it cannot calibrate a tolerance by itself",
+        "patronSeedQueueAcceptance": 1.0,
+        "queueAcceptance": 0.07032596861975622,
+        "queueAcceptanceByTolerance": {
+          "0.0": 0.07032596861975622,
+          "0.0001": 0.07032596861975622,
+          "0.001": 0.07032596861975622,
+          "0.002": 0.07032596861975622,
+          "0.005": 0.07032596861975622,
+          "0.01": 0.07032596861975622,
+          "0.02": 0.07032596861975622,
+          "0.03": 0.07032596861975622,
+          "0.05": 0.07032596861975622,
+          "0.08": 0.07032596861975622,
+          "0.1": 0.07032596861975622,
+          "0.15": 0.07032596861975622,
+          "0.2": 0.07032596861975622,
+          "0.3": 0.07032596861975622,
+          "0.5": 0.07032596861975622,
+          "0.75": 0.07032596861975622,
+          "1.0": 0.29898735461409603,
+          "1.5": 0.29898735461409603,
+          "10.0": 1.0,
+          "1e-06": 0.07032596861975622,
+          "1e-09": 0.07032596861975622,
+          "2.0": 0.35906712676266095,
+          "5.0": 0.988053892081
+        }
+      },
+      "referenceErrors": 0,
+      "status": "separating",
+      "toleranceCeiling": 10.0,
+      "toleranceFloor": 10.0
+    }
+  ],
+  "sources": {
+    "engine/shelf_events.py": "952c2c7965914c73ee1a5f7d1cb5ae6ef290e52f7510680676aca4f58a053696",
+    "engine/shelf_runtime.py": "88df2d811e0838f50bc993eb62efe49eae4e116ba0c4d5a07c3fe7723e090df1",
+    "scripts/calibrate-content.py": "56d3152dc521de674ab652c70feb2bc8b0dec0479181d687491bf4696cc4525a",
+    "scripts/validate-content.py": "7ebb0849edc67a2b349e02377cd431f9ea1188c01c3cd1fa6b2f023c3951109a"
+  }
+}
