@@ -263,6 +263,8 @@ const systems = {
       await hint.click({ force: true });
       await page.clock.runFor(34);
     }
+    await dismissTutorials(recorder);
+    assert.equal(await page.evaluate(() => window.__SHELF__.getState().hintLevel), 3);
     await recorder.hold('Three hints per request, opened only when they are wanted.', 3);
     await recorder.shot('window', 'hints', 'Hints opened');
     recorder.record('windows', 'hints');
@@ -317,14 +319,14 @@ const systems = {
 
     await openTool(recorder, TOOL.menu);
     await recorder.click('Save & load');
-    await recorder.click('Save here');
+    await recorder.click('Save here', page.locator('.save-slot').first());
     await recorder.click('Replace this bookmark');
     await recorder.settle(0.5);
     await recorder.hold('Three local bookmarks, plus an export you can carry away.', 3);
     await recorder.shot('window', 'saves', 'Save slots');
     recorder.record('windows', 'saves');
     await closeDialog(recorder);
-    await recorder.click('Back to the library');
+    await dismissTutorials(recorder);
     await recorder.settle(0.3);
 
     await openTool(recorder, TOOL.settings);
@@ -357,7 +359,6 @@ const devtools = {
     await recorder.settle();
     await dismissTutorials(recorder);
     await recorder.shot('puzzle', puzzle.id, puzzle.title);
-    recorder.record('puzzles', { id: puzzle.id, kind: puzzle.kind, chapter: puzzle.chapter, patrons: 0 });
     recorder.record('chapters', puzzle.chapter);
 
     await page.keyboard.press('Backquote');
