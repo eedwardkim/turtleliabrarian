@@ -47,7 +47,7 @@ export interface GameStateForUI {
   stepClock: (seconds: number) => void;
   markTutorial: (id: string) => void;
   purchase: (id: string) => void;
-  runScratch?: (code: string) => Promise<RunResult | null>;
+  runScratch?: (code: string, options?: { stage?: boolean }) => Promise<RunResult | null>;
   toggleStandingOrder?: (puzzleId: string) => void;
   equipHat?: (id: string) => void;
   replayStandingOrder?: (puzzleId: string) => Promise<void>;

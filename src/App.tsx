@@ -3,14 +3,14 @@ import type { CSSProperties, ReactNode } from 'react';
 import World from './scene/World';
 import { useGame } from './game/store';
 import { getTutorial } from '../content/tutorials';
-import { DEMO_COVERED_TUTORIALS, DEMO_PUZZLE_IDS, codeSatisfies, demoSteps, describeInputs } from '../content/tutorials/demo';
+import { DEMO_COVERED_TUTORIALS, DEMO_PUZZLE_IDS, codeSatisfies, demoSteps, describeInputs, filledLine } from '../content/tutorials/demo';
 import { puzzles } from './game/catalog';
 import { almanac as almanacCatalog, visibleAlmanac } from '../content/almanac';
 import { atlasWings, shop as shopCatalog } from './game/economy';
 import { useAudio } from './audio/useAudio';
 import { eventDuration } from './game/replay';
 import { sandboxUnlocked } from './game/sandbox';
-import type { WindowLayout, WorldProps } from './contracts';
+import type { RunResult, WindowLayout, WorldProps } from './contracts';
 import { CodeEditor } from './ui/CodeEditor';
 import { Dialog } from './ui/Dialog';
 import { QueuePanel, ReplayPanel, RequestPanel, ScratchPanel } from './ui/GamePanels';
@@ -55,6 +55,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   const [introBeat, setIntroBeat] = useState(0);
   const [tutorialPosition, setTutorialPosition] = useState({ id: '', step: 0 });
   const [demoStep, setDemoStep] = useState<number | null>(null);
+  const [lastScratch, setLastScratch] = useState<{ code: string; result: RunResult | null } | null>(null);
   const demo = useMemo(() => demoSteps(DEMO_PUZZLE_IDS.flatMap(id => puzzles.filter(puzzle => puzzle.id === id))), []);
   const demoCurrent = demoStep === null ? undefined : demo[demoStep];
   const [showDevtools, setShowDevtools] = useState(false);
@@ -100,7 +101,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   const optionalWindows = [
     ...(revealed('queue') ? ['queue'] : []),
     ...(revealed('replay') ? ['replay'] : []),
-    ...(revealed('scratch') ? ['scratch'] : []),
+    ...(revealed('scratch') || demoStep !== null ? ['scratch'] : []),
     ...(canSandbox ? ['sandbox'] : []),
   ];
   const files = Object.keys(game.save.files);
@@ -197,6 +198,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   }
   function openDemoStep(step: number) {
     demoWaitSeen.current = null;
+    setLastScratch(null);
     setDemoStep(step);
     const entry = demo[step];
     if (!entry) return;
@@ -206,12 +208,14 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     if (entry.puzzleId && current !== entry.puzzleId) return;
     if (entry.waitFor?.kind === 'code') { state.setActiveFile('main.py'); openWindow('editor'); }
     else if (entry.waitFor?.kind === 'run-pass') openWindow('output');
-    else if (entry.waitFor?.kind === 'serve-pass' && revealed('queue')) openWindow('queue');
+    else if (entry.waitFor?.kind === 'serve-pass') openWindow('queue');
+    else if (entry.waitFor?.kind === 'scratch-pass') openWindow('scratch');
   }
   function demoSatisfied(entry: typeof demo[number] | undefined): boolean {
     if (!entry?.waitFor || !entry.puzzleId || game.puzzle.id !== entry.puzzleId) return false;
     if (entry.waitFor.kind === 'code') return codeSatisfies(game.code, entry.waitFor.accepted);
     if (entry.waitFor.kind === 'run-pass') return game.result !== null && game.diff?.pass === true && !game.busy;
+    if (entry.waitFor.kind === 'scratch-pass') return !!lastScratch?.result && !lastScratch.result.error && codeSatisfies(lastScratch.code, entry.waitFor.accepted);
     return game.queue.length > 0 && game.queue.every(item => item.status === 'passed') && !game.busy;
   }
   useEffect(() => {
@@ -224,11 +228,13 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
       ? codeSatisfies(game.code, entry.waitFor.accepted)
       : entry.waitFor.kind === 'run-pass'
         ? game.result !== null && game.diff?.pass === true && !game.busy
-        : game.queue.length > 0 && game.queue.every(item => item.status === 'passed') && !game.busy;
+        : entry.waitFor.kind === 'scratch-pass'
+          ? !!lastScratch?.result && !lastScratch.result.error && codeSatisfies(lastScratch.code, entry.waitFor.accepted)
+          : game.queue.length > 0 && game.queue.every(item => item.status === 'passed') && !game.busy;
     if (!satisfied) return;
     demoWaitSeen.current = demoStep;
     openDemoStepRef.current?.(demoStep + 1);
-  }, [demoStep, demoCurrent, game.code, game.result, game.diff, game.busy, game.queue, game.puzzle.id]);
+  }, [demoStep, demoCurrent, game.code, game.result, game.diff, game.busy, game.queue, game.puzzle.id, lastScratch]);
   function setIndex(index: number) {
     if (queueEntry) setQueueTraceIndex(index);
     else game.setReplay(index);
@@ -256,7 +262,8 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   function editor(file: string) {
     return floating(file === primaryFile ? 'editor' : `script:${file}`, <div className="editor-body">
       <CodeEditor value={game.save.files[file] ?? ''} onChange={code => { game.setActiveFile(file); game.setCode(code); }} onRun={() => { void run(file); }}
-        api={game.puzzle.learnedApi} files={files} fontSize={settings.editorFontSize} line={file === game.activeFile ? result?.error?.line || event?.line || 0 : 0} readOnly={game.busy} label={`${text.editor.label}: ${file}`} />
+        api={game.puzzle.learnedApi} files={files} fontSize={settings.editorFontSize} line={file === game.activeFile ? result?.error?.line || event?.line || 0 : 0} readOnly={game.busy} label={`${text.editor.label}: ${file}`}
+        ghost={file === primaryFile && demoCurrent?.waitFor?.kind === 'code' ? demoCurrent.ghost : undefined} />
       <div className="editor-footer"><span><span className={`status-dot ${game.busy ? 'busy' : ''}`} />{game.busy ? text.editor.running : text.editor.language}</span><span>{text.editor.escape}</span></div>
     </div>, <>
       <IconButton icon="play" label={text.editor.run} className="run-button" showLabel disabled={game.busy} onClick={() => { void run(file); }} />
@@ -308,7 +315,10 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
         {floating('request', <RequestPanel key={game.puzzle.id} game={game} />)}
         {revealed('queue') && floating('queue', <QueuePanel game={game} onReplay={index => { setQueueIndex(index); setQueueTraceIndex(0); setQueuePaused(false); openWindow('replay'); openWindow('output'); }} />)}
         {revealed('replay') && floating('replay', <ReplayPanel result={result} index={replayIndex} paused={paused} speed={settings.replaySpeed} onIndex={setIndex} onPaused={setPaused} onSpeed={game.setSpeed} />)}
-        {revealed('scratch') && floating('scratch', <ScratchPanel game={game} runScratch={game.runScratch} />)}
+        {(revealed('scratch') || demoStep !== null) && floating('scratch',
+          <ScratchPanel key={demoCurrent?.scratch?.key ?? 'scratch'} game={game} runScratch={game.runScratch} preset={demoCurrent?.scratch}
+            ghost={demoCurrent?.scratch ? demoCurrent.ghost : undefined} stage={demoStep !== null}
+            onRun={(code, outcome) => setLastScratch({ code, result: outcome })} />)}
         {canSandbox && floating('sandbox', <SandboxPanel game={game} notebook={game.save.sandbox} onChange={game.setSandbox} onRun={game.runSandbox} />)}
         <div className="window-dock">{windowIds.filter(id => layoutFor(id).minimized && !layoutFor(id).closed).map(id => <button className="dock-button" key={id} onClick={() => openWindow(id)}>{titleFor(id)}<Icon name="restore" /></button>)}</div>
       </main>}
@@ -339,6 +349,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
       {game.screen === 'game' && demoCurrent && demoStep !== null && !dialog && <Dialog title={demoCurrent.title} onClose={finishDemo} className="tutorial-dialog demo-dialog" modal={false}>
         <span className="eyebrow">{text.tutorial.speaker}</span><p>{demoCurrent.body}</p>
         {demoCurrent.showsAnswer && (game.expected === null || typeof game.expected !== 'object') && <p className="demo-answer"><code>{describeInputs(game.puzzle)}</code> → <code>{scalarText(game.expected)}</code></p>}
+        {demoCurrent.ghost && filledLine(demoCurrent) && <pre className="demo-code">{filledLine(demoCurrent)}</pre>}
         {demoCurrent.waitFor?.kind === 'run-pass' && game.diff && !game.diff.pass && <p className="demo-nudge">{format(text.tutorial.retry, { line: demoCurrent.line ?? '' })}</p>}
         <div className="button-row">
           <button className="button primary" disabled={!!demoCurrent.waitFor && !demoSatisfied(demoCurrent) || game.busy} onClick={() => { if (demoStep === demo.length - 1) finishDemo(); else openDemoStep(demoStep + 1); }}>{demoCurrent.waitFor && !demoSatisfied(demoCurrent) ? text.tutorial.waiting : game.busy ? text.tutorial.watching : demoStep === demo.length - 1 ? text.tutorial.done : text.tutorial.next}</button>

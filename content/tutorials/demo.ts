@@ -1,7 +1,8 @@
 import type { Puzzle } from '../../src/contracts';
 
 export type DemoAction = 'goto' | 'next';
-export type DemoWait = { kind: 'code'; accepted: string[] } | { kind: 'run-pass' } | { kind: 'serve-pass' };
+export type DemoWait = { kind: 'code'; accepted: string[] } | { kind: 'run-pass' } | { kind: 'serve-pass' }
+  | { kind: 'scratch-pass'; accepted: string[] };
 
 export interface DemoStep {
   title: string;
@@ -11,15 +12,19 @@ export interface DemoStep {
   puzzleId?: string;
   waitFor?: DemoWait;
   line?: string;
+  /** Grey suggestion offered in place of a `___` blank in the editor or scratch pad. */
+  ghost?: string;
+  /** Code loaded into the scratch pad when this step opens; `key` identifies the preset. */
+  scratch?: { key: string; code: string };
   /** Show the slip's inputs and the answer they produce beneath the step. */
   showsAnswer?: boolean;
 }
 
-/** The requests the guided demo plays through, in order. */
-export const DEMO_PUZZLE_IDS: readonly string[] = ['p0-01-stamp', 'p0-02-shares'];
+/** The request the guided demo plays through. */
+export const DEMO_PUZZLE_IDS: readonly string[] = ['p0-01-stamp'];
 
 /** Popup tutorials whose lesson the demo already teaches; they are marked seen when it ends. */
-export const DEMO_COVERED_TUTORIALS: readonly string[] = ['request', 'run', 'output', 'queue', 'resources'];
+export const DEMO_COVERED_TUTORIALS: readonly string[] = ['request', 'run', 'output', 'queue', 'resources', 'scratch'];
 
 function scalar(value: unknown): string {
   if (typeof value === 'string') return JSON.stringify(value);
@@ -56,50 +61,67 @@ export function codeSatisfies(code: string, accepted: string[]): boolean {
   return !compact.includes('___') && accepted.some(answer => compact.includes(answer.replace(/\s/g, '')));
 }
 
+/** The full code a step asks the player to type, with blanks filled by the ghost. */
+export function filledLine(step: DemoStep): string | null {
+  if (step.line) return step.line;
+  if (step.scratch && step.ghost) return step.scratch.code.replace('___', step.ghost);
+  return null;
+}
+
+const SHELF = "Table().with_columns('title', make_array('Moss Almanac', 'Cloud Atlas', 'Fern Letters'), 'pages', make_array(80, 120, 64))";
+
 export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
-  const steps: DemoStep[] = [{
-    title: 'Welcome to the reading room',
-    body: 'Patrons bring requests, and you answer them with a line or two of Python. Let’s do the first two together: you type, I’ll point.',
-    target: 'request',
-  }];
-  puzzles.forEach((puzzle, index) => {
-    steps.push(
-      {
-        title: index === 0 ? 'A patron arrives' : 'Another slip on the desk',
-        body: `${puzzle.patron}: “${puzzle.request}”`,
-        target: 'request', action: 'goto', puzzleId: puzzle.id,
-      },
-      {
-        title: 'Read the slip',
-        body: `Your task: ${puzzle.objective} Under “Already in Python” you’ll see ${describeInputs(puzzle)}. Those names already hold those values, so you never type the numbers yourself.`,
-        target: 'request',
-      },
-      {
-        title: 'Fill in the blank',
-        body: `In the script window, double-click ___ to select it, then type ${demoAnswer(puzzle)} in its place so the line reads “${firstLine(puzzle.reference)}”. The last line, deliver(…), hands the result to ${puzzle.patron}.`,
-        target: 'editor', waitFor: { kind: 'code', accepted: acceptedAnswers(puzzle) }, line: firstLine(puzzle.reference), puzzleId: puzzle.id,
-      },
-      {
-        title: 'Run it',
-        body: 'Press Run (the play button in the script window, or Cmd/Ctrl + Enter). Then look at Output: “Delivered to the patron” should show the number below.',
-        target: 'output', waitFor: { kind: 'run-pass' }, line: firstLine(puzzle.reference), puzzleId: puzzle.id, showsAnswer: true,
-      },
-      {
-        title: 'Serve the queue',
-        body: `Now press Serve queue (the stacked-books button beside Run in the script window). ${puzzle.queueSize} patrons bring different values; your script runs for each one and must pass them all.`,
-        target: 'queue', waitFor: { kind: 'serve-pass' }, puzzleId: puzzle.id,
-      },
-      {
-        title: 'Request complete',
-        body: 'Every patron is satisfied: you earned Ink and a Gold Star. Press Understood and the next slip lands on the desk.',
-        target: 'resources',
-      },
-    );
-  });
-  steps.push({
-    title: 'Your turn at the desk',
-    body: 'From here the requests are yours. Stuck? “A small hint” on the slip says what to compute, then which Python tool, then the line with one blank. You can replay this walkthrough from Help.',
-    target: 'request', action: 'next',
-  });
-  return steps;
+  const puzzle = puzzles[0];
+  if (!puzzle) return [];
+  return [
+    {
+      title: 'Welcome to the desk',
+      body: 'Shelby the librarian does whatever your Python says. This tour is one request, then a trip to the Stacks. Nothing here can break.',
+      target: 'request',
+    },
+    {
+      title: 'A slip arrives',
+      body: `${puzzle.patron}’s slip is on the request window. Two numbers are already in Python for you: ${describeInputs(puzzle)}. Your job is one line of code.`,
+      target: 'request', action: 'goto', puzzleId: puzzle.id,
+    },
+    {
+      title: 'Fill in the blank',
+      body: `In the script window the grey text is the answer. Press Tab (or click it) to accept it, or type ${demoAnswer(puzzle)} yourself.`,
+      target: 'editor', waitFor: { kind: 'code', accepted: acceptedAnswers(puzzle) },
+      ghost: demoAnswer(puzzle), line: firstLine(puzzle.reference), puzzleId: puzzle.id,
+    },
+    {
+      title: 'Run it and watch',
+      body: 'Press Run (▶ or Cmd/Ctrl+Enter). Watch the room: Shelby walks to the fee stamp to work out the numbers, then carries the fee to the patron. Output shows the same number.',
+      target: 'output', waitFor: { kind: 'run-pass' }, line: firstLine(puzzle.reference), puzzleId: puzzle.id, showsAnswer: true,
+    },
+    {
+      title: 'Serve the queue',
+      body: `${puzzle.queueSize} patrons, same script, different numbers. Press Serve queue and Shelby runs your line for each of them.`,
+      target: 'queue', waitFor: { kind: 'serve-pass' }, puzzleId: puzzle.id,
+    },
+    {
+      title: 'Off to the Stacks',
+      body: 'Requests aren’t the only thing code does. The blotting paper is a terminal: any Python you run there happens right away, and Shelby acts it out. The grey text is ready — press Tab to accept, then Run.',
+      target: 'scratch', scratch: { key: 'shelf', code: 'shelf = ___\nshelf' }, ghost: SHELF,
+      waitFor: { kind: 'scratch-pass', accepted: ['with_columns'] }, puzzleId: puzzle.id,
+    },
+    {
+      title: 'Sort the shelf',
+      body: 'Shelby wheeled a cart to the Stacks and stamped three books. Now order them: accept the grey text and Run — watch the books reshuffle.',
+      target: 'scratch', scratch: { key: 'sort', code: `shelf = ${SHELF}\nby_pages = shelf.sort(___)\nby_pages` }, ghost: "'pages'",
+      waitFor: { kind: 'scratch-pass', accepted: ['sort('] }, puzzleId: puzzle.id,
+    },
+    {
+      title: 'Keep only the thin ones',
+      body: 'One more: where() sifts a table. Accept, Run, and watch the sieve keep the books under 100 pages.',
+      target: 'scratch', scratch: { key: 'thin', code: `shelf = ${SHELF}\nthin = shelf.where('pages', ___)\nthin` }, ghost: 'are.below(100)',
+      waitFor: { kind: 'scratch-pass', accepted: ['are.below(100)'] }, puzzleId: puzzle.id,
+    },
+    {
+      title: 'Your turn',
+      body: 'That’s the whole game: read a slip, write Python, Run, watch Shelby. The next slip is waiting.',
+      target: 'request', action: 'next',
+    },
+  ];
 }

@@ -6,7 +6,7 @@ import { bracketMatching, HighlightStyle, indentOnInput, syntaxHighlighting } fr
 import { python } from '@codemirror/lang-python';
 import { closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
 import { tags } from '@lezer/highlight';
-import { completionExtension, externalCodeUpdate, highlightPlayerLine, playerLine } from './editorExtensions';
+import { completionExtension, externalCodeUpdate, ghostText, highlightPlayerLine, playerLine, setGhost } from './editorExtensions';
 import { text } from './text';
 
 const syntax = HighlightStyle.define([
@@ -46,9 +46,11 @@ export interface CodeEditorProps {
   fontSize?: number;
   readOnly?: boolean;
   label?: string;
+  /** Grey suggestion shown in place of a `___` blank; Tab or click accepts it. */
+  ghost?: string;
 }
 
-export function CodeEditor({ value, onChange, onRun, api, files = EMPTY_FILES, line = 0, fontSize = 14, readOnly = false, label = text.editor.label }: CodeEditorProps) {
+export function CodeEditor({ value, onChange, onRun, api, files = EMPTY_FILES, line = 0, fontSize = 14, readOnly = false, label = text.editor.label, ghost }: CodeEditorProps) {
   const parent = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const callbacks = useRef({ onChange, onRun });
@@ -64,7 +66,7 @@ export function CodeEditor({ value, onChange, onRun, api, files = EMPTY_FILES, l
         extensions: [
           lineNumbers(), highlightActiveLine(), highlightActiveLineGutter(), drawSelection(),
           history(), python(), bracketMatching(), indentOnInput(), closeBrackets(),
-          syntaxHighlighting(syntax), theme, playerLine,
+          syntaxHighlighting(syntax), theme, playerLine, ghostText,
           compartments.completions.of([]), compartments.appearance.of([]),
           compartments.readonly.of([]), compartments.label.of([]),
           keymap.of([
@@ -96,5 +98,6 @@ export function CodeEditor({ value, onChange, onRun, api, files = EMPTY_FILES, l
     ] });
   }, [api, files, fontSize, readOnly, label, compartments]);
   useEffect(() => { view.current?.dispatch({ effects: highlightPlayerLine.of(line) }); }, [line]);
+  useEffect(() => { view.current?.dispatch({ effects: setGhost.of(ghost ?? null) }); }, [ghost]);
   return <div ref={parent} className="code-editor" data-testid="python-editor" />;
 }

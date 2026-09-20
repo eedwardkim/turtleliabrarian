@@ -8,7 +8,7 @@ import { Asset } from './Asset';
 import { Books } from './Books';
 import type { DisplayBook } from './Books';
 import { animatedBookPosition, arrayPosition, BOOK_LIMIT, bookPosition, booksFor, clampProgress, frameForWorld, INPUT_CART,
-  isArray, OUTPUT_CART, PATRON, valueCount } from './director';
+  isArray, OUTPUT_CART, PATRON, shelbyPose, valueCount } from './director';
 import type { Position, WorldFrame } from './director';
 import { Label } from './Label';
 import { StagingSet } from './StagingSet';
@@ -129,16 +129,19 @@ function Diorama({ frame, props }: { frame: WorldFrame; props: WorldProps }) {
       ...book, ghost: true, position: bookPosition(book.index, [OUTPUT_CART[0], OUTPUT_CART[1] + 0.55, OUTPUT_CART[2]]),
     })) : [], [props.diff, props.feedback]);
   const idleBooks = useMemo(() => [...shelfBooks, ...inputBooks], [shelfBooks, inputBooks]);
-  const clip = props.feedback === 'loud' ? 'flip' : props.feedback === 'success' ? 'cheer' : frame.animation.clip;
-  const shelbyPosition: Position = motion === 'trip' ? [Math.sin(p * Math.PI * 2) * 0.7, 1.98, 1.24]
-    : motion === 'deliver' ? [0.2 + p * 0.7, 1.98, 1.25] : [0.02, 1.98, 1.24];
+  const pose = shelbyPose(frame.animation, p, props.reducedMotion);
+  const overrideClip = props.feedback === 'loud' ? 'flip' : props.feedback === 'success' ? 'cheer' : null;
+  const clip = overrideClip ?? pose.clip;
+  const shelbyPosition = pose.position;
   const count = valueCount(frame.output?.value);
   const showOutput = Boolean(frame.output?.visible) || motion === 'fade';
   const outputOpacity = motion === 'fade' ? 1 - p : 1;
   const plan = useMemo(() => planScene({ chapter: props.chapter, hat: props.hat,
     hatchlings: props.hatchlings, staging: staging.kind, showOutput, showGhosts: ghosts.length > 0 }),
   [props.chapter, props.hat, props.hatchlings, staging.kind, showOutput, ghosts.length]);
-  const hatPosition: Position = [shelbyPosition[0] - 0.111, shelbyPosition[1] + 0.38, shelbyPosition[2] + 0.436];
+  const hatOffset: Position = [-0.111, 0.38, 0.436];
+  const hatPosition: Position = [shelbyPosition[0] + hatOffset[0] * Math.cos(pose.yaw) + hatOffset[2] * Math.sin(pose.yaw),
+    shelbyPosition[1] + hatOffset[1], shelbyPosition[2] - hatOffset[0] * Math.sin(pose.yaw) + hatOffset[2] * Math.cos(pose.yaw)];
   const wingSlot = wingPosition(Math.max(0, plan.wings.length - 1), plan.wings.length);
   return <group>
     <Asset name="atlas" wireframe={wireframe} clip="swim_idle" progress={props.reducedMotion ? 0 : p} />
@@ -155,10 +158,10 @@ function Diorama({ frame, props }: { frame: WorldFrame; props: WorldProps }) {
       progress={motion === 'stamp' ? p : 0} wireframe={wireframe} />}
     <Asset name="cart" position={INPUT_CART} wireframe={wireframe} />
     {showOutput && <Asset name="cart" position={OUTPUT_CART} wireframe={wireframe} opacity={outputOpacity} />}
-    <Asset name="shelby" position={shelbyPosition} rotation={[0, -0.25, 0]} clip={clip}
-      progress={props.feedback === 'loud' || props.feedback === 'success' ? Math.max(p, 0.45) : p}
+    <Asset name="shelby" position={shelbyPosition} rotation={[0, pose.yaw, 0]} clip={clip}
+      progress={overrideClip ? Math.max(p, 0.45) : pose.clipProgress}
       wireframe={wireframe} />
-    {plan.hat && <Asset name={plan.hat} position={hatPosition} rotation={[0, -0.25, 0]}
+    {plan.hat && <Asset name={plan.hat} position={hatPosition} rotation={[0, pose.yaw, 0]}
       clip={plan.hat === 'lantern_hat' ? 'flicker' : plan.hat === 'gradcap' ? 'swing' : undefined}
       progress={p} wireframe={wireframe} />}
     {plan.quill && <Asset name="quill" position={props.feedback === 'silent' ? [1.74, 2.6, 0.45] : [-2.28, 2.80, 0.3]}

@@ -90,7 +90,7 @@ export interface GameState {
   replayQueue(index: number): Promise<void>;
   replayStandingOrder(puzzleId: string): Promise<void>;
   setOrderPaused(puzzleId: string, paused: boolean): void;
-  scratch(code: string): Promise<RunResult | null>;
+  scratch(code: string, options?: { stage?: boolean }): Promise<RunResult | null>;
   setSandbox(notebook: Partial<SandboxNotebook>): void;
   runSandbox(code?: string): Promise<RunResult | null>;
   tickReplay(milliseconds: number): void;
@@ -602,17 +602,23 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           if (ticket === epoch) { set({ busy: false }); void runOrders(); }
         }
       },
-      async scratch(code) {
+      async scratch(code, options: { stage?: boolean } = {}) {
         if (!get().ready) return null;
         const ticket = begin('Trying a note on the blotting paper…');
         const state = get();
         try {
           const expected = await reference(state.puzzle, state.puzzle.visibleSeed, state.puzzle.visibleInputs);
           if (ticket !== epoch) return null;
-          const result = await runtime.run(requestFor(state.puzzle, code, state.puzzle.visibleSeed, state.save.files, expected.inputs, state.save.settings.openStacks));
+          const result = await runtime.run(requestFor(state.puzzle, code, state.puzzle.visibleSeed, state.save.files, expected.inputs,
+            options.stage || state.save.settings.openStacks));
           if (ticket !== epoch) return null;
-          set({ status: result.error?.friendly ?? 'Scratch work finished. Your script is unchanged.' });
-          tutorial('scratch');
+          if (options.stage) {
+            set({ ...replayFields(result), inputs: result.inputs, diff: null, expected: null,
+              status: result.error?.friendly ?? 'Scratch work finished. Your script is unchanged.' });
+          } else {
+            set({ status: result.error?.friendly ?? 'Scratch work finished. Your script is unchanged.' });
+            tutorial('scratch');
+          }
           return result;
         } catch (error) { if (ticket === epoch) set({ status: errorMessage(error) }); return null; }
         finally { if (ticket === epoch) { set({ busy: false }); void runOrders(); } }
