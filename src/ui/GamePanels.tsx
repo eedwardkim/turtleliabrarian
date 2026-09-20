@@ -5,6 +5,7 @@ import { OutputPanel, ValueDisplay } from './Output';
 import { Icon, IconButton } from './Icon';
 import { format, text } from './text';
 import { scalarText } from './helpers';
+import { applyMove, nextMove } from '../../content/tutorials/demo';
 import type { GameStateForUI } from './types';
 
 export function RequestPanel({ game }: { game: GameStateForUI }) {
@@ -12,10 +13,21 @@ export function RequestPanel({ game }: { game: GameStateForUI }) {
   const completed = game.save.completed.includes(game.puzzle.id);
   const filed = game.save.standingOrders.some(order => order.puzzleId === game.puzzle.id);
   const inputs = Object.entries(game.puzzle.visibleInputs ?? {});
+  const [moveShown, setMoveShown] = useState('');
+  const showingMove = moveShown === game.puzzle.id;
+  const move = showingMove ? nextMove(game.code, game.puzzle.reference) : null;
+  const moveBlock = <div className="next-move">
+    <button className="button primary wide" onClick={() => { game.showMove(); setMoveShown(game.puzzle.id); }}>{text.request.showMove}</button>
+    {showingMove && (move
+      ? <><span className="eyebrow">{format(text.request.moveLabel, { n: move.index + 1 })}</span><pre className="demo-code">{move.line}</pre>
+        <button className="button wide" onClick={() => { game.setActiveFile('main.py'); game.setCode(applyMove(game.puzzle.reference, move.index)); }}>{text.request.applyMove}</button></>
+      : <p>{text.request.moveDone}{game.puzzle.lesson ? '' : ` ${text.request.moveDoneQueue}`}</p>)}
+  </div>;
   if (game.puzzle.lesson) return <article className="request-slip">
     <div className="request-number"><span>{format(text.request.number, { number: game.puzzle.id })}</span><Icon name="book" /></div>
     <div className="request-from">{text.request.from}</div><h2>{game.puzzle.patron}</h2>
     <p className="request-message">“{game.puzzle.request}”</p>
+    {moveBlock}
     {inputs.length > 0 && <div className="request-inputs"><span className="eyebrow">{text.request.inputs}</span>
       <div className="request-inputs-row">{inputs.map(([name, value]) => value === null || typeof value !== 'object'
         ? <code className="request-input-chip" key={name}>{name} = {typeof value === 'string' ? JSON.stringify(value) : scalarText(value)}</code>
@@ -31,6 +43,7 @@ export function RequestPanel({ game }: { game: GameStateForUI }) {
     <div className="request-number"><span>{format(text.request.number, { number: game.puzzle.id })}</span><Icon name="book" /></div>
     <div className="request-from">{text.request.from}</div><h2>{game.puzzle.patron}</h2>
     <p className="request-message">“{game.puzzle.request}”</p>
+    {moveBlock}
     <div className="request-objective"><span className="eyebrow">{text.request.objective}</span><p>{game.puzzle.objective}</p></div>
     {inputs.length > 0 && <div className="request-inputs"><span className="eyebrow">{text.request.inputs}</span>
       <div className="request-inputs-row">{inputs.map(([name, value]) => value === null || typeof value !== 'object'

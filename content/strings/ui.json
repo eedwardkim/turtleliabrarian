@@ -147,6 +147,11 @@
     "completeNote": "Every patron in this queue has their answer.",
     "completeLessonNote": "Shelby delivered it. On to the next slip.",
     "next": "Next request",
+    "showMove": "Show me the move",
+    "moveLabel": "Type this as line {n}",
+    "applyMove": "Put it in my script",
+    "moveDone": "Your script matches the answer. Press Run.",
+    "moveDoneQueue": "Then Serve queue.",
     "standing": "File a standing order",
     "filed": "Standing order filed",
     "learn": "On this page"

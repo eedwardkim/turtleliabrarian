@@ -70,6 +70,23 @@ export function blankAnswer(starter: string, reference: string): string | null {
   return match ? match.slice(prefix.length, match.length - suffix.length) : null;
 }
 
+/** First reference line (trimmed, non-empty, not a comment) that is not already in the code. */
+export function nextMove(code: string, reference: string): { index: number; line: string } | null {
+  const written = new Set(code.split('\n').map((line) => line.trim()));
+  const lines = reference.split('\n');
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index].trim();
+    if (!line || line.startsWith('#') || written.has(line)) continue;
+    return { index, line };
+  }
+  return null;
+}
+
+/** The reference's first `index + 1` lines. */
+export function applyMove(reference: string, index: number): string {
+  return reference.split('\n').slice(0, index + 1).join('\n');
+}
+
 export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
   const puzzle = puzzles[0];
   const puzzleId = puzzle?.id;

@@ -39,11 +39,11 @@ describe('output rendering', () => {
   it('renders scalar request inputs as chips and tables as closed summaries', () => {
     const base = {
       screen: 'game' as const, loading: 1, loadingMessage: '', ready: true, save: freshSave(),
-      puzzle: authoredPuzzles[0], activeFile: 'main.py', result: null, expected: 4, queue: [], diff: null,
+      puzzle: authoredPuzzles[0], activeFile: 'main.py', code: '', result: null, expected: 4, queue: [], diff: null,
       busy: false, status: '', hintLevel: 0, traceIndex: 0, replayPaused: true,
       initialize: vi.fn(), newGame: vi.fn(), setScreen: vi.fn(), setCode: vi.fn(), setActiveFile: vi.fn(),
       addFile: vi.fn(), run: vi.fn(), serveQueue: vi.fn(), stop: vi.fn(), gotoPuzzle: vi.fn(), nextPuzzle: vi.fn(),
-      hint: vi.fn(), setSettings: vi.fn(), setLayout: vi.fn(), setReplay: vi.fn(), setReplayPaused: vi.fn(),
+      hint: vi.fn(), showMove: vi.fn(), setSettings: vi.fn(), setLayout: vi.fn(), setReplay: vi.fn(), setReplayPaused: vi.fn(),
       setSpeed: vi.fn(), loadSlot: vi.fn(), saveSlot: vi.fn(), exportSave: vi.fn(), importSave: vi.fn(), reset: vi.fn(),
       fileStandingOrder: vi.fn(), stepClock: vi.fn(), markTutorial: vi.fn(), purchase: vi.fn(), runScratch: vi.fn(),
     } satisfies GameStateForUI;
