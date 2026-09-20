@@ -36,7 +36,7 @@ export function SandboxPanel({ game, notebook, onChange, onRun }: {
       <button className="button primary" disabled={game.busy || !game.ready} onClick={() => { void run(); }}>{text.sandbox.run}</button>
       <button className="button" disabled={!game.busy} onClick={game.stop}>{text.sandbox.stop}</button>
     </div>
-    <div className="scratch-output" tabIndex={0} role="region" aria-label={text.sandbox.title}>
+    <div className="scratch-output" tabIndex={0} role="region" aria-label={`${text.sandbox.title}: ${text.windows.output}`}>
       <details className="sandbox-inputs"><summary>{text.sandbox.inputs}</summary>
         <p>{text.sandbox.csvNote}</p>
         {Object.entries(result?.inputs ?? {}).map(([name, value]) => <section key={name}><h3><code>{name}</code></h3><ValueDisplay value={value} /></section>)}
