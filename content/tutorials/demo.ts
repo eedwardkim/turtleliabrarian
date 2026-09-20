@@ -15,6 +15,9 @@ export interface DemoStep {
 /** The requests the guided demo plays through, in order. */
 export const DEMO_PUZZLE_IDS: readonly string[] = ['p0-01-stamp', 'p0-02-shares'];
 
+/** Popup tutorials whose lesson the demo already teaches; they are marked seen when it ends. */
+export const DEMO_COVERED_TUTORIALS: readonly string[] = ['request', 'run', 'output', 'queue', 'resources'];
+
 export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
   const steps: DemoStep[] = [{
     title: 'Welcome to the reading room',
