@@ -5,7 +5,7 @@
   "objective": "Reduce an array, compare element-wise, and count True values.",
   "concepts": ["mean", "sum", "boolean_arrays", "count_nonzero", "inclusive_comparison"],
   "requiredApi": ["np.mean", "np.count_nonzero", "deliver"],
-  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "sort", "item", "sum", "np.mean", "np.count_nonzero"],
   "starter": "import numpy as np\ncount = 0\ndeliver(count)",
   "hints": ["Compute how many values in times are at least the average of the tray.", "Use np.mean(times) for the average, >= for an inclusive comparison, and np.count_nonzero to count True values.", "Write average = np.mean(times), then count = np.count_nonzero(times >= ___) and deliver(count)."],
   "inputCode": "import random\nfrom datascience import make_array\ntimes = make_array(*[random.randint(1, 30) for _ in range(random.randint(2, 8))])",

@@ -5,6 +5,30 @@
   background: #e4eef7;
 }
 .shelf-world canvas { display: block; touch-action: none; }
+.bookcase-world {
+  position: absolute;
+  inset: 70px 24px 330px;
+  overflow: hidden;
+  border-radius: 18px;
+  box-shadow: 0 10px 40px #503c2422;
+}
+.shelf-book-title {
+  display: block;
+  color: #fff3d6;
+  writing-mode: vertical-rl;
+  font: 600 16px/1 'Fraunces', serif;
+  text-shadow: 0 1px 2px #32272099;
+  pointer-events: none;
+}
+.shelf-book-height {
+  display: block;
+  padding: 3px 5px;
+  border-radius: 3px;
+  color: #443126;
+  background: #f7e6bc;
+  font: 600 13px/1 'IBM Plex Mono', monospace;
+  pointer-events: none;
+}
 .scene-label {
   display: flex;
   flex-direction: column;

@@ -73,8 +73,8 @@ describe('shelved requests', () => {
       'capstone-4', 'ch6-break-1', 'ch6-vary-1', 'ch6-vary-2', 'ch7-break-1', 'ch7-show-2', 'ch7-vary-1',
       'ch8-break-1', 'ch8-break-2', 'ch8-show-2', 'ch8-vary-1',
     ]);
-    expect(authoredPuzzles).toHaveLength(78);
-    expect(withoutShelved(authoredPuzzles)).toHaveLength(67);
+    expect(authoredPuzzles).toHaveLength(79);
+    expect(withoutShelved(authoredPuzzles)).toHaveLength(68);
     expect(withoutShelved(authoredPuzzles).every((puzzle) => !shelvedRequestIds.has(puzzle.id))).toBe(true);
   });
 });

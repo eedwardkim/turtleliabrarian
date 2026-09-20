@@ -7,7 +7,7 @@ import { createSaveService, exportJSON, freshSave, importJSON, type Snapshot } f
 function rangeSave() {
   return {
     ...freshSave(), started: true, puzzleId: 'ch1-show-2',
-    completed: [...puzzles.filter(puzzle => puzzle.lesson).map(puzzle => puzzle.id), 'ch1-show-1'],
+    completed: [...puzzles.filter(puzzle => puzzle.chapter === 0).map(puzzle => puzzle.id), 'ch1-show-1'],
     seenTutorials: ['almanac', commandTutorialId('make_array'), commandTutorialId('array-math')],
   };
 }

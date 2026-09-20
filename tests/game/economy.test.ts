@@ -8,7 +8,7 @@ describe('M1 economy', () => {
     let save = freshSave();
     const m1 = [
       'p0-01-stamp', 'p0-02-shares', 'p0-03-badge', 'p0-04-budget', 'p0-05-badge',
-      'ch1-show-1', 'ch1-show-2', 'ch1-vary-1', 'ch1-vary-2', 'ch1-break-1', 'ch1-break-2',
+      'ch1-show-1', 'ch1-show-2', 'ch1-show-3', 'ch1-vary-1', 'ch1-vary-2', 'ch1-break-1', 'ch1-break-2',
       'ch2-show-1', 'ch2-show-2',
     ].map(getPuzzle);
     for (const puzzle of m1) {
@@ -17,8 +17,8 @@ describe('M1 economy', () => {
       expect(save.resources.stars).toBeGreaterThanOrEqual(0);
       save = { ...save, ...completePuzzle(save, puzzle, false) };
     }
-    expect(save.completed).toHaveLength(13);
-    expect(save.resources.stars).toBe(15);
+    expect(save.completed).toHaveLength(14);
+    expect(save.resources.stars).toBe(17);
     expect(save.resources.eggs).toBe(2);
   });
   it('does not duplicate completion rewards and gates future requests', () => {

@@ -5,7 +5,7 @@
   "objective": "Find the final valid zero-based index from the array length.",
   "concepts": ["indexing", "zero_based", "index_out_of_range"],
   "requiredApi": ["item", "len", "deliver"],
-  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "sort", "item"],
   "starter": "last_reading = readings.item(0)\ndeliver(last_reading)",
   "hints": ["Compute the final reading from the nonempty readings array, whatever its length is.", "Use readings.item(len(readings) - 1); len counts entries and item uses zero-based indexes.", "Write last_reading = readings.item(len(readings) - ___), then deliver(last_reading)."],
   "inputCode": "import random\nfrom datascience import make_array\nreadings = make_array(*[random.randint(1, 90) for _ in range(random.randint(1, 8))])",

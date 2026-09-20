@@ -8,7 +8,7 @@ const authored = await loadPuzzles();
 
 describe('curriculum document generator', () => {
   it('reads every authored request in the same order as the shipped catalog', () => {
-    expect(authored).toHaveLength(78);
+    expect(authored).toHaveLength(79);
     expect(authored.map((puzzle: { id: string }) => puzzle.id)).toEqual(puzzles.map((puzzle) => puzzle.id));
   });
 

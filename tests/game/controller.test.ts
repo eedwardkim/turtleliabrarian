@@ -37,6 +37,60 @@ function harness() {
 
 afterEach(() => { stores.splice(0).forEach((store) => store.getState().disposeGame()); });
 
+describe('bookcase expression lesson', () => {
+  const puzzle = getPuzzle('ch1-show-3');
+  const sorted: RunResult = {
+    ...output, delivered: null, inputs: puzzle.visibleInputs!,
+    value: { kind: 'table', labels: ['title', 'height'], rows: [['Fern', 10], ['Rain', 12], ['Sun', 14],
+      ['Seed', 17], ['Moss', 20], ['Cloud', 24], ['Moon', 28]], totalRows: 7 },
+    trace: [{ version: 1, seq: 0, type: 'sort', line: 1, inputs: ['books'], output: 'sorted', payload: {} }],
+  };
+  async function bookcaseHarness() {
+    const setup = harness();
+    setup.runtime.run.mockResolvedValue(sorted);
+    await setup.store.getState().initialize();
+    setup.store.getState().setSettings({ openStacks: true });
+    setup.store.getState().gotoPuzzle(puzzle.id);
+    await setup.store.getState().waitForIdle();
+    setup.store.getState().setCode(puzzle.reference);
+    return setup;
+  }
+
+  it('checks the real last expression and waits for the books to settle before completing', async () => {
+    const { store } = await bookcaseHarness();
+    await store.getState().run();
+    expect(store.getState().diff?.pass).toBe(true);
+    expect(store.getState().save.completed).not.toContain(puzzle.id);
+    store.getState().tickReplay(1200);
+    expect(store.getState().save.completed).not.toContain(puzzle.id);
+    store.getState().tickReplay(2000);
+    expect(store.getState().save.completed).toContain(puzzle.id);
+    expect(store.getState().result?.delivered).toBeNull();
+    store.getState().nextPuzzle();
+    expect(store.getState().puzzle.id).toBe('ch1-vary-1');
+  });
+
+  it('rejects a wrong last expression even when a sorted table was delivered', async () => {
+    const { store, runtime } = await bookcaseHarness();
+    runtime.run.mockResolvedValueOnce({ ...sorted, delivered: sorted.value, value: puzzle.visibleInputs!.books });
+    await store.getState().run();
+    store.getState().tickReplay(5000);
+    expect(store.getState().diff?.pass).toBe(false);
+    expect(store.getState().save.completed).not.toContain(puzzle.id);
+  });
+
+  it('cancels a pending celebration when Stop interrupts the shelf animation', async () => {
+    const { store } = await bookcaseHarness();
+    await store.getState().run();
+    store.getState().stop();
+    store.getState().tickReplay(5000);
+    expect(store.getState().save.completed).not.toContain(puzzle.id);
+    await store.getState().run();
+    store.getState().skipReplay();
+    expect(store.getState().save.completed).toContain(puzzle.id);
+  });
+});
+
 describe('range Run verification (controlled runtime responses)', () => {
   const puzzle = getPuzzle('ch1-show-2');
   const visible: RunResult = {
