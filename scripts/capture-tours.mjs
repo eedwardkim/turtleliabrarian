@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { chapterPuzzles } from './capture-lib.mjs';
 import {
-  bootstrap, captureUrl, closeDialog, dismissTutorials, editor, nextRequest, openTool,
+  bootstrap, captureUrl, closeDialog, dismissTutorials, editor, nextRequest, openTool, walkDemo,
   playRequest, run, serveQueue, setCode, startNewGame, typeReference,
 } from './capture-steps.mjs';
 
@@ -120,20 +120,21 @@ function chapterTour(chapter, id) {
 const prologue = {
   id: 'V00',
   title: 'V00 — The first ten minutes',
-  description: 'Title, intro, opening tutorials and the first two prologue requests typed, run and served. Unchanged from the accepted V00 capture.',
-  expectedMinutes: 6,
+  description: 'Title, intro, the guided two-request demo Shelby plays herself, then the remaining two prologue requests typed, run and served by the player.',
+  expectedMinutes: 8,
   requirement: puzzles => ({
     chapters: [0],
-    puzzles: ['p0-01-stamp', 'p0-02-shares'].filter(id => puzzles.some(puzzle => puzzle.id === id)),
-    minTutorials: 1,
+    puzzles: ['p0-03-badge', 'p0-04-budget'].filter(id => puzzles.some(puzzle => puzzle.id === id)),
+    minTutorials: 3,
     windows: ['queue', 'output'],
     screenshots: { puzzle: 2, tutorial: 1 },
   }),
   async run({ recorder, puzzles }) {
     await recorder.hold('Reading Shells — a library carried by Atlas, a sky turtle.', 4);
     await startNewGame(recorder);
+    await walkDemo(recorder);
     await dismissTutorials(recorder);
-    for (const id of ['p0-01-stamp', 'p0-02-shares']) {
+    for (const id of ['p0-03-badge', 'p0-04-budget']) {
       const puzzle = puzzles.find(entry => entry.id === id);
       assert(puzzle, `The prologue request ${id} is missing from content/puzzles.`);
       await recorder.hold(puzzle.title);
@@ -153,9 +154,9 @@ const prologue = {
       recorder.record('puzzles', { id: puzzle.id, kind: puzzle.kind, chapter: puzzle.chapter, patrons: queue.length });
       recorder.record('chapters', puzzle.chapter);
       await recorder.click('Close window: The waiting line');
-      if (id === 'p0-01-stamp') await nextRequest(recorder);
+      if (id === 'p0-03-badge') await nextRequest(recorder);
     }
-    await recorder.hold('Two requests solved. A whole floating library still to discover.', 4);
+    await recorder.hold('The prologue is shelved. A whole floating library still to discover.', 4);
   },
 };
 

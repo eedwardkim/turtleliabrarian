@@ -39,6 +39,24 @@ export async function startNewGame(recorder, name = 'Shelby') {
   await recorder.settle();
 }
 
+/** Walks the guided demo the game opens for a new library, waiting for each played step to finish. */
+export async function walkDemo(recorder, seconds = 3) {
+  const { page } = recorder;
+  const dialog = page.locator('.demo-dialog');
+  assert(await dialog.count(), 'A new library must open the guided demo.');
+  for (let step = 0; step < 40; step++) {
+    if (!await dialog.count()) return;
+    await recorder.settle(0.2);
+    const title = await dialog.locator('h2').innerText();
+    await recorder.hold(title, seconds);
+    await recorder.shot('tutorial', `demo-${step + 1}`, title);
+    recorder.record('tutorials', `demo-${step + 1}`);
+    await dialog.getByRole('button', { name: /^(Understood|Back to work)$/ }).click({ force: true });
+    await page.clock.runFor(34);
+  }
+  throw new Error('The guided demo did not finish.');
+}
+
 /** Walks whatever tutorials the game queued, recording each one it actually showed. */
 export async function dismissTutorials(recorder, seconds = 2) {
   const { page } = recorder;
