@@ -102,19 +102,19 @@ export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
     },
     {
       title: 'Off to the Stacks',
-      body: 'Requests aren’t the only thing code does. The blotting paper is a terminal: any Python you run there happens right away, and Shelby acts it out. The grey text is ready — press Tab to accept, then Run.',
+      body: 'Requests aren’t the only thing code does. The blotting paper is a terminal: any Python you run there happens right away, and Shelby acts it out. The grey text is ready — press Tab to accept, then Run. Watch the Stacks, then press Next.',
       target: 'scratch', scratch: { key: 'shelf', code: 'shelf = ___\nshelf' }, ghost: SHELF,
       waitFor: { kind: 'scratch-pass', accepted: ['with_columns'] }, puzzleId: puzzle.id,
     },
     {
       title: 'Sort the shelf',
-      body: 'Shelby wheeled a cart to the Stacks and stamped three books. Now order them: accept the grey text and Run — watch the books reshuffle.',
+      body: 'Shelby wheeled a cart to the Stacks and stamped three books. Now order them: accept the grey text and Run — watch the books reshuffle, then press Next.',
       target: 'scratch', scratch: { key: 'sort', code: `shelf = ${SHELF}\nby_pages = shelf.sort(___)\nby_pages` }, ghost: "'pages'",
       waitFor: { kind: 'scratch-pass', accepted: ['sort('] }, puzzleId: puzzle.id,
     },
     {
       title: 'Keep only the thin ones',
-      body: 'One more: where() sifts a table. Accept, Run, and watch the sieve keep the books under 100 pages.',
+      body: 'One more: where() sifts a table. Accept, Run, and watch the sieve keep the books under 100 pages. Press Next when you’ve seen it.',
       target: 'scratch', scratch: { key: 'thin', code: `shelf = ${SHELF}\nthin = shelf.where('pages', ___)\nthin` }, ghost: 'are.below(100)',
       waitFor: { kind: 'scratch-pass', accepted: ['are.below(100)'] }, puzzleId: puzzle.id,
     },

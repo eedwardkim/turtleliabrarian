@@ -215,7 +215,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     if (!entry?.waitFor || !entry.puzzleId || game.puzzle.id !== entry.puzzleId) return false;
     if (entry.waitFor.kind === 'code') return codeSatisfies(game.code, entry.waitFor.accepted);
     if (entry.waitFor.kind === 'run-pass') return game.result !== null && game.diff?.pass === true && !game.busy;
-    if (entry.waitFor.kind === 'scratch-pass') return !!lastScratch?.result && !lastScratch.result.error && codeSatisfies(lastScratch.code, entry.waitFor.accepted);
+    if (entry.waitFor.kind === 'scratch-pass') return !!lastScratch?.result && !lastScratch.result.error && codeSatisfies(lastScratch.code, entry.waitFor.accepted) && !game.busy;
     return game.queue.length > 0 && game.queue.every(item => item.status === 'passed') && !game.busy;
   }
   useEffect(() => {
@@ -224,13 +224,13 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   useEffect(() => {
     const entry = demoCurrent;
     if (demoStep === null || !entry?.waitFor || !entry.puzzleId || game.puzzle.id !== entry.puzzleId || demoWaitSeen.current === demoStep) return;
+    // scratch-pass steps stay put so the player can watch Shelby before pressing Next.
+    if (entry.waitFor.kind === 'scratch-pass') return;
     const satisfied = entry.waitFor.kind === 'code'
       ? codeSatisfies(game.code, entry.waitFor.accepted)
       : entry.waitFor.kind === 'run-pass'
         ? game.result !== null && game.diff?.pass === true && !game.busy
-        : entry.waitFor.kind === 'scratch-pass'
-          ? !!lastScratch?.result && !lastScratch.result.error && codeSatisfies(lastScratch.code, entry.waitFor.accepted)
-          : game.queue.length > 0 && game.queue.every(item => item.status === 'passed') && !game.busy;
+        : game.queue.length > 0 && game.queue.every(item => item.status === 'passed') && !game.busy;
     if (!satisfied) return;
     demoWaitSeen.current = demoStep;
     openDemoStepRef.current?.(demoStep + 1);
