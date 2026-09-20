@@ -50,10 +50,11 @@ export function ghostReplacement(state: EditorState): { from: number; to: number
 }
 
 export function acceptGhost(view: EditorView): boolean {
+  if (view.state.readOnly) return false;
   const replacement = ghostReplacement(view.state);
   if (!replacement) return false;
   view.dispatch({ changes: { from: replacement.from, to: replacement.to, insert: replacement.insert },
-    selection: { anchor: replacement.from + replacement.insert.length }, effects: setGhost.of(null) });
+    selection: { anchor: replacement.from + replacement.insert.length } });
   return true;
 }
 
@@ -61,11 +62,15 @@ class GhostWidget extends WidgetType {
   constructor(readonly content: string) { super(); }
   override eq(other: GhostWidget) { return other.content === this.content; }
   override toDOM(view: EditorView) {
-    const span = document.createElement('span');
-    span.className = 'cm-ghost';
-    span.textContent = this.content;
-    span.addEventListener('mousedown', (event) => { event.preventDefault(); acceptGhost(view); });
-    return span;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'cm-ghost';
+    button.title = text.editor.fill;
+    button.setAttribute('aria-label', `${text.editor.fill}: ${this.content}`);
+    button.textContent = this.content;
+    button.addEventListener('mousedown', event => event.preventDefault());
+    button.addEventListener('click', () => { if (acceptGhost(view)) view.focus(); });
+    return button;
   }
 }
 

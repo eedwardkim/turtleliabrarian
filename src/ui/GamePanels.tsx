@@ -8,6 +8,38 @@ import { scalarText } from './helpers';
 import { applyMove, nextMove } from '../../content/tutorials/demo';
 import type { GameStateForUI } from './types';
 
+export function LessonPanel({ game }: { game: GameStateForUI }) {
+  const completed = game.save.completed.includes(game.puzzle.id);
+  const code = game.save.files['main.py'] ?? game.code;
+  const inputs = Object.entries(game.puzzle.visibleInputs ?? {});
+  const failed = !game.busy && (game.result?.error || game.diff && !game.diff.pass);
+  return <article className={`request-slip lesson-slip ${completed ? 'lesson-solved' : ''}`}>
+    <span className="eyebrow">{game.puzzle.title}</span>
+    {completed ? <div className="lesson-celebration" role="status">
+      <Icon name="check" /><h2>{text.solved.title}</h2>
+      <p>{text.request.completeLessonNote}</p>
+      <button className="button primary wide" disabled={game.busy} onClick={game.nextPuzzle}>{text.request.next}<Icon name="arrow" /></button>
+    </div> : <>
+      <p className="request-message">{game.puzzle.request}</p>
+      {inputs.length > 0 && <p className="lesson-inputs">{inputs.map(([name, value]) =>
+        `${name} = ${typeof value === 'string' ? JSON.stringify(value) : value === null || typeof value !== 'object' ? scalarText(value) : '…'}`).join(' · ')}</p>}
+      <div className="lesson-instruction" aria-live="polite">
+        {failed ? <>
+          <p>{text.request.lessonRetry}</p>
+          {game.result?.error && <p className="lesson-error">{game.result.error.friendly || game.result.error.message}</p>}
+          <button className="button wide" onClick={() => {
+            game.showMove(); game.setActiveFile('main.py'); game.setCode(game.puzzle.reference);
+          }}>{text.request.lessonFix}</button>
+        </> : <p>{game.busy ? text.request.lessonWatching
+          : code.includes('___') ? text.request.lessonClick : text.request.lessonRun}</p>}
+      </div>
+      {!failed && !game.busy && <button className="text-button" onClick={() => {
+        game.showMove(); game.setActiveFile('main.py'); game.setCode(game.puzzle.reference);
+      }}>{text.request.showMove}</button>}
+    </>}
+  </article>;
+}
+
 export function RequestPanel({ game }: { game: GameStateForUI }) {
   const [ghost, setGhost] = useState(false);
   const completed = game.save.completed.includes(game.puzzle.id);
@@ -23,22 +55,7 @@ export function RequestPanel({ game }: { game: GameStateForUI }) {
         <button className="button wide" onClick={() => { game.setActiveFile('main.py'); game.setCode(applyMove(game.puzzle.reference, move.index)); }}>{text.request.applyMove}</button></>
       : <p>{text.request.moveDone}{game.puzzle.lesson ? '' : ` ${text.request.moveDoneQueue}`}</p>)}
   </div>;
-  if (game.puzzle.lesson) return <article className="request-slip">
-    <div className="request-number"><span>{format(text.request.number, { number: game.puzzle.id })}</span><Icon name="book" /></div>
-    <div className="request-from">{text.request.from}</div><h2>{game.puzzle.patron}</h2>
-    <p className="request-message">“{game.puzzle.request}”</p>
-    {moveBlock}
-    {inputs.length > 0 && <div className="request-inputs"><span className="eyebrow">{text.request.inputs}</span>
-      <div className="request-inputs-row">{inputs.map(([name, value]) => value === null || typeof value !== 'object'
-        ? <code className="request-input-chip" key={name}>{name} = {typeof value === 'string' ? JSON.stringify(value) : scalarText(value)}</code>
-        : value.kind === 'array'
-          ? <details className="request-input-table" key={name}><summary><code>{name}</code> · {format(text.request.inputValues, { count: value.totalValues ?? value.values.length })}</summary><ValueDisplay value={value} /></details>
-          : <details className="request-input-table" key={name}><summary><code>{name}</code> · {format(text.request.inputTable, { rows: value.totalRows, columns: value.labels.length })}</summary><ValueDisplay value={value} /></details>)}</div>
-    </div>}
-    {completed && <div className="completed-slip"><Icon name="check" /><h3>{text.request.complete}</h3><p>{text.request.completeLessonNote}</p>
-      <button className="button primary wide" onClick={game.nextPuzzle}>{text.request.next}<Icon name="arrow" /></button>
-    </div>}
-  </article>;
+  if (game.puzzle.lesson) return <LessonPanel game={game} />;
   return <article className="request-slip">
     <div className="request-number"><span>{format(text.request.number, { number: game.puzzle.id })}</span><Icon name="book" /></div>
     <div className="request-from">{text.request.from}</div><h2>{game.puzzle.patron}</h2>
@@ -61,7 +78,7 @@ export function RequestPanel({ game }: { game: GameStateForUI }) {
     </div>
     {completed && <div className="completed-slip"><Icon name="check" /><h3>{text.request.complete}</h3><p>{text.request.completeNote}</p>
       <button className="button primary wide" onClick={game.nextPuzzle}>{text.request.next}<Icon name="arrow" /></button>
-      {game.puzzle.standingOrder.eligible && (filed ? <p>{text.request.filed}</p> : <button className="button wide" onClick={game.fileStandingOrder}><Icon name="order" />{text.request.standing}</button>)}
+      {game.puzzle.chapter >= 2 && game.puzzle.standingOrder.eligible && (filed ? <p>{text.request.filed}</p> : <button className="button wide" onClick={game.fileStandingOrder}><Icon name="order" />{text.request.standing}</button>)}
     </div>}
   </article>;
 }

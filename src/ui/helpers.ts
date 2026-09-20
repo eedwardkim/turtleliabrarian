@@ -1,5 +1,6 @@
-import type { CheckDiff, Json, Puzzle, Scalar, TableValue, TraceEvent, Value, WindowLayout } from '../contracts';
+import type { CheckDiff, Json, Scalar, TableValue, TraceEvent, Value, WindowLayout } from '../contracts';
 import { text } from './text';
+export { canReveal } from '../game/guidance';
 
 export interface Viewport { width: number; height: number }
 export type WindowId = 'editor' | 'output' | 'request' | 'queue' | 'replay' | 'scratch' | 'sandbox';
@@ -69,6 +70,22 @@ export function adjustLayout(layout: WindowLayout, key: string, resize: boolean,
     : { ...layout, x: layout.x + dx, y: layout.y + dy }, viewport);
 }
 
+export const RESIZE_EDGES = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] as const;
+export type ResizeEdge = typeof RESIZE_EDGES[number];
+
+export function resizeLayout(layout: WindowLayout, edge: ResizeEdge, dx: number, dy: number, viewport: Viewport): WindowLayout {
+  const current = clampLayout(layout, viewport);
+  let left = current.x;
+  let top = current.y;
+  let right = left + current.width;
+  let bottom = top + current.height;
+  if (edge.includes('w')) left = Math.max(16, Math.min(left + dx, right - 280));
+  if (edge.includes('e')) right = Math.min(viewport.width - 16, Math.max(right + dx, left + 280));
+  if (edge.includes('n')) top = Math.max(86, Math.min(top + dy, bottom - 140));
+  if (edge.includes('s')) bottom = Math.min(viewport.height - 44, Math.max(bottom + dy, top + 140));
+  return { ...current, x: left, y: top, width: right - left, height: bottom - top };
+}
+
 export function tablePreview(table: TableValue): { rows: Scalar[][]; omitted: number } {
   const rows = table.rows.slice(0, 10);
   return { rows, omitted: Math.max(0, table.totalRows - rows.length) };
@@ -80,13 +97,6 @@ export function cellState(diff: CheckDiff | null | undefined, row: number, colum
   if (diff.extraRows.includes(row)) return 'extra-row';
   if (diff.misorderedRows.includes(row)) return 'misordered-row';
   return '';
-}
-
-export function canReveal(puzzle: Puzzle, completed: string[], feature: 'queue' | 'almanac' | 'scratch' | 'replay' | 'scripts'): boolean {
-  if (puzzle.lesson) return false;
-  if (puzzle.chapter > 0 || puzzle.unlocks.includes(feature)) return true;
-  const thresholds = { queue: 1, almanac: 1, replay: 1, scratch: 2, scripts: 3 };
-  return completed.length >= thresholds[feature];
 }
 
 export interface ChartPoint {

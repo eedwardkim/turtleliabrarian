@@ -94,7 +94,7 @@ export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
   return [
     {
       title: 'Welcome',
-      body: 'Shelby only does what your Python says. The grey text is the answer. Press Tab to accept it.',
+      body: 'Shelby only does what your Python says. The blinking grey text is the answer. Click it to make it real.',
       target: 'editor', waitFor: { kind: 'code', accepted: [ghost] }, ghost, puzzleId,
       done: 'The blank is filled.',
     },

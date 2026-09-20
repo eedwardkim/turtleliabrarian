@@ -46,7 +46,7 @@ export interface CodeEditorProps {
   fontSize?: number;
   readOnly?: boolean;
   label?: string;
-  /** Grey suggestion shown in place of a `___` blank; Tab or click accepts it. */
+  /** Grey suggestion shown in place of a `___` blank; click (or Tab) accepts it. */
   ghost?: string;
 }
 

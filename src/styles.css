@@ -106,6 +106,7 @@ details pre{padding:10px;background:#342d2409}
 .name-card label{display:block;text-align:left;font-size:12px;margin-bottom:7px}
 .name-card .name-help{font-size:11px;text-align:left;margin:7px 0 22px}
 .game-hud{position:absolute;top:24px;left:25px;right:25px;display:flex;justify-content:space-between;gap:22px;pointer-events:none;z-index:100}
+.quiet-hud{justify-content:flex-end}
 .resource-bar,.tool-bar{display:flex;align-items:center;gap:2px;padding:5px 7px;background:#fbf8f1e8;border:1px solid #d7cbb499;border-radius:8px;box-shadow:0 3px 12px #3d3b2910;pointer-events:auto}
 .resource-counter{display:flex;align-items:center;gap:8px;padding:4px 11px;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;border-right:1px solid #d9ccb466}
 .resource-counter:last-child{border:0}
@@ -134,8 +135,20 @@ details pre{padding:10px;background:#342d2409}
 .window-actions .serve-button{border:1px solid currentColor;margin-right:3px}
 .window-actions .run-button{background:#6e8552;color:#fffcef;margin-right:3px}
 .window-actions .run-button:hover{background:#82965f}
+.compact-controls:not(.minimized) .window-bar{height:auto;flex-wrap:wrap}
+.compact-controls:not(.minimized) .window-grip{min-height:30px}
+.compact-controls:not(.minimized) .window-controls{order:3;flex-basis:100%;justify-content:flex-end;padding:2px 0}
+.minimized .window-controls{display:none}
 .window-body{flex:1;min-height:0;overflow:auto;position:relative}
-.window-resize{position:absolute;right:0;bottom:0;width:19px;height:19px;display:flex;align-items:center;justify-content:center;background:transparent;color:#9e947f;cursor:nwse-resize;touch-action:none;border-radius:0 0 5px 0}
+.window-resize{position:absolute;z-index:3;display:flex;align-items:center;justify-content:center;background:transparent;color:#9e947f;touch-action:none;padding:0}
+.window-resize:hover,.window-resize:focus-visible{background:#b9a46a44}
+.resize-n,.resize-s{left:16px;right:16px;height:6px;cursor:ns-resize}
+.resize-n{top:0}.resize-s{bottom:0}
+.resize-e,.resize-w{top:16px;bottom:16px;width:6px;cursor:ew-resize}
+.resize-e{right:0}.resize-w{left:0}
+.resize-ne,.resize-nw,.resize-se,.resize-sw{width:16px;height:16px;z-index:4}
+.resize-ne{top:0;right:0;cursor:nesw-resize}.resize-nw{top:0;left:0;cursor:nwse-resize}
+.resize-se{bottom:0;right:0;cursor:nwse-resize}.resize-sw{bottom:0;left:0;cursor:nesw-resize}
 .window-resize .icon{width:12px;height:12px}
 .editor-body{height:100%;display:flex;flex-direction:column}
 .code-editor{height:100%;min-height:70px;flex:1;overflow:hidden}
@@ -181,6 +194,16 @@ details pre{padding:10px;background:#342d2409}
 .chart-legend li>span{display:inline-block;width:12px;height:12px;border:1px solid #675d4c}
 .elapsed{font:9px 'IBM Plex Mono',monospace;color:#726b60;text-align:right;margin-top:10px}
 .request-slip{padding:24px 24px 28px;background:linear-gradient(#fbf8f1,#f6eedc);min-height:100%}
+.lesson-slip .request-message{font-size:19px;line-height:1.5}
+.lesson-inputs{font:13px/1.8 'IBM Plex Mono',monospace;overflow-wrap:anywhere;margin-bottom:20px}
+.lesson-instruction{border-left:3px solid #81996d;padding:12px 15px;background:#e5ecd982;font-size:16px;line-height:1.6;margin-bottom:12px}
+.lesson-instruction .button{margin-top:12px}
+.lesson-error{font-size:12px;color:var(--red);margin-top:8px}
+.lesson-celebration{padding:25px 0;text-align:center;animation:page-in .3s ease-out}
+.lesson-celebration>.icon{width:48px;height:48px;color:var(--green)}
+.lesson-celebration h2{font-size:38px;margin:12px 0}
+.lesson-celebration p{margin:0 0 24px;line-height:1.6}
+.lesson-solved{background:#e9f0df}
 .request-number{display:flex;justify-content:space-between;align-items:center;padding-bottom:17px;border-bottom:1px solid #d5c9ae;font-size:9px;letter-spacing:.15em;color:#7c6d52}
 .request-number .icon{width:19px;height:19px;color:#8d764c}
 .request-from{font-size:10px;color:var(--muted);margin:21px 0 5px}
@@ -318,6 +341,13 @@ details pre{padding:10px;background:#342d2409}
 .tutorial-dialog .eyebrow{font-size:9px;margin-bottom:12px}
 .tutorial-dialog .button{font-size:11px}
 .tutorial-dialog .text-button{font-size:10px}
+.tutorial-layer{position:fixed;inset:0;z-index:2147483000;pointer-events:none}
+.tutorial-shade{position:absolute;background:#17271f80;pointer-events:auto}
+.tutorial-ring{position:absolute;border:2px solid #ffedb2;border-radius:7px;box-shadow:0 0 18px #ffedb255}
+.tutorial-arrow{position:absolute;inset:0;overflow:visible}
+.anchored-tutorial{position:absolute;transform:none;inset:auto;width:min(360px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;pointer-events:auto}
+.anchored-tutorial .dialog-content>p{font-size:15px;line-height:1.6}
+.anchored-tutorial .button-row{margin-top:20px}
 .demo-dialog{width:min(640px,calc(100vw - 32px));max-height:72vh}
 .demo-dialog .dialog-header h2{font-size:28px}
 .demo-dialog .dialog-content>p{font-size:16px;line-height:1.65}
@@ -337,7 +367,9 @@ details pre{padding:10px;background:#342d2409}
 .solved-dialog .button-row{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:16px}
 .solved-dialog .button.primary{font-size:15px;padding:11px 22px}
 @keyframes solved-pop{from{opacity:0;transform:translateX(-50%) scale(.86)}to{opacity:1;transform:translateX(-50%) scale(1)}}
-.cm-ghost{opacity:.45;font-style:italic;cursor:pointer}
+.cm-ghost{font:inherit;color:#d9ddd8;cursor:pointer;padding:0 6px;border-radius:4px;background:#bec8bb24;outline:1px dashed #bec8bb;animation:ghost-blink 1.6s ease-in-out infinite}
+.cm-ghost:hover,.cm-ghost:focus-visible{animation:none;background:#bec8bb44;outline:2px solid #d6c481}
+@keyframes ghost-blink{50%{background:#bec8bb55;box-shadow:0 0 0 3px #bec8bb28}}
 .tutorial-count{font:10px 'IBM Plex Mono',monospace;color:var(--muted);margin-left:auto}
 .dock-button{display:flex;align-items:center;gap:6px}
 .dock-button .icon{width:12px;height:12px}

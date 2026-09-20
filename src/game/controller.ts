@@ -4,6 +4,7 @@ import type {
 } from '../contracts';
 import { getTutorial, tutorialsFor } from '../../content/tutorials';
 import { puzzles, getPuzzle } from './catalog';
+import { automaticTutorial } from './guidance';
 import { check } from './checker';
 import {
   ARCHIVE_CHAPTER, canEnterPuzzle, completePuzzle, enterWing, equipHat, firstTryBonus, inkFor, maxReplaySpeed, offlineSeconds,
@@ -133,11 +134,10 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
     };
     const tutorial = (trigger: string): void => {
       const state = get();
-      if (state.puzzle.lesson) return;
-      const pending = tutorialsFor(trigger, state.save.seenTutorials)
-        .map((entry) => entry.id).filter((id) => !state.tutorialQueue.includes(id) && state.activeTutorial !== id);
-      const queue = [...state.tutorialQueue, ...pending];
-      set({ activeTutorial: state.activeTutorial ?? queue.shift() ?? null, tutorialQueue: queue });
+      if (state.activeTutorial) return;
+      const id = automaticTutorial(trigger, state.puzzle, state.save.seenTutorials);
+      if (id === 'replay' && !state.result?.trace.length) return;
+      if (id) set({ activeTutorial: id, tutorialQueue: [] });
     };
     const replayFields = (result: RunResult, index = 0, paused = false) => ({
       result, traceIndex: index, replayElapsed: 0, replayPaused: paused || !result.trace.length,
@@ -428,6 +428,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         installSave({ ...save, puzzleId: id, files: { ...save.files, 'main.py': code }, activeFile: 'main.py' });
         persist(get().save);
         set({ screen: 'game' });
+        tutorial('puzzle');
         if (chapterChanged) tutorial('chapter');
         if (puzzle.chapter >= ARCHIVE_CHAPTER) tutorial('archive');
         if (puzzle.kind === 'capstone') tutorial('capstone');
@@ -546,8 +547,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         if (!getTutorial(id)) return;
         const save = get().save;
         if (!save.seenTutorials.includes(id)) persist({ ...save, seenTutorials: [...save.seenTutorials, id] });
-        const queue = get().tutorialQueue.filter((entry) => entry !== id);
-        set({ activeTutorial: get().activeTutorial === id ? queue.shift() ?? null : get().activeTutorial, tutorialQueue: queue });
+        set({ activeTutorial: get().activeTutorial === id ? null : get().activeTutorial, tutorialQueue: [] });
       },
       purchase(id) {
         try {
@@ -648,8 +648,13 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         set({ replayElapsed: eventDuration(trace[trace.length - 1]), progress: 1 });
       },
       replay() { get().setReplay(0); set({ replayPaused: false }); },
-      triggerTutorial: tutorial,
-      replayTutorial(id) { if (getTutorial(id)) set({ activeTutorial: id }); },
+      triggerTutorial(trigger) {
+        const state = get();
+        if (state.puzzle.lesson || state.activeTutorial) return;
+        const entry = tutorialsFor(trigger, state.save.seenTutorials)[0];
+        if (entry) set({ activeTutorial: entry.id, tutorialQueue: [] });
+      },
+      replayTutorial(id) { if (getTutorial(id)) set({ activeTutorial: id, tutorialQueue: [] }); },
       dismissTutorial() { const id = get().activeTutorial; if (id) get().markTutorial(id); },
       waitForIdle() {
         if (!get().busy && !get().backgroundBusy) return Promise.resolve();
