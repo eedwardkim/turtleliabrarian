@@ -1,0 +1,28 @@
+{
+  "id": "ch2-vary-1", "chapter": 2, "kind": "vary",
+  "title": "Three for the Window Table", "patron": "Pip",
+  "request": "The window table holds three books. Give me the three most borrowed books on this cart with their loan counts, busiest first, and never more books than the cart actually holds.",
+  "objective": "Sort a cart by a numeric column and take a bounded number of rows from the top.",
+  "concepts": ["sort", "descending", "take", "num_rows", "short_tables"],
+  "requiredApi": ["sort", "take", "num_rows", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing"],
+  "starter": "window = shelf.select('title', 'loans')\ndeliver(window)",
+  "hints": ["A cart arrives in whatever order the returns bin emptied, and a cart of two books cannot fill three slots.", "sort takes descending=True, and take accepts a row-number array such as np.arange(3).", "Sort the cart first, decide how many rows the window table can really hold, then take that many from the sorted copy."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ntitles = ['Lanterns of the Slow Tide', 'The Brass Hour', 'Nine Ways to Fold a Map', 'Winter Comes to the Aviary', 'The Lamp Under the Stair', 'Eleven Rooms of Rain', 'The Index of Small Storms', 'Harbour Lights Counted Twice']\nn = random.randint(3, 6)\npicked = random.sample(titles, n)\ncounts = random.sample(range(4, 48), n)\nshelf = Table().with_columns('title', make_array(*picked), 'loans', make_array(*counts))",
+  "visibleSeed": 41,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "loans"], "rows": [["The Brass Hour", 31], ["Eleven Rooms of Rain", 22], ["Nine Ways to Fold a Map", 18], ["The Index of Small Storms", 9]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "unsorted_arrivals", "inputs": {"shelf": {"kind": "table", "labels": ["title", "loans"], "rows": [["Winter Comes to the Aviary", 12], ["The Lamp Under the Stair", 40], ["Harbour Lights Counted Twice", 27], ["Lanterns of the Slow Tide", 33]], "totalRows": 4}}, "predicate": "bool((np.diff(shelf.column('loans')) > 0).any())"},
+    {"name": "short_cart", "inputs": {"shelf": {"kind": "table", "labels": ["title", "loans"], "rows": [["The Brass Hour", 16], ["Eleven Rooms of Rain", 25]], "totalRows": 2}}, "predicate": "shelf.num_rows < 3"}
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nranked = shelf.sort('loans', descending=True)\nslots = min(3, shelf.num_rows)\ndeliver(ranked.select('title', 'loans').take(np.arange(slots)))",
+  "naive": [
+    {"code": "import numpy as np\ndeliver(shelf.select('title', 'loans').take(np.arange(min(3, shelf.num_rows))))", "fails": "silent", "hazard": "unsorted_arrivals"},
+    {"code": "import numpy as np\ndeliver(shelf.sort('loans', descending=True).select('title', 'loans').take(np.arange(3)))", "fails": "loud", "hazard": "short_cart"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["num_rows"],
+  "standingOrder": {"eligible": true, "ink": 5, "oil": 0},
+  "setPiece": "window-table", "hazards": ["unsorted_arrivals", "short_cart"], "stochastic": false
+}

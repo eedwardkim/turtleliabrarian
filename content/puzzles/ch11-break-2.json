@@ -1,0 +1,248 @@
+{
+  "id": "ch11-break-2",
+  "chapter": 11,
+  "kind": "break",
+  "title": "Pages Shout, Shelves Whisper",
+  "patron": "Dr. Newt",
+  "request": "This catalogue records pages in the hundreds and shelf numbers in single digits. Put both columns in standard units before measuring anything, then tell me the nearest book's genre.",
+  "objective": "Scale features before measuring distance so one column cannot drown the other.",
+  "concepts": [
+    "feature_scaling",
+    "standard_units",
+    "nearest_neighbour"
+  ],
+  "requiredApi": [
+    "column",
+    "np.mean",
+    "np.std",
+    "np.sqrt",
+    "with_column",
+    "sort",
+    "item",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "import numpy as np\npages = catalogue.column('pages')\nshelves = catalogue.column('shelf')\npage_units = (pages - np.mean(pages)) / np.std(pages)\nshelf_units = (shelves - np.mean(shelves)) / np.std(shelves)\ngaps = np.sqrt((page_units - stranger.item(0)) ** 2 + (shelf_units - stranger.item(1)) ** 2)\ndeliver(catalogue.with_column('gap', gaps).sort('gap').column('genre').item(0))",
+  "hints": [
+    "A hundred pages and a hundred shelves are not the same journey.",
+    "Convert the pages column and the shelf column to standard units, and convert the stranger with the very same means and spreads.",
+    "Measure the straight-line distance in those standard units, sort, and deliver the first genre."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(5, 9)\nsame_scale = random.choice([True, False, False])\npages = random.sample(range(100, 900), count) if not same_scale else random.sample(range(1, 10), count)\nshelves = random.sample(range(1, 10), count)\nkinds = [['picture', 'history', 'poetry'][i % 3] for i in range(count)]\ncatalogue = Table().with_columns('pages', make_array(*pages), 'shelf', make_array(*shelves), 'genre', make_array(*kinds))\nstranger = make_array(random.choice(pages) + random.randint(-40, 40), random.randint(1, 9))\ndel count, same_scale, pages, shelves, kinds",
+  "visibleSeed": 91,
+  "visibleInputs": {
+    "catalogue": {
+      "kind": "table",
+      "labels": [
+        "pages",
+        "shelf",
+        "genre"
+      ],
+      "rows": [
+        [
+          2,
+          2,
+          "picture"
+        ],
+        [
+          5,
+          5,
+          "history"
+        ],
+        [
+          8,
+          8,
+          "poetry"
+        ]
+      ],
+      "totalRows": 3
+    },
+    "stranger": {
+      "kind": "array",
+      "values": [
+        2,
+        2
+      ]
+    }
+  },
+  "fixtures": [
+    {
+      "name": "pages_dwarf_the_shelf_numbers",
+      "predicate": "max(catalogue.column('pages')) > 50 * max(catalogue.column('shelf'))",
+      "inputs": {
+        "catalogue": {
+          "kind": "table",
+          "labels": [
+            "pages",
+            "shelf",
+            "genre"
+          ],
+          "rows": [
+            [
+              500,
+              1,
+              "history"
+            ],
+            [
+              1000,
+              9,
+              "poetry"
+            ],
+            [
+              2000,
+              9,
+              "picture"
+            ]
+          ],
+          "totalRows": 3
+        },
+        "stranger": {
+          "kind": "array",
+          "values": [
+            505,
+            9
+          ]
+        }
+      }
+    },
+    {
+      "name": "one_column_never_moves",
+      "predicate": "max(catalogue.column('shelf')) == min(catalogue.column('shelf'))",
+      "inputs": {
+        "catalogue": {
+          "kind": "table",
+          "labels": [
+            "pages",
+            "shelf",
+            "genre"
+          ],
+          "rows": [
+            [
+              110,
+              4,
+              "picture"
+            ],
+            [
+              420,
+              4,
+              "history"
+            ],
+            [
+              730,
+              4,
+              "poetry"
+            ]
+          ],
+          "totalRows": 3
+        },
+        "stranger": {
+          "kind": "array",
+          "values": [
+            400,
+            4
+          ]
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\npages = catalogue.column('pages')\nshelves = catalogue.column('shelf')\npage_units = (pages - np.mean(pages)) / np.std(pages)\nshelf_units = (shelves - np.mean(shelves)) / np.std(shelves)\nasked_pages = (stranger.item(0) - np.mean(pages)) / np.std(pages)\nasked_shelf = (stranger.item(1) - np.mean(shelves)) / np.std(shelves)\ngaps = np.sqrt((page_units - asked_pages) ** 2 + (shelf_units - asked_shelf) ** 2)\ndeliver(catalogue.with_column('gap', gaps).sort('gap').column('genre').item(0))",
+  "naive": [
+    {
+      "code": "import numpy as np\ngaps = np.sqrt((catalogue.column('pages') - stranger.item(0)) ** 2 + (catalogue.column('shelf') - stranger.item(1)) ** 2)\ndeliver(catalogue.with_column('gap', gaps).sort('gap').column('genre').item(0))",
+      "fails": "silent",
+      "hazard": "pages_dwarf_the_shelf_numbers"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 0.0,
+    "relativeTolerance": 0.0
+  },
+  "unlocks": [
+    "feature-scaling"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 15,
+    "oil": 1
+  },
+  "setPiece": "lantern-aisle",
+  "hazards": [
+    "pages_dwarf_the_shelf_numbers",
+    "one_column_never_moves"
+  ],
+  "stochastic": false
+}

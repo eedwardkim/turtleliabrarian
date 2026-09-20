@@ -4,10 +4,11 @@ import numpy as np
 
 from shelf_events import check_api, emit
 
+from .functions import minimize, percentile, sample_proportions
 from .predicates import are
 from .tables import Table
 
-__all__ = ["Table", "are", "make_array"]
+__all__ = ["Table", "are", "make_array", "percentile", "minimize", "sample_proportions"]
 
 
 def make_array(*elements):

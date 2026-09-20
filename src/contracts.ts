@@ -10,6 +10,7 @@ export interface TableValue {
 export interface ArrayValue {
   kind: 'array';
   values: Scalar[];
+  totalValues?: number;
   id?: string;
 }
 export type Value = Scalar | TableValue | ArrayValue;
@@ -83,6 +84,9 @@ export interface Puzzle {
   setPiece: string;
   hazards: string[];
   stochastic: boolean;
+  /** Chapter-0 lessons complete on a passing Run and hide extra UI. */
+  lesson?: boolean;
+  verifyOnRun?: boolean;
 }
 export interface CheckDiff {
   pass: boolean;
@@ -102,6 +106,8 @@ export interface QueueEntry {
   diff?: CheckDiff;
 }
 export interface Settings {
+  muted: boolean;
+  ambience: boolean;
   masterVolume: number;
   musicVolume: number;
   sfxVolume: number;
@@ -135,6 +141,10 @@ export interface StandingOrder {
   paused: boolean;
   failure?: QueueEntry;
 }
+export interface SandboxNotebook {
+  dataset: string;
+  code: string;
+}
 export interface SaveData {
   version: 1;
   started?: boolean;
@@ -151,6 +161,7 @@ export interface SaveData {
   ownedItems: string[];
   hat: string;
   hatchlings: number;
+  sandbox?: SandboxNotebook;
 }
 export interface WorldProps {
   inputs: Record<string, Value>;
@@ -164,6 +175,7 @@ export interface WorldProps {
   colorblind: boolean;
   hat: string;
   hatchlings: number;
+  setPiece?: string;
   cameraPreset?: string;
   wireframe?: boolean;
   showGrid?: boolean;

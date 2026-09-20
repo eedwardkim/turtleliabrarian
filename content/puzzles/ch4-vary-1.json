@@ -1,0 +1,25 @@
+{
+  "id": "ch4-vary-1", "chapter": 4, "kind": "vary",
+  "title": "Totals for the Month Sheet", "patron": "Clerk Odo",
+  "request": "The month sheet wants one row per wing with its loans and renewals added up, wings alphabetical, and the columns still called loans and renewals — not whatever the grouping machine renames them.",
+  "objective": "Collect several numeric columns while grouping and restore the reported labels.",
+  "concepts": ["group", "collect", "aggregation", "relabeled", "multiple_columns"],
+  "requiredApi": ["group", "relabeled", "select", "sort", "deliver"],
+  "learnedApi": ["deliver","print","round","abs","max","min","len","int","float","str","range","make_array","np.arange","item","sum","np.mean","np.count_nonzero","np.max","np.min","np.sum","Table","with_columns","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","barh","hist","scatter","plot","apply","group","pivot","strip","lower"],
+  "starter": "deliver(shelf.group('wing'))",
+  "hints": ["Grouping without an instruction only tallies rows; the month sheet wants the numbers inside the rows added.", "group takes a second argument such as sum, and it renames every collected column after the function it used.", "Keep only the wing and the two numeric columns, group them with sum, then rename both collected columns before sorting by wing."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nwings = ['Reference', 'Nature', 'Travel', 'Poetry', 'Mystery']\nn = random.randint(4, 9)\nchosen = [random.choice(wings) for _ in range(n)]\nloans = [random.randint(0, 30) for _ in range(n)]\nrenewals = [random.randint(0, 6) for _ in range(n)]\nshelf = Table().with_columns('wing', make_array(*chosen), 'loans', make_array(*loans), 'renewals', make_array(*renewals))",
+  "visibleSeed": 11,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["wing", "loans", "renewals"], "rows": [["Nature", 12, 2], ["Mystery", 25, 0], ["Nature", 7, 3], ["Travel", 19, 1]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "one_wing_reporting", "inputs": {"shelf": {"kind": "table", "labels": ["wing", "loans", "renewals"], "rows": [["Poetry", 8, 1], ["Poetry", 14, 4], ["Poetry", 3, 0]], "totalRows": 3}}, "predicate": "int(len(set(shelf.column('wing').tolist()))) == 1"},
+    {"name": "nobody_renewed", "inputs": {"shelf": {"kind": "table", "labels": ["wing", "loans", "renewals"], "rows": [["Reference", 21, 0], ["Travel", 6, 0], ["Reference", 9, 0]], "totalRows": 3}}, "predicate": "bool((shelf.column('renewals') == 0).all())"}
+  ],
+  "queueSize": 7,
+  "reference": "totals = shelf.select('wing', 'loans', 'renewals').group('wing', sum)\ntidy = totals.relabeled('loans sum', 'loans').relabeled('renewals sum', 'renewals')\ndeliver(tidy.sort('wing'))",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["group"],
+  "standingOrder": {"eligible": true, "ink": 6, "oil": 1},
+  "setPiece": "month-sheet", "hazards": ["nobody_renewed"], "stochastic": false
+}

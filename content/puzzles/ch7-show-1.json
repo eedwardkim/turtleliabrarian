@@ -1,0 +1,231 @@
+{
+  "id": "ch7-show-1",
+  "chapter": 7,
+  "kind": "show",
+  "title": "Lamp Shelf, Window Shelf",
+  "patron": "Dr. Newt",
+  "request": "The trustees moved half the loans to the lamp shelf and half to the window shelf. Give me the lamp average minus the window average, signed, as one number.",
+  "objective": "Compute a signed test statistic that answers the question actually asked.",
+  "concepts": [
+    "test_statistic",
+    "group_comparison",
+    "direction"
+  ],
+  "requiredApi": [
+    "where",
+    "are.equal_to",
+    "column",
+    "np.mean",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std",
+    "percentile"
+  ],
+  "starter": "import numpy as np\ndeliver(np.mean(trial.column('days')))",
+  "hints": [
+    "One average over the whole cart answers a question nobody asked.",
+    "Sieve the trial cart twice, once for each shelf, and take the days column from each.",
+    "Subtract the window average from the lamp average and deliver that difference, keeping its sign."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ntitles = ['Kettle Songs', 'Tide Notes', 'Paper Lanterns', 'Winter Ferns', 'Quiet Harbours', 'Salt & Slate', 'Moth Lamps', 'Copper Rain', 'Nine Bridges', 'Lark Almanac']\nlamp_rows = random.randint(4, 8)\nwindow_rows = random.randint(4, 8)\nshelves = ['lamp'] * lamp_rows + ['window'] * window_rows\nrandom.shuffle(shelves)\ndays = [random.randint(6, 14) if shelf == 'lamp' else random.randint(3, 11) for shelf in shelves]\nnames = [random.choice(titles) + ' v' + str(i + 1) for i in range(len(shelves))]\ntrial = Table().with_columns('title', make_array(*names), 'shelf', make_array(*shelves), 'days', make_array(*days))\ndel lamp_rows, window_rows, shelves, days, names, titles",
+  "visibleSeed": 47,
+  "visibleInputs": {
+    "trial": {
+      "kind": "table",
+      "labels": [
+        "title",
+        "shelf",
+        "days"
+      ],
+      "rows": [
+        [
+          "Kettle Songs v1",
+          "lamp",
+          12
+        ],
+        [
+          "Tide Notes v2",
+          "window",
+          5
+        ],
+        [
+          "Paper Lanterns v3",
+          "lamp",
+          10
+        ],
+        [
+          "Winter Ferns v4",
+          "window",
+          7
+        ],
+        [
+          "Quiet Harbours v5",
+          "lamp",
+          14
+        ],
+        [
+          "Salt & Slate v6",
+          "window",
+          6
+        ]
+      ],
+      "totalRows": 6
+    }
+  },
+  "fixtures": [
+    {
+      "name": "window_reads_longer",
+      "predicate": "np.mean(trial.where('shelf', are.equal_to('window')).column('days')) > np.mean(trial.where('shelf', are.equal_to('lamp')).column('days'))",
+      "inputs": {
+        "trial": {
+          "kind": "table",
+          "labels": [
+            "title",
+            "shelf",
+            "days"
+          ],
+          "rows": [
+            [
+              "Moth Lamps v1",
+              "lamp",
+              4
+            ],
+            [
+              "Copper Rain v2",
+              "window",
+              13
+            ],
+            [
+              "Nine Bridges v3",
+              "lamp",
+              6
+            ],
+            [
+              "Lark Almanac v4",
+              "window",
+              11
+            ]
+          ],
+          "totalRows": 4
+        }
+      }
+    },
+    {
+      "name": "one_book_each_shelf",
+      "predicate": "trial.num_rows == 2",
+      "inputs": {
+        "trial": {
+          "kind": "table",
+          "labels": [
+            "title",
+            "shelf",
+            "days"
+          ],
+          "rows": [
+            [
+              "Kettle Songs v9",
+              "lamp",
+              9
+            ],
+            [
+              "Tide Notes v9",
+              "window",
+              4
+            ]
+          ],
+          "totalRows": 2
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nlamp = trial.where('shelf', are.equal_to('lamp')).column('days')\nwindow = trial.where('shelf', are.equal_to('window')).column('days')\ndeliver(np.mean(lamp) - np.mean(window))",
+  "naive": [
+    {
+      "code": "import numpy as np\nlamp = trial.where('shelf', are.equal_to('lamp')).column('days')\nwindow = trial.where('shelf', are.equal_to('window')).column('days')\ndeliver(abs(np.mean(lamp) - np.mean(window)))",
+      "fails": "silent",
+      "hazard": "window_reads_longer"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "test-statistic"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 9,
+    "oil": 0
+  },
+  "setPiece": "trustees-scales",
+  "hazards": [
+    "window_reads_longer"
+  ],
+  "stochastic": false
+}

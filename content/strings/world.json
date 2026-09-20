@@ -1,0 +1,110 @@
+{
+  "wings": {
+    "0": {
+      "name": "Front Desk",
+      "blurb": "Where every book comes home. Stamp it, shelve it, and learn the rhythm of the day."
+    },
+    "1": {
+      "name": "Returns Desk",
+      "blurb": "Trays of numbers arrive by the cartload. Arrays are simply tidy carts."
+    },
+    "2": {
+      "name": "The Stacks",
+      "blurb": "Long rows of shelves and longer tables. Choose columns, keep rows, sort the lot."
+    },
+    "3": {
+      "name": "Display Hall",
+      "blurb": "Everything under glass. Bars, bins and scatter on the polished floor."
+    },
+    "4": {
+      "name": "Catalogue Room",
+      "blurb": "Cabinets of cards. Write a function, group the drawers, pivot the counts."
+    },
+    "5": {
+      "name": "Loans Office",
+      "blurb": "Two ledgers, one gold thread. Join them and see who borrowed what."
+    },
+    "6": {
+      "name": "Sealed Archive",
+      "blurb": "Sampling by lamplight. Take a handful of cards and reason about the whole drawer."
+    },
+    "7": {
+      "name": "Trustees’ Hall",
+      "blurb": "Claims, shuffles and shaded tails. Test a story until it confesses."
+    },
+    "8": {
+      "name": "Bookends Gallery",
+      "blurb": "Resampling from end to end. Bootstrap an interval and hang it on the wall."
+    },
+    "9": {
+      "name": "Almanac Tower",
+      "blurb": "Centre, spread and the standard units that make two shelves comparable."
+    },
+    "10": {
+      "name": "Reading Room",
+      "blurb": "Correlation and the quiet line that fits a cloud of borrowings."
+    },
+    "11": {
+      "name": "Unlabelled Stacks",
+      "blurb": "Nearest neighbours in a stretched room. Guess the label, then measure the misses."
+    },
+    "12": {
+      "name": "The Last Card",
+      "blurb": "Priors, evidence and a branching chute. Update a belief with counts."
+    },
+    "13": {
+      "name": "Grand Reopening",
+      "blurb": "The doors open again. Answer the closing requests and the library is yours."
+    }
+  },
+  "shop": {
+    "script-slot": {
+      "title": "A second writing desk",
+      "description": "Six more script slots, so helper modules get their own page instead of crowding main.py."
+    },
+    "replay-speed": {
+      "title": "Well-oiled cart wheels",
+      "description": "Raises the replay dial from 2× to 8× for long traces."
+    },
+    "standing-slot": {
+      "title": "A second order peg",
+      "description": "Hang a second standing order on the wall and both keep earning."
+    },
+    "standing-slot-3": {
+      "title": "A third order peg",
+      "description": "One more peg, for three standing orders at once."
+    },
+    "ink-ledger": {
+      "title": "A tidier ledger",
+      "description": "Neat columns pay better: every patron served brings a quarter more Ink."
+    },
+    "oil-flask": {
+      "title": "A flask of lamp oil",
+      "description": "Twenty measures of Lamp Oil for archive sampling. Buy as many as you like."
+    },
+    "hat-reading-cap": {
+      "title": "Reading cap",
+      "description": "Shelby reads a little faster: ten percent more Ink per patron. Wear it or hang it back up."
+    },
+    "hat-beret": {
+      "title": "Beret",
+      "description": "An artistic temperament forgives one hint, so a single nudge still earns the clean-solve star."
+    },
+    "hat-graduation": {
+      "title": "Graduation cap",
+      "description": "Scholarly posture: one extra Gold Star for every request completed while it is worn."
+    },
+    "hat-lantern": {
+      "title": "Lantern hat",
+      "description": "Hands-free light halves the Lamp Oil an archive sampling trip burns."
+    },
+    "hat-beanie": {
+      "title": "Knit beanie",
+      "description": "Warm ears, brisk pace: standing-order trips run fifteen percent faster."
+    },
+    "hatchling": {
+      "title": "Hatch a helper",
+      "description": "A young turtle joins the cart. Each helper adds a full round of standing-order trips."
+    }
+  }
+}

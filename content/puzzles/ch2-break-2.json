@@ -1,0 +1,30 @@
+{
+  "id": "ch2-break-2", "chapter": 2, "kind": "break",
+  "title": "Spine Plates and Bookworms", "patron": "Hazel",
+  "request": "Average the known page counts on this cart to one decimal, ignoring '?' and 'missing' plates. Bookworms ate the numbers; magpies changed the case and left spaces around the writing.",
+  "objective": "Clean text before excluding missing readings and averaging numeric counts.",
+  "concepts": ["missing_values", "messy_strings", "data_cleaning", "text_vs_number", "where", "mean", "exclusion"],
+  "requiredApi": ["where", "are.not_equal_to", "column", "make_array", "np.mean", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing", "strip", "lower"],
+  "starter": "readable = shelf.where('pages', are.not_equal_to('?'))\ndeliver(readable.num_rows)",
+  "hints": ["A chewed plate is not a book of zero pages; a differently written missing marker is still missing.", "strip removes surrounding spaces and lower makes case consistent; are.not_equal_to can then exclude both missing markers.", "Replace pages with make_array(*[plate.strip().lower() for plate in shelf.column('pages')]), exclude '?' and 'missing', convert readable plates with int, then round the mean."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ntitles = ['The Cartographer\\'s Apology', 'Every Ladder in the Stacks', 'Migrations of the Paper Crane', 'Fieldwork at the Edge of Sleep', 'A Catalogue of Kind Machines', 'The Long Shelf of Tuesdays', 'The Last Card in the Drawer']\nn = random.randint(4, 7)\npicked = random.sample(titles, n)\nplates = [str(random.randrange(120, 420, 2)) for _ in range(n)]\nfor index in random.sample(range(n), random.randint(0, n - 2)):\n    plates[index] = random.choice(['?', 'missing', ' Missing ', 'MISSING  '])\nshelf = Table().with_columns('title', make_array(*picked), 'pages', make_array(*plates))",
+  "visibleSeed": 7,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Every Ladder in the Stacks", "122"], ["The Long Shelf of Tuesdays", "264"], ["A Catalogue of Kind Machines", "320"]], "totalRows": 3}},
+  "fixtures": [
+    {"name": "chewed_plates", "inputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Migrations of the Paper Crane", "194"], ["The Last Card in the Drawer", "?"], ["Fieldwork at the Edge of Sleep", "346"], ["The Cartographer's Apology", "?"]], "totalRows": 4}}, "predicate": "int((shelf.column('pages') == '?').sum()) >= 2"},
+    {"name": "one_plate_left", "inputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Every Ladder in the Stacks", "?"], ["The Long Shelf of Tuesdays", "258"], ["The Last Card in the Drawer", "?"]], "totalRows": 3}}, "predicate": "int((shelf.column('pages') != '?').sum()) == 1"},
+    {"name": "magpie_plates", "inputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Every Ladder in the Stacks", " Missing "], ["The Long Shelf of Tuesdays", " 258 "], ["The Last Card in the Drawer", "MISSING  "], ["Rain Register", "142"]], "totalRows": 4}}, "predicate": "any(plate != plate.strip().lower() for plate in shelf.column('pages')) and any(plate.strip().lower() == 'missing' for plate in shelf.column('pages'))"}
+  ],
+  "queueSize": 7,
+  "reference": "plates = make_array(*[plate.strip().lower() for plate in shelf.column('pages')])\ntidy = shelf.with_columns('pages', plates)\nreadable = tidy.where('pages', are.not_equal_to('?')).where('pages', are.not_equal_to('missing'))\ncounts = make_array(*[int(plate) for plate in readable.column('pages')])\ndeliver(round(np.mean(counts), 1))",
+  "naive": [
+    {"code": "counts = make_array(*[int(plate) for plate in shelf.column('pages')])\ndeliver(round(np.mean(counts), 1))", "fails": "loud", "hazard": "chewed_plates"},
+    {"code": "counts = make_array(*[0 if plate == '?' else int(plate) for plate in shelf.column('pages')])\ndeliver(round(np.mean(counts), 1))", "fails": "silent", "hazard": "one_plate_left"},
+    {"code": "readable = shelf.where('pages', are.not_equal_to('?')).where('pages', are.not_equal_to('missing'))\ncounts = make_array(*[int(plate) for plate in readable.column('pages')])\ndeliver(round(np.mean(counts), 1))", "fails": "loud", "hazard": "magpie_plates"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["are.not_equal_to", "strip", "lower"],
+  "standingOrder": {"eligible": true, "ink": 6, "oil": 1},
+  "setPiece": "bookworm-cart", "hazards": ["chewed_plates", "one_plate_left", "magpie_plates"], "stochastic": false
+}

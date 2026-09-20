@@ -1,0 +1,279 @@
+{
+  "id": "ch8-vary-1",
+  "chapter": 8,
+  "kind": "vary",
+  "title": "Bookends on the Average",
+  "patron": "Dr. Newt",
+  "request": "Re-grab this cart three hundred times, keep each re-grab's average wait, and hand me the middle ninety-five percent of them as a two-number interval, left bookend first.",
+  "objective": "Build a bootstrap distribution and cut a 95% confidence interval from it.",
+  "concepts": [
+    "bootstrap",
+    "confidence_interval",
+    "percentiles"
+  ],
+  "requiredApi": [
+    "sample",
+    "num_rows",
+    "column",
+    "np.mean",
+    "np.append",
+    "percentile",
+    "make_array",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std"
+  ],
+  "starter": "import numpy as np\nfrom datascience import make_array\naverage = np.mean(cart.column('days'))\ndeliver(make_array(average, average + 1))",
+  "hints": [
+    "One re-grab is a guess; three hundred re-grabs are a shelf of guesses.",
+    "Collect each resample's mean with np.append into one array, then cut it with percentile.",
+    "The left bookend is percentile(2.5, means) and the right bookend is percentile(97.5, means); deliver them in that order."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(8, 14)\nspread = random.choice([0, 3, 7, 12])\ndays = [random.randint(4, 4 + spread) for _ in range(count)]\nwing = [random.choice(['Display Hall', 'Loans Office']) for _ in range(count)]\ncart = Table().with_columns('wing', make_array(*wing), 'days', make_array(*days))\ndel count, spread, days, wing",
+  "visibleSeed": 21,
+  "visibleInputs": {
+    "cart": {
+      "kind": "table",
+      "labels": [
+        "wing",
+        "days"
+      ],
+      "rows": [
+        [
+          "Display Hall",
+          7
+        ],
+        [
+          "Loans Office",
+          7
+        ],
+        [
+          "Display Hall",
+          7
+        ],
+        [
+          "Loans Office",
+          7
+        ],
+        [
+          "Display Hall",
+          7
+        ],
+        [
+          "Loans Office",
+          7
+        ],
+        [
+          "Display Hall",
+          7
+        ],
+        [
+          "Loans Office",
+          7
+        ],
+        [
+          "Display Hall",
+          7
+        ],
+        [
+          "Loans Office",
+          7
+        ],
+        [
+          "Display Hall",
+          7
+        ],
+        [
+          "Loans Office",
+          7
+        ]
+      ],
+      "totalRows": 12
+    }
+  },
+  "fixtures": [
+    {
+      "name": "cart_is_longer_than_ten_slips",
+      "predicate": "cart.num_rows > 10 and max(cart.column('days')) > min(cart.column('days'))",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "wing",
+            "days"
+          ],
+          "rows": [
+            [
+              "Display Hall",
+              3
+            ],
+            [
+              "Loans Office",
+              18
+            ],
+            [
+              "Display Hall",
+              6
+            ],
+            [
+              "Loans Office",
+              21
+            ],
+            [
+              "Display Hall",
+              9
+            ],
+            [
+              "Loans Office",
+              2
+            ],
+            [
+              "Display Hall",
+              14
+            ],
+            [
+              "Loans Office",
+              5
+            ],
+            [
+              "Display Hall",
+              25
+            ],
+            [
+              "Loans Office",
+              11
+            ],
+            [
+              "Display Hall",
+              8
+            ],
+            [
+              "Loans Office",
+              16
+            ]
+          ],
+          "totalRows": 12
+        }
+      }
+    },
+    {
+      "name": "two_slips_far_apart",
+      "predicate": "cart.num_rows == 2 and max(cart.column('days')) > 3 * min(cart.column('days'))",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "wing",
+            "days"
+          ],
+          "rows": [
+            [
+              "Display Hall",
+              4
+            ],
+            [
+              "Loans Office",
+              28
+            ]
+          ],
+          "totalRows": 2
+        }
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "import numpy as np\nfrom datascience import make_array\nmeans = make_array()\nfor repetition in range(300):\n    resample = cart.sample(cart.num_rows)\n    means = np.append(means, np.mean(resample.column('days')))\ndeliver(make_array(percentile(2.5, means), percentile(97.5, means)))",
+  "naive": [
+    {
+      "code": "import numpy as np\nfrom datascience import make_array\nmeans = make_array()\nfor repetition in range(300):\n    resample = cart.sample(10)\n    means = np.append(means, np.mean(resample.column('days')))\ndeliver(make_array(percentile(2.5, means), percentile(97.5, means)))",
+      "fails": "silent",
+      "hazard": "cart_is_longer_than_ten_slips"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "bootstrap",
+    "confidence-interval"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 14,
+    "oil": 1
+  },
+  "setPiece": "bookends",
+  "hazards": [
+    "cart_is_longer_than_ten_slips"
+  ],
+  "stochastic": true
+}

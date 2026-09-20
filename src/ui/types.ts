@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
+import type { AlmanacEntry as AuthoredAlmanacEntry } from '../../content/almanac';
 import type { CheckDiff, Puzzle, QueueEntry, RunResult, SaveData, Settings, Value, WindowLayout } from '../contracts';
 
 export type Screen = 'title' | 'intro' | 'game' | 'credits';
-export type DialogName = 'pause' | 'settings' | 'saves' | 'almanac' | 'windows' | 'newScript' | 'alerts' | 'shop' | 'orders';
+export type DialogName = 'pause' | 'settings' | 'saves' | 'almanac' | 'windows' | 'newScript' | 'alerts' | 'shop' | 'orders' | 'atlas';
 
 export interface GameStateForUI {
   screen: Screen;
@@ -12,6 +13,7 @@ export interface GameStateForUI {
   save: SaveData;
   puzzle: Puzzle;
   activeFile: string;
+  code: string;
   result: RunResult | null;
   expected: Value;
   queue: QueueEntry[];
@@ -33,6 +35,7 @@ export interface GameStateForUI {
   gotoPuzzle: (id: string) => void;
   nextPuzzle: () => void;
   hint: () => void;
+  showMove: () => void;
   setSettings: (settings: Partial<Settings>) => void;
   setLayout: (id: string, layout: WindowLayout) => void;
   setReplay: (index: number) => void;
@@ -53,7 +56,7 @@ export interface GameStateForUI {
   replayStandingOrder?: (puzzleId: string) => Promise<void>;
 }
 
-export interface AlmanacEntry {
+export interface AlmanacEntry extends Pick<AuthoredAlmanacEntry, 'parameters' | 'comparison' | 'note'> {
   id: string;
   title: string;
   signature?: string;
@@ -72,12 +75,24 @@ export interface ShopItem {
   ink: number;
   chapter?: number;
   hat?: boolean;
+  repeatable?: boolean;
   currency?: 'ink' | 'eggs';
+}
+
+/** One wing of the library, as the Atlas shows it. */
+export interface AtlasWing {
+  chapter: number;
+  name: string;
+  blurb: string;
+  cost: number;
+  unlocked: boolean;
+  puzzles: { id: string; title: string; completed: boolean; reachable: boolean }[];
 }
 
 export interface UIIntegrations {
   almanac?: AlmanacEntry[];
   shop?: ShopItem[];
+  atlas?: AtlasWing[];
   devtools?: ReactNode;
   onIntroBeat?: (beat: number) => void;
 }

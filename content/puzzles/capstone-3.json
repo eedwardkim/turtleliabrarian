@@ -1,0 +1,32 @@
+{
+  "id": "capstone-3", "chapter": 13, "kind": "capstone",
+  "title": "The Geese Want a Headline", "patron": "Gossip Geese",
+  "request": "Our null-model simulations are ready: report the share whose absolute difference from zero is at least as large as the observed difference. Deliver 'evidence' only if that share is below 0.05, otherwise 'inconclusive', alongside the share in a one-row table.",
+  "objective": "Combine a two-sided statistic, inclusive tail, decision threshold and table construction without a causal claim.",
+  "concepts": ["hypothesis_testing", "two_sided_test", "p_value", "wrong_tail", "ties_at_cutoff"],
+  "requiredApi": ["np.abs", "np.count_nonzero", "len", "Table", "with_columns", "make_array", "deliver"],
+  "learnedApi": ["np.abs","np.count_nonzero","len","Table","with_columns","make_array","deliver","abs","print","round","max","min","int","float","str","np.arange","item","sum","np.mean","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","strip","lower","range","np.max","np.min","np.sum","barh","hist","scatter","plot","apply","group","pivot","are.contained_in","join","read_table","np.append","np.std","np.random.choice","percentile","sample_proportions","sample","with_column","row","rows","show","exclude","are.between_or_equal_to","np.percentile","np.sort","np.median","np.sqrt","np.absolute","minimize"],
+  "starter": "deliver(observed > 0)",
+  "hints": [
+    "The geese care about a difference in either direction; a simulated tie is just as extreme as the observation.",
+    "Compare absolute simulated differences with abs(observed), including equality, then divide the count by the simulation size.",
+    "Compute the tail share first, choose a label with if/else, and build one row with p-value and conclusion."
+  ],
+  "inputCode": "import random\nfrom datascience import make_array\nn = random.randint(20, 80)\nsimulated = make_array(*[random.randint(-8, 8) for _ in range(n)])\nobserved = random.choice([-9, -6, -3, 0, 3, 6, 9])\ndel n",
+  "visibleSeed": 903,
+  "visibleInputs": {"simulated": {"kind": "array", "values": [0, 1, 1, 2, 3, 0, 1, 2, 3, 1]}, "observed": 2.5},
+  "fixtures": [
+    {"name": "evidence_in_both_tails", "inputs": {"simulated": {"kind": "array", "values": [-6, -5, -4, -1, 0, 1, 4, 5, 6, 0]}, "observed": 4}, "predicate": "any(simulated < -abs(observed)) and any(simulated > abs(observed))"},
+    {"name": "ties_count_as_extreme", "inputs": {"simulated": {"kind": "array", "values": [-2, 0, 2, 0, 0, 1, -1, 0, 1, 0]}, "observed": -2}, "predicate": "any(abs(simulated) == abs(observed))"},
+    {"name": "no_simulated_result_is_as_extreme", "inputs": {"simulated": {"kind": "array", "values": [0, 1, -1, 2, -2, 0]}, "observed": 5}, "predicate": "all(abs(simulated) < abs(observed))"}
+  ],
+  "queueSize": 7,
+  "reference": "p = np.count_nonzero(np.abs(simulated) >= abs(observed)) / len(simulated)\nif p < 0.05:\n    conclusion = 'evidence'\nelse:\n    conclusion = 'inconclusive'\ndeliver(Table().with_columns('p-value', make_array(p), 'conclusion', make_array(conclusion)))",
+  "naive": [
+    {"code": "p = np.count_nonzero(simulated >= abs(observed)) / len(simulated)\nconclusion = 'evidence' if p < 0.05 else 'inconclusive'\ndeliver(Table().with_columns('p-value', make_array(p), 'conclusion', make_array(conclusion)))", "fails": "silent", "hazard": "evidence_in_both_tails"},
+    {"code": "p = np.count_nonzero(np.abs(simulated) > abs(observed)) / len(simulated)\nconclusion = 'evidence' if p < 0.05 else 'inconclusive'\ndeliver(Table().with_columns('p-value', make_array(p), 'conclusion', make_array(conclusion)))", "fails": "silent", "hazard": "ties_count_as_extreme"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": [], "standingOrder": {"eligible": true, "ink": 12, "oil": 2},
+  "setPiece": "reopening-evidence", "hazards": ["evidence_in_both_tails", "ties_count_as_extreme", "no_simulated_result_is_as_extreme"], "stochastic": false
+}

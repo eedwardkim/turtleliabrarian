@@ -1,0 +1,231 @@
+{
+  "id": "ch7-vary-2",
+  "chapter": 7,
+  "kind": "vary",
+  "title": "How Far From Even",
+  "patron": "Hazel",
+  "request": "Here is tonight's count of requests by wing, and here is the share each wing is supposed to draw. Give me the total variation distance between them.",
+  "objective": "Build a distance statistic between an observed distribution and a claimed one.",
+  "concepts": [
+    "total_variation_distance",
+    "distributions",
+    "statistic_choice"
+  ],
+  "requiredApi": [
+    "column",
+    "sum",
+    "abs",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std",
+    "percentile"
+  ],
+  "starter": "counts = tally.column('requests')\ndeliver(sum(abs(counts - tally.column('claimed'))))",
+  "hints": [
+    "Counts and shares do not live on the same scale, so one of them has to move.",
+    "Divide each wing's count by the total to get observed shares, then compare them wing by wing.",
+    "Total variation distance is half the sum of the absolute differences between the two share columns."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nwings = ['Display Hall', 'Catalog Room', 'Loans Office', 'Sealed Archive']\nshares = [3, 3, 2, 2]\ntotal = sum(shares)\nclaimed = [share / total for share in shares]\ndrift = random.choice([0, 1, 2, 5, 9])\nrequests = [random.randint(6, 18) for _ in wings]\nrequests[random.randrange(len(wings))] += drift\ntally = Table().with_columns('wing', make_array(*wings), 'requests', make_array(*requests), 'claimed', make_array(*claimed))\ndel wings, shares, total, claimed, drift, requests",
+  "visibleSeed": 73,
+  "visibleInputs": {
+    "tally": {
+      "kind": "table",
+      "labels": [
+        "wing",
+        "requests",
+        "claimed"
+      ],
+      "rows": [
+        [
+          "Display Hall",
+          30,
+          0.3
+        ],
+        [
+          "Catalog Room",
+          30,
+          0.3
+        ],
+        [
+          "Loans Office",
+          20,
+          0.2
+        ],
+        [
+          "Sealed Archive",
+          20,
+          0.2
+        ]
+      ],
+      "totalRows": 4
+    }
+  },
+  "fixtures": [
+    {
+      "name": "one_wing_swamps_the_rest",
+      "predicate": "max(tally.column('requests')) > 3 * min(tally.column('requests'))",
+      "inputs": {
+        "tally": {
+          "kind": "table",
+          "labels": [
+            "wing",
+            "requests",
+            "claimed"
+          ],
+          "rows": [
+            [
+              "Display Hall",
+              48,
+              0.3
+            ],
+            [
+              "Catalog Room",
+              8,
+              0.3
+            ],
+            [
+              "Loans Office",
+              12,
+              0.2
+            ],
+            [
+              "Sealed Archive",
+              12,
+              0.2
+            ]
+          ],
+          "totalRows": 4
+        }
+      }
+    },
+    {
+      "name": "counts_far_above_one",
+      "predicate": "sum(tally.column('requests')) > 50",
+      "inputs": {
+        "tally": {
+          "kind": "table",
+          "labels": [
+            "wing",
+            "requests",
+            "claimed"
+          ],
+          "rows": [
+            [
+              "Display Hall",
+              21,
+              0.3
+            ],
+            [
+              "Catalog Room",
+              24,
+              0.3
+            ],
+            [
+              "Loans Office",
+              15,
+              0.2
+            ],
+            [
+              "Sealed Archive",
+              20,
+              0.2
+            ]
+          ],
+          "totalRows": 4
+        }
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "observed = tally.column('requests') / sum(tally.column('requests'))\ndeliver(sum(abs(observed - tally.column('claimed'))) / 2)",
+  "naive": [
+    {
+      "code": "observed = tally.column('requests') / sum(tally.column('requests'))\ndeliver(sum(abs(observed - tally.column('claimed'))))",
+      "fails": "silent",
+      "hazard": "one_wing_swamps_the_rest"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "total-variation-distance"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 8,
+    "oil": 0
+  },
+  "setPiece": "trustees-scales",
+  "hazards": [
+    "one_wing_swamps_the_rest",
+    "counts_far_above_one"
+  ],
+  "stochastic": false
+}

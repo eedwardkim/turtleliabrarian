@@ -1,0 +1,27 @@
+{
+  "id": "ch6-break-2", "chapter": 6, "kind": "break",
+  "title": "Two Books, Never the Same Book", "patron": "Dr. Newt",
+  "request": "Pull two different books off the cart at random, 300 times over, and tell me the share of those pairs that came from the same wing, rounded to two decimals. Two copies of one book are not a pair.",
+  "objective": "Sample without replacement inside a simulation instead of taking the default.",
+  "concepts": ["sample", "with_replacement", "simulation", "empirical_probability", "for"],
+  "requiredApi": ["sample", "column", "item", "deliver"],
+  "learnedApi": ["deliver","print","round","abs","max","min","len","int","float","str","range","make_array","np.arange","np.append","item","sum","np.mean","np.std","np.count_nonzero","np.max","np.min","np.sum","np.random.choice","percentile","sample_proportions","Table","with_columns","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","sample","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","are.contained_in","barh","hist","scatter","plot","apply","group","pivot","join","read_table","strip","lower"],
+  "starter": "pair = shelf.sample(2)\ndeliver(pair)",
+  "hints": ["Sampling twice from the same cart can hand you the same book twice, and that pair always agrees with itself about its wing.", "The draw the patron described forbids repeats, which is not what sample does unless you say so.", "Run 300 rounds, each drawing two rows with with_replacement set to False, and count the rounds whose two wings match."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nwings = ['Nature', 'Travel', 'Mystery', 'Poetry']\nn = random.randint(4, 6)\nsingle = random.random() < 0.3\nchosen = [wings[0]] * n if single else [random.choice(wings) for _ in range(n)]\nshelf = Table().with_columns('shelfmark', make_array(*[f'W-{index + 1:03d}' for index in range(n)]), 'wing', make_array(*chosen))",
+  "visibleSeed": 1,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["shelfmark", "wing"], "rows": [["W-001", "Nature"], ["W-002", "Nature"], ["W-003", "Nature"], ["W-004", "Nature"]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "wings_all_different", "inputs": {"shelf": {"kind": "table", "labels": ["shelfmark", "wing"], "rows": [["W-001", "Nature"], ["W-002", "Travel"], ["W-003", "Mystery"], ["W-004", "Poetry"]], "totalRows": 4}}, "predicate": "int(len(set(shelf.column('wing').tolist()))) == shelf.num_rows"},
+    {"name": "one_wing_doubled", "inputs": {"shelf": {"kind": "table", "labels": ["shelfmark", "wing"], "rows": [["W-001", "Travel"], ["W-002", "Travel"], ["W-003", "Mystery"], ["W-004", "Poetry"], ["W-005", "Nature"]], "totalRows": 5}}, "predicate": "int(np.count_nonzero(shelf.column('wing') == 'Travel')) == 2 and int(len(set(shelf.column('wing').tolist()))) == 4"}
+  ],
+  "queueSize": 8,
+  "reference": "matches = 0\nfor _ in range(300):\n    pair = shelf.sample(2, with_replacement=False)\n    if pair.column('wing').item(0) == pair.column('wing').item(1):\n        matches = matches + 1\n\ndeliver(round(matches / 300, 2))",
+  "naive": [
+    {"code": "matches = 0\nfor _ in range(300):\n    pair = shelf.sample(2)\n    if pair.column('wing').item(0) == pair.column('wing').item(1):\n        matches = matches + 1\n\ndeliver(round(matches / 300, 2))", "fails": "silent", "hazard": "wings_all_different"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["sample"],
+  "standingOrder": {"eligible": true, "ink": 9, "oil": 3},
+  "setPiece": "display-case", "hazards": ["wings_all_different", "one_wing_doubled"], "stochastic": true
+}

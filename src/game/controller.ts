@@ -1,13 +1,19 @@
 import { create } from 'zustand';
 import type {
-  CheckDiff, Puzzle, QueueEntry, RunRequest, RunResult, Settings, TraceEvent, Value, WindowLayout,
+  CheckDiff, Puzzle, QueueEntry, RunRequest, RunResult, SandboxNotebook, Settings, TraceEvent, Value, WindowLayout,
 } from '../contracts';
 import { getTutorial, tutorialsFor } from '../../content/tutorials';
 import { puzzles, getPuzzle } from './catalog';
+import { automaticTutorial } from './guidance';
+import { commandTutorialId, pendingCommands } from './commands';
 import { check } from './checker';
-import { canEnterPuzzle, completePuzzle, enterWing, offlineSeconds, orderTrips, ORDER_SECONDS, purchaseItem } from './economy';
+import {
+  ARCHIVE_CHAPTER, canEnterPuzzle, completePuzzle, enterWing, equipHat, firstTryBonus, inkFor, maxReplaySpeed, offlineSeconds,
+  OFFLINE_CAP_SECONDS, orderCapacity, orderTrips, purchaseItem, scriptCapacity, shareTrips, spendOil, tripSeconds, wingUnlocked,
+} from './economy';
 import { buildQueue, requestFor } from './queue';
 import { advanceReplay, currentLine, eventDuration, replayProgress } from './replay';
+import { isSandboxDataset, sandboxRequest, sandboxUnlocked } from './sandbox';
 import {
   exportJSON, freshSave, importJSON, readLayout, readSettings, saves, validFilename,
   type GameSave, type PuzzleProgress, type SaveService,
@@ -65,6 +71,7 @@ export interface GameState {
   gotoPuzzle(id: string): void;
   nextPuzzle(): void;
   hint(): void;
+  showMove(): void;
   setSettings(partial: Partial<Settings>): void;
   setLayout(id: string, layout: WindowLayout): void;
   setReplay(index: number): void;
@@ -78,7 +85,9 @@ export interface GameState {
   fileStandingOrder(): void;
   stepClock(seconds: number): void;
   markTutorial(id: string): void;
+  acknowledgeCommand(id: string): void;
   purchase(id: string): void;
+  equipHat(id: string): void;
   autoSolve(): Promise<void>;
   playNaive(): Promise<void>;
   refreshExpected(): Promise<void>;
@@ -86,6 +95,8 @@ export interface GameState {
   replayStandingOrder(puzzleId: string): Promise<void>;
   setOrderPaused(puzzleId: string, paused: boolean): void;
   scratch(code: string): Promise<RunResult | null>;
+  setSandbox(notebook: Partial<SandboxNotebook>): void;
+  runSandbox(code?: string): Promise<RunResult | null>;
   tickReplay(milliseconds: number): void;
   stepReplay(): void;
   skipReplay(): void;
@@ -96,6 +107,8 @@ export interface GameState {
   waitForIdle(): Promise<void>;
   disposeGame(): void;
 }
+
+const CHART_API = new Set(['hist', 'barh', 'scatter', 'plot']);
 
 function progressFor(save: GameSave, puzzle: Puzzle): PuzzleProgress {
   return save.progress[puzzle.id] ?? { code: puzzle.starter, attempts: 0, hints: 0 };
@@ -123,10 +136,10 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
     };
     const tutorial = (trigger: string): void => {
       const state = get();
-      const pending = tutorialsFor(trigger, state.save.seenTutorials)
-        .map((entry) => entry.id).filter((id) => !state.tutorialQueue.includes(id) && state.activeTutorial !== id);
-      const queue = [...state.tutorialQueue, ...pending];
-      set({ activeTutorial: state.activeTutorial ?? queue.shift() ?? null, tutorialQueue: queue });
+      if (state.activeTutorial) return;
+      const id = automaticTutorial(trigger, state.puzzle, state.save.seenTutorials);
+      if (id === 'replay' && !state.result?.trace.length) return;
+      if (id) set({ activeTutorial: id, tutorialQueue: [] });
     };
     const replayFields = (result: RunResult, index = 0, paused = false) => ({
       result, traceIndex: index, replayElapsed: 0, replayPaused: paused || !result.trace.length,
@@ -156,10 +169,21 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       references.set(key, result);
       return result;
     };
-    const display = (result: RunResult, expected: Value): CheckDiff => {
+    const finish = (puzzle: Puzzle, code: string, files: Record<string, string>, status: string): void => {
+      const save = get().save;
+      const completed = completePuzzle(save, puzzle, firstTryBonus(save, progressFor(save, puzzle).attempts, get().hintLevel));
+      persist({ ...save, ...completed, progress: {
+        ...save.progress, [puzzle.id]: { ...progressFor(save, puzzle), solvedCode: code, solvedFiles: { ...files } },
+      } });
+      set({ status });
+      tutorial('complete');
+    };
+    const display = (result: RunResult, expected: Value, validationFailure?: string): CheckDiff => {
       const diff = check(result.delivered, expected, get().puzzle.checker);
       if (result.error) { diff.pass = false; diff.message = result.error.friendly || result.error.message; }
+      else if (validationFailure) { diff.pass = false; diff.message = validationFailure; }
       set({ ...replayFields(result), expected, inputs: result.inputs, diff, status: diff.message });
+      if (!diff.pass && get().hintLevel === 0 && get().puzzle.chapter <= 1) get().hint();
       tutorial('output');
       tutorial('run');
       tutorial(result.error ? 'loud' : diff.pass ? 'run-pass' : 'silent');
@@ -178,22 +202,25 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
     const rewardPatrons = (puzzle: Puzzle, count: number): void => {
       const save = get().save;
       persist({ ...save, resources: {
-        ...save.resources, ink: save.resources.ink + count * puzzle.standingOrder.ink,
+        ...save.resources, ink: save.resources.ink + inkFor(save, puzzle.standingOrder.ink, count),
         oil: save.resources.oil + count * puzzle.standingOrder.oil, served: save.resources.served + count,
       } });
     };
     const runOrders = async (): Promise<void> => {
       if (!get().ready || get().busy || get().backgroundBusy || !get().save.standingOrders.some((order) => !order.paused)) return;
-      const trips = orderTrips(backgroundSeconds, get().save.hatchlings);
+      const trips = orderTrips(backgroundSeconds, get().save.hatchlings, get().save.hat);
       if (!trips) return;
-      backgroundSeconds -= trips * ORDER_SECONDS / (1 + get().save.hatchlings);
+      backgroundSeconds -= tripSeconds(trips, get().save.hatchlings, get().save.hat);
       const ticket = ++epoch;
       set({ backgroundBusy: true });
       try {
-        for (const order of [...get().save.standingOrders]) {
-          if (order.paused) continue;
+        const active = get().save.standingOrders.filter((order) => !order.paused);
+        const shares = shareTrips(trips, active.length);
+        for (const [index, order] of active.entries()) {
+          const earnedTrips = shares[index];
+          if (!earnedTrips) continue;
           const puzzle = getPuzzle(order.puzzleId);
-          const count = Math.min(5, trips);
+          const count = Math.min(5, earnedTrips);
           let failed = false;
           for (let sample = 0; sample < count; sample++) {
             if (ticket !== epoch) return;
@@ -217,10 +244,10 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
             const save = get().save;
             persist({ ...save,
               resources: { ...save.resources,
-                ink: save.resources.ink + trips * puzzle.standingOrder.ink,
-                oil: save.resources.oil + trips * puzzle.standingOrder.oil, served: save.resources.served + trips },
+                ink: save.resources.ink + inkFor(save, puzzle.standingOrder.ink, earnedTrips),
+                oil: save.resources.oil + earnedTrips * puzzle.standingOrder.oil, served: save.resources.served + earnedTrips },
               standingOrders: save.standingOrders.map((entry) => entry.puzzleId === order.puzzleId ?
-                { ...entry, earned: entry.earned + trips * puzzle.standingOrder.ink } : entry),
+                { ...entry, earned: entry.earned + earnedTrips * puzzle.standingOrder.ink } : entry),
             });
           }
         }
@@ -309,7 +336,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       },
       addFile(name) {
         const save = get().save;
-        const capacity = save.ownedItems.includes('script-slot') ? 8 : 2;
+        const capacity = scriptCapacity(save);
         if (!validFilename(name)) { set({ status: 'Use a Python module name such as helper.py, without a folder or library name.' }); return; }
         if (Object.hasOwn(save.files, name)) { get().setActiveFile(name); return; }
         if (Object.keys(save.files).length >= capacity) { set({ status: 'The writing desks are full. Another desk in the shop adds six script slots.' }); return; }
@@ -333,12 +360,32 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         if (!get().ready) { set({ status: 'Wait for the reading lamp to finish warming.' }); return; }
         const ticket = begin('Shelby is reading your script…');
         const { puzzle, code, save } = get();
+        if (puzzle.verifyOnRun) set({ diff: null });
         try {
           const expected = await reference(puzzle, puzzle.visibleSeed, puzzle.visibleInputs);
           if (ticket !== epoch) return;
           const result = await runtime.run(requestFor(puzzle, code, puzzle.visibleSeed, { ...save.files }, expected.inputs, save.settings.openStacks));
           if (ticket !== epoch) return;
-          display(result, expected.delivered);
+          let validationFailure: string | undefined;
+          if (puzzle.verifyOnRun && !result.error && check(result.delivered, expected.delivered, puzzle.checker).pass) {
+            set({ status: 'Checking your script with different inputs…' });
+            for (const entry of buildQueue(puzzle)) {
+              const otherExpected = await reference(puzzle, entry.seed, entry.inputs);
+              if (ticket !== epoch) return;
+              const otherResult = await runtime.run(requestFor(puzzle, code, entry.seed, { ...save.files }, otherExpected.inputs, save.settings.openStacks));
+              if (ticket !== epoch) return;
+              if (otherResult.error || !check(otherResult.delivered, otherExpected.delivered, puzzle.checker).pass) {
+                validationFailure = `This matches the shown example, but not different inputs. ${puzzle.hints[0]}`;
+                break;
+              }
+            }
+          }
+          const diff = display(result, expected.delivered, validationFailure);
+          if (puzzle.lesson && diff.pass && !get().save.completed.includes(puzzle.id)) {
+            const progress = progressFor(get().save, puzzle);
+            persist({ ...get().save, progress: { ...get().save.progress, [puzzle.id]: { ...progress, attempts: progress.attempts + 1 } } });
+            finish(puzzle, code, get().save.files, 'Delivered. Shelby stamped it: request complete.');
+          }
         } catch (error) { if (ticket === epoch) set({ status: errorMessage(error) }); }
         finally { if (ticket === epoch) { set({ busy: false }); void runOrders(); } }
       },
@@ -347,7 +394,9 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         const ticket = begin('The queue is taking its places…');
         const { puzzle, code, save } = get();
         const progress = progressFor(save, puzzle);
-        persist({ ...save, progress: { ...save.progress, [puzzle.id]: { ...progress, attempts: progress.attempts + 1 } } });
+        const { save: charged, lent } = spendOil(save, puzzle);
+        persist({ ...charged, progress: { ...charged.progress, [puzzle.id]: { ...progress, attempts: progress.attempts + 1 } } });
+        if (lent) set({ status: 'The archive lends you lamp oil for this sampling trip.' });
         const queue = buildQueue(puzzle, puzzle.visibleSeed + progress.attempts);
         set({ queue });
         tutorial('run-pass');
@@ -367,13 +416,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
             for (const hazard of puzzle.hazards) if (entry.name === hazard) tutorial(hazard);
           }
           if (get().queue.every((entry) => entry.status === 'passed')) {
-            const current = get().save;
-            const completed = completePuzzle(current, puzzle, progress.attempts === 0 && get().hintLevel === 0);
-            persist({ ...current, ...completed, progress: {
-              ...current.progress, [puzzle.id]: { ...progressFor(current, puzzle), solvedCode: code, solvedFiles: { ...save.files } },
-            } });
-            set({ status: 'Every patron is satisfied. The request is complete.' });
-            tutorial('complete');
+            finish(puzzle, code, save.files, 'Every patron is satisfied. The request is complete.');
           } else {
             set({ status: 'Some patrons need another try. Select a failed shelf to inspect it.' });
           }
@@ -391,28 +434,43 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           set({ status: 'Complete the previous request to open this one.' }); return;
         }
         let save: GameSave;
-        try { save = { ...get().save, ...enterWing(get().save, puzzle.chapter) }; }
-        catch (error) { set({ status: errorMessage(error) }); return; }
+        const current = get().save;
+        try {
+          save = current.settings.openStacks && !wingUnlocked(current, puzzle.chapter)
+            ? { ...current, ownedItems: puzzle.chapter > 0 ? [...current.ownedItems, `wing-${puzzle.chapter}`] : current.ownedItems }
+            : { ...current, ...enterWing(current, puzzle.chapter) };
+        } catch (error) { set({ status: errorMessage(error) }); return; }
         const chapterChanged = puzzle.chapter !== get().puzzle.chapter;
         stop();
         const code = progressFor(save, puzzle).code;
         installSave({ ...save, puzzleId: id, files: { ...save.files, 'main.py': code }, activeFile: 'main.py' });
         persist(get().save);
         set({ screen: 'game' });
+        tutorial('puzzle');
         if (chapterChanged) tutorial('chapter');
-        for (const hazard of puzzle.hazards) tutorial(hazard);
+        if (puzzle.chapter >= ARCHIVE_CHAPTER) tutorial('archive');
+        if (puzzle.kind === 'capstone') tutorial('capstone');
+        if (puzzle.requiredApi.some((api) => CHART_API.has(api))) tutorial('chart');
+        for (const topic of [...puzzle.concepts, ...puzzle.hazards]) tutorial(topic);
         if (get().ready) void get().refreshExpected();
       },
       nextPuzzle() {
         const next = puzzles[puzzles.findIndex((entry) => entry.id === get().puzzle.id) + 1];
-        if (next) get().gotoPuzzle(next.id);
-        else set({ status: 'The Returns Desk and first Stacks lessons are complete.' });
+        if (next) { get().gotoPuzzle(next.id); return; }
+        set({ status: 'Every request in the library is answered. The Grand Reopening is yours to enjoy.' });
+        if (puzzles.every((entry) => get().save.completed.includes(entry.id))) set({ screen: 'credits' });
       },
       hint() {
         const { puzzle, save } = get();
         const level = Math.min(3, get().hintLevel + 1);
         set({ hintLevel: level, status: puzzle.hints[level - 1] });
         persist({ ...save, progress: { ...save.progress, [puzzle.id]: { ...progressFor(save, puzzle), hints: level } } });
+        tutorial('hint');
+      },
+      showMove() {
+        const { puzzle, save } = get();
+        set({ hintLevel: 3, status: 'The next line is on the slip.' });
+        persist({ ...save, progress: { ...save.progress, [puzzle.id]: { ...progressFor(save, puzzle), hints: 3 } } });
         tutorial('hint');
       },
       setSettings(partial) {
@@ -432,7 +490,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       setReplayPaused(replayPaused) { set({ replayPaused }); },
       setSpeed(speed) {
         if (!Number.isFinite(speed)) return;
-        const maximum = get().save.ownedItems.includes('replay-speed') ? 8 : 2;
+        const maximum = maxReplaySpeed(get().save);
         get().setSettings({ replaySpeed: Math.min(maximum, Math.max(0.25, speed)) });
       },
       async loadSlot(slot) {
@@ -449,6 +507,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           set({ activeSlot: slot, screen: 'game' });
           await get().refreshExpected();
           get().stepClock(elapsed);
+          if (elapsed > 60) tutorial('offline');
           set({ status: loaded.recovered ? 'Recovered the last good snapshot from this slot.' : 'Save loaded.' });
           tutorial('save');
         } catch (error) { set({ status: errorMessage(error) }); throw error; }
@@ -489,8 +548,8 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           set({ status: 'Pass this request’s full queue before filing an order.' }); return;
         }
         const existing = save.standingOrders.find((order) => order.puzzleId === puzzle.id);
-        const capacity = save.ownedItems.includes('standing-slot') ? 2 : 1;
-        if (!existing && save.standingOrders.length >= capacity) { set({ status: 'The order pegs are full. A second peg is available in the shop.' }); return; }
+        const capacity = orderCapacity(save);
+        if (!existing && save.standingOrders.length >= capacity) { set({ status: 'The order pegs are full. Another peg is available in the shop.' }); return; }
         const order = { puzzleId: puzzle.id, code: solvedCode, earned: existing?.earned ?? 0, paused: false };
         persist({ ...save, orderFiles: { ...save.orderFiles, [puzzle.id]: solvedFiles ?? save.orderFiles[puzzle.id] ?? { 'main.py': solvedCode } }, standingOrders: existing ?
           save.standingOrders.map((entry) => entry.puzzleId === puzzle.id ? order : entry) : [...save.standingOrders, order] });
@@ -499,21 +558,35 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       },
       stepClock(seconds) {
         if (!Number.isFinite(seconds) || seconds <= 0 || !get().save.standingOrders.some((order) => !order.paused)) return;
-        backgroundSeconds = Math.min(28800, backgroundSeconds + seconds);
+        backgroundSeconds = Math.min(OFFLINE_CAP_SECONDS, backgroundSeconds + seconds);
         void runOrders();
       },
       markTutorial(id) {
         if (!getTutorial(id)) return;
         const save = get().save;
         if (!save.seenTutorials.includes(id)) persist({ ...save, seenTutorials: [...save.seenTutorials, id] });
-        const queue = get().tutorialQueue.filter((entry) => entry !== id);
-        set({ activeTutorial: get().activeTutorial === id ? queue.shift() ?? null : get().activeTutorial, tutorialQueue: queue });
+        set({ activeTutorial: get().activeTutorial === id ? null : get().activeTutorial, tutorialQueue: [] });
+      },
+      acknowledgeCommand(id) {
+        const { puzzle, save } = get();
+        const entry = pendingCommands(puzzle, save)[0];
+        if (!entry || entry.id !== id) return;
+        const commands = [entry.id, ...(entry.comparison ? [entry.comparison.id] : [])];
+        persist({ ...save, seenTutorials: [...new Set([...save.seenTutorials, 'almanac', ...commands.map(commandTutorialId)])] });
+        set({ activeTutorial: null, tutorialQueue: [] });
       },
       purchase(id) {
         try {
           persist({ ...get().save, ...purchaseItem(get().save, id) });
           set({ status: 'The ledger is updated.' });
-          tutorial(id === 'hatchling' ? 'hatch' : 'complete');
+          tutorial(id === 'hatchling' ? 'hatch' : 'shop');
+        } catch (error) { set({ status: errorMessage(error) }); }
+      },
+      equipHat(id) {
+        try {
+          const next = equipHat(get().save, id);
+          persist({ ...get().save, ...next });
+          set({ status: next.hat ? 'Shelby tries on the new hat.' : 'Shelby hangs the hat back on its peg.' });
         } catch (error) { set({ status: errorMessage(error) }); }
       },
       async autoSolve() { get().setCode(get().puzzle.reference); await get().run(); },
@@ -545,6 +618,32 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       setOrderPaused(puzzleId, paused) {
         persist({ ...get().save, standingOrders: get().save.standingOrders.map((order) => order.puzzleId === puzzleId ? { ...order, paused } : order) });
       },
+      setSandbox(partial) {
+        const save = get().save;
+        if (!sandboxUnlocked(save)) return;
+        const sandbox = { ...save.sandbox, ...partial };
+        if (sandbox.code.length > 100_000 || !isSandboxDataset(sandbox.dataset)) {
+          set({ status: 'Choose a library dataset and keep the notebook under 100,000 characters.' });
+          return;
+        }
+        persist({ ...save, sandbox });
+      },
+      async runSandbox(code) {
+        if (!get().ready || get().busy || !sandboxUnlocked(get().save)) return null;
+        const ticket = begin('Exploring Open Stacks…');
+        const { save } = get();
+        try {
+          const result = await runtime.run(sandboxRequest({ ...save.sandbox, code: code ?? save.sandbox.code }, save.files));
+          if (ticket !== epoch) return null;
+          set({ ...replayFields(result), inputs: result.inputs, diff: null, status: result.error?.friendly ?? 'Notebook finished. There are no grades in Open Stacks.' });
+          return result;
+        } catch (error) {
+          if (ticket === epoch) set({ status: errorMessage(error) });
+          return null;
+        } finally {
+          if (ticket === epoch) { set({ busy: false }); void runOrders(); }
+        }
+      },
       async scratch(code) {
         if (!get().ready) return null;
         const ticket = begin('Trying a note on the blotting paper…');
@@ -575,8 +674,13 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         set({ replayElapsed: eventDuration(trace[trace.length - 1]), progress: 1 });
       },
       replay() { get().setReplay(0); set({ replayPaused: false }); },
-      triggerTutorial: tutorial,
-      replayTutorial(id) { if (getTutorial(id)) set({ activeTutorial: id }); },
+      triggerTutorial(trigger) {
+        const state = get();
+        if (state.puzzle.lesson || state.activeTutorial) return;
+        const entry = tutorialsFor(trigger, state.save.seenTutorials)[0];
+        if (entry) set({ activeTutorial: entry.id, tutorialQueue: [] });
+      },
+      replayTutorial(id) { if (getTutorial(id)) set({ activeTutorial: id, tutorialQueue: [] }); },
       dismissTutorial() { const id = get().activeTutorial; if (id) get().markTutorial(id); },
       waitForIdle() {
         if (!get().busy && !get().backgroundBusy) return Promise.resolve();

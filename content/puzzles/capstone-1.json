@@ -1,0 +1,32 @@
+{
+  "id": "capstone-1", "chapter": 13, "kind": "capstone",
+  "title": "The Reopening Catalogue", "patron": "Mrs. Quill",
+  "request": "For reopening, list the Fern wing's readable books as title and numeric pages, shortest first, preserving ties. Magpies changed the wing labels' case and spaces; bookworms left '?' where a page count should be.",
+  "objective": "Combine text cleaning, missing-value handling, numeric conversion and stable table sorting.",
+  "concepts": ["data_cleaning", "messy_strings", "missing_values", "text_vs_number", "stable_sort"],
+  "requiredApi": ["make_array", "column", "with_columns", "where", "are.not_equal_to", "sort", "select", "deliver"],
+  "learnedApi": ["deliver","make_array","column","with_columns","where","are.not_equal_to","sort","select","int","strip","lower","print","round","abs","max","min","len","float","str","np.arange","item","sum","np.mean","np.count_nonzero","Table","drop","relabeled","labels","num_rows","num_columns","take","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.containing","range","np.max","np.min","np.sum","barh","hist","scatter","plot","apply","group","pivot","are.contained_in","join","read_table","np.append","np.std","np.random.choice","percentile","sample_proportions","sample","with_column","row","rows","show","exclude","are.between_or_equal_to","np.percentile","np.sort","np.median","np.sqrt","np.abs","np.absolute","minimize"],
+  "starter": "deliver(shelf.where('wing', 'fern').select('title', 'pages'))",
+  "hints": [
+    "A tidy name and a readable count are separate checks; neither changes which book the card belongs to.",
+    "Use strip and lower for wing labels, exclude '?' before int, then sort the numeric page column.",
+    "Build clean wing labels, replace that column, filter readable Fern rows, replace their page counts, and select the two requested columns after sorting."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nn = random.randint(4, 9)\nnames = ['Fern', ' fern ', 'FERN', 'reed', ' Reed ']\ntitles = make_array(*['Reopening Notebook ' + str(i) for i in range(n)])\nwings = make_array(*[random.choice(names) for _ in range(n)])\npages = make_array(*[random.choice(['?', '9', '40', '100', '240']) for _ in range(n)])\nshelf = Table().with_columns('title', titles, 'wing', wings, 'pages', pages)\ndel n, names, titles, wings, pages",
+  "visibleSeed": 901,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "wing", "pages"], "rows": [["Cloud Index", "fern", "40"], ["Rain Register", "fern", "90"]], "totalRows": 2}},
+  "fixtures": [
+    {"name": "magpies_and_bookworms", "inputs": {"shelf": {"kind": "table", "labels": ["title", "wing", "pages"], "rows": [["Cloud Index", " FERN ", "100"], ["Rain Register", "fern", "?"], ["Moss Map", "Fern", "9"], ["Reed Atlas", "reed", "4"]], "totalRows": 4}}, "predicate": "any(name != name.strip().lower() for name in shelf.column('wing')) and '?' in shelf.column('pages')"},
+    {"name": "numeric_ties", "inputs": {"shelf": {"kind": "table", "labels": ["title", "wing", "pages"], "rows": [["Long Rain", "fern", "100"], ["First Moss", "fern", "9"], ["Second Moss", "fern", "9"]], "totalRows": 3}}, "predicate": "len(set(shelf.column('pages'))) < shelf.num_rows and '100' in shelf.column('pages')"},
+    {"name": "fern_shelf_closed", "inputs": {"shelf": {"kind": "table", "labels": ["title", "wing", "pages"], "rows": [["Reed Atlas", "reed", "44"]], "totalRows": 1}}, "predicate": "not any(name.strip().lower() == 'fern' for name in shelf.column('wing'))"}
+  ],
+  "queueSize": 7,
+  "reference": "wings = make_array(*[name.strip().lower() for name in shelf.column('wing')])\nclean = shelf.with_columns('wing', wings)\nreadable = clean.where('wing', 'fern').where('pages', are.not_equal_to('?'))\nnumbers = make_array(*[int(page) for page in readable.column('pages')])\ndeliver(readable.with_columns('pages', numbers).sort('pages').select('title', 'pages'))",
+  "naive": [
+    {"code": "readable = shelf.where('wing', 'fern').where('pages', are.not_equal_to('?'))\nnumbers = make_array(*[int(page) for page in readable.column('pages')])\ndeliver(readable.with_columns('pages', numbers).sort('pages').select('title', 'pages'))", "fails": "silent", "hazard": "magpies_and_bookworms"},
+    {"code": "ordered = shelf.where('wing', 'fern').sort('pages')\nnumbers = make_array(*[int(page) for page in ordered.column('pages')])\ndeliver(ordered.with_columns('pages', numbers).select('title', 'pages'))", "fails": "silent", "hazard": "numeric_ties"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": [], "standingOrder": {"eligible": true, "ink": 12, "oil": 2},
+  "setPiece": "reopening-catalogue", "hazards": ["magpies_and_bookworms", "numeric_ties", "fern_shelf_closed"], "stochastic": false
+}

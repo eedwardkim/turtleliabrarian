@@ -1,0 +1,263 @@
+{
+  "id": "ch7-vary-1",
+  "chapter": 7,
+  "kind": "vary",
+  "title": "Shuffling the Trustees' Labels",
+  "patron": "Bramble",
+  "request": "I do not trust your lamp shelf result. Shuffle the shelf labels three hundred times and tell me the share of shuffles whose lamp-minus-window difference is at least the real one.",
+  "objective": "Test a difference between two groups by permuting the labels under the null of no effect.",
+  "concepts": [
+    "permutation_test",
+    "sample_with_replacement_false",
+    "p_value"
+  ],
+  "requiredApi": [
+    "sample",
+    "with_column",
+    "where",
+    "are.equal_to",
+    "column",
+    "np.mean",
+    "np.append",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std",
+    "percentile"
+  ],
+  "starter": "import numpy as np\nlamp = trial.where('shelf', are.equal_to('lamp')).column('days')\nwindow = trial.where('shelf', are.equal_to('window')).column('days')\ndeliver(np.mean(lamp) - np.mean(window))",
+  "hints": [
+    "Under the trustees' null the shelf label is just a sticker; the days would not care which sticker they wore.",
+    "trial.sample(trial.num_rows, with_replacement=False) deals the same rows in a new order, so its shelf column is a shuffled label column.",
+    "For each of three hundred shuffles, rebuild the table with the shuffled labels, take the lamp-minus-window difference, and count how many reach the observed difference."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nlamp_rows = random.randint(5, 8)\nwindow_rows = random.randint(5, 8)\nshelves = ['lamp'] * lamp_rows + ['window'] * window_rows\nrandom.shuffle(shelves)\ngap = random.choice([0, 1, 3, 5])\ndays = [random.randint(5, 11) + (gap if shelf == 'lamp' else 0) for shelf in shelves]\ntrial = Table().with_columns('shelf', make_array(*shelves), 'days', make_array(*days))\ndel lamp_rows, window_rows, shelves, gap, days",
+  "visibleSeed": 58,
+  "visibleInputs": {
+    "trial": {
+      "kind": "table",
+      "labels": [
+        "shelf",
+        "days"
+      ],
+      "rows": [
+        [
+          "lamp",
+          16
+        ],
+        [
+          "window",
+          5
+        ],
+        [
+          "lamp",
+          18
+        ],
+        [
+          "window",
+          4
+        ],
+        [
+          "lamp",
+          17
+        ],
+        [
+          "window",
+          6
+        ],
+        [
+          "lamp",
+          19
+        ],
+        [
+          "window",
+          3
+        ]
+      ],
+      "totalRows": 8
+    }
+  },
+  "fixtures": [
+    {
+      "name": "labels_make_no_difference",
+      "predicate": "abs(np.mean(trial.where('shelf', are.equal_to('lamp')).column('days')) - np.mean(trial.where('shelf', are.equal_to('window')).column('days'))) < 0.5",
+      "inputs": {
+        "trial": {
+          "kind": "table",
+          "labels": [
+            "shelf",
+            "days"
+          ],
+          "rows": [
+            [
+              "lamp",
+              8
+            ],
+            [
+              "window",
+              9
+            ],
+            [
+              "lamp",
+              9
+            ],
+            [
+              "window",
+              8
+            ],
+            [
+              "lamp",
+              7
+            ],
+            [
+              "window",
+              7
+            ],
+            [
+              "lamp",
+              10
+            ],
+            [
+              "window",
+              10
+            ]
+          ],
+          "totalRows": 8
+        }
+      }
+    },
+    {
+      "name": "uneven_shelf_sizes",
+      "predicate": "trial.where('shelf', are.equal_to('lamp')).num_rows != trial.where('shelf', are.equal_to('window')).num_rows",
+      "inputs": {
+        "trial": {
+          "kind": "table",
+          "labels": [
+            "shelf",
+            "days"
+          ],
+          "rows": [
+            [
+              "lamp",
+              15
+            ],
+            [
+              "lamp",
+              14
+            ],
+            [
+              "lamp",
+              16
+            ],
+            [
+              "lamp",
+              13
+            ],
+            [
+              "lamp",
+              17
+            ],
+            [
+              "window",
+              6
+            ],
+            [
+              "window",
+              5
+            ]
+          ],
+          "totalRows": 7
+        }
+      }
+    }
+  ],
+  "queueSize": 8,
+  "reference": "import numpy as np\nfrom datascience import make_array\nobserved = np.mean(trial.where('shelf', are.equal_to('lamp')).column('days')) - np.mean(trial.where('shelf', are.equal_to('window')).column('days'))\nsimulated = make_array()\nfor repetition in range(300):\n    shuffled = trial.with_column('shelf', trial.sample(trial.num_rows, with_replacement=False).column('shelf'))\n    lamp = shuffled.where('shelf', are.equal_to('lamp')).column('days')\n    window = shuffled.where('shelf', are.equal_to('window')).column('days')\n    simulated = np.append(simulated, np.mean(lamp) - np.mean(window))\ndeliver(np.count_nonzero(simulated >= observed) / 300)",
+  "naive": [
+    {
+      "code": "import numpy as np\nfrom datascience import make_array\nobserved = np.mean(trial.where('shelf', are.equal_to('lamp')).column('days')) - np.mean(trial.where('shelf', are.equal_to('window')).column('days'))\nsimulated = make_array()\nfor repetition in range(300):\n    shuffled = trial.with_column('shelf', trial.sample(trial.num_rows).column('shelf'))\n    lamp = shuffled.where('shelf', are.equal_to('lamp')).column('days')\n    window = shuffled.where('shelf', are.equal_to('window')).column('days')\n    simulated = np.append(simulated, np.mean(lamp) - np.mean(window))\ndeliver(np.count_nonzero(simulated >= observed) / 300)",
+      "fails": "silent",
+      "hazard": "labels_make_no_difference"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 0.02,
+    "relativeTolerance": 0.0
+  },
+  "unlocks": [
+    "permutation-test"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 12,
+    "oil": 0
+  },
+  "setPiece": "observed-flag",
+  "hazards": [
+    "labels_make_no_difference"
+  ],
+  "stochastic": true
+}

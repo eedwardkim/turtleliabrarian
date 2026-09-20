@@ -1,0 +1,304 @@
+{
+  "id": "ch7-break-2",
+  "chapter": 7,
+  "kind": "break",
+  "title": "Who Chose the Front Table",
+  "patron": "Dr. Newt",
+  "request": "Front-table books get checked out more, but picture books also crowd the front table. Compare front and back within each genre and give me the average of those differences.",
+  "objective": "Separate a display effect from the genre that confounds it.",
+  "concepts": [
+    "confounding",
+    "observational_study",
+    "stratified_comparison"
+  ],
+  "requiredApi": [
+    "group",
+    "where",
+    "are.equal_to",
+    "column",
+    "np.mean",
+    "sort",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std",
+    "percentile"
+  ],
+  "starter": "import numpy as np\nfront = reports.where('display', are.equal_to('front')).column('checkouts')\ndeliver(np.mean(front))",
+  "hints": [
+    "The front table is not a coin flip; picture books were already going to move.",
+    "Compare like with like: inside one genre, front against back.",
+    "Loop over the genres, take the front-minus-back difference for each, and deliver the mean of those differences."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ngenres = ['picture', 'history']\nlift = random.choice([1, 2, 3])\nbase = {'picture': random.randint(14, 20), 'history': random.randint(4, 8)}\ncrowding = random.choice([[4, 4, 4, 4], [7, 2, 2, 7], [6, 3, 3, 6]])\ncounts = {('picture', 'front'): crowding[0], ('picture', 'back'): crowding[1], ('history', 'front'): crowding[2], ('history', 'back'): crowding[3]}\ngenre_column = []\ndisplay_column = []\ncheckout_column = []\nfor genre in genres:\n    for display in ['front', 'back']:\n        for _ in range(counts[(genre, display)]):\n            genre_column.append(genre)\n            display_column.append(display)\n            checkout_column.append(base[genre] + (lift if display == 'front' else 0))\nreports = Table().with_columns('genre', make_array(*genre_column), 'display', make_array(*display_column), 'checkouts', make_array(*checkout_column))\ndel genres, lift, base, crowding, counts, genre, display, genre_column, display_column, checkout_column",
+  "visibleSeed": 64,
+  "visibleInputs": {
+    "reports": {
+      "kind": "table",
+      "labels": [
+        "genre",
+        "display",
+        "checkouts"
+      ],
+      "rows": [
+        [
+          "picture",
+          "front",
+          19
+        ],
+        [
+          "picture",
+          "front",
+          19
+        ],
+        [
+          "picture",
+          "back",
+          17
+        ],
+        [
+          "picture",
+          "back",
+          17
+        ],
+        [
+          "history",
+          "front",
+          8
+        ],
+        [
+          "history",
+          "front",
+          8
+        ],
+        [
+          "history",
+          "back",
+          6
+        ],
+        [
+          "history",
+          "back",
+          6
+        ]
+      ],
+      "totalRows": 8
+    }
+  },
+  "fixtures": [
+    {
+      "name": "picture_books_crowd_the_front",
+      "predicate": "reports.where('genre', are.equal_to('picture')).where('display', are.equal_to('front')).num_rows > 2 * reports.where('genre', are.equal_to('history')).where('display', are.equal_to('front')).num_rows",
+      "inputs": {
+        "reports": {
+          "kind": "table",
+          "labels": [
+            "genre",
+            "display",
+            "checkouts"
+          ],
+          "rows": [
+            [
+              "picture",
+              "front",
+              20
+            ],
+            [
+              "picture",
+              "front",
+              20
+            ],
+            [
+              "picture",
+              "front",
+              20
+            ],
+            [
+              "picture",
+              "front",
+              20
+            ],
+            [
+              "picture",
+              "front",
+              20
+            ],
+            [
+              "picture",
+              "front",
+              20
+            ],
+            [
+              "picture",
+              "back",
+              18
+            ],
+            [
+              "history",
+              "front",
+              7
+            ],
+            [
+              "history",
+              "back",
+              5
+            ],
+            [
+              "history",
+              "back",
+              5
+            ],
+            [
+              "history",
+              "back",
+              5
+            ],
+            [
+              "history",
+              "back",
+              5
+            ],
+            [
+              "history",
+              "back",
+              5
+            ],
+            [
+              "history",
+              "back",
+              5
+            ]
+          ],
+          "totalRows": 14
+        }
+      }
+    },
+    {
+      "name": "one_genre_only",
+      "predicate": "reports.group('genre').num_rows == 1",
+      "inputs": {
+        "reports": {
+          "kind": "table",
+          "labels": [
+            "genre",
+            "display",
+            "checkouts"
+          ],
+          "rows": [
+            [
+              "history",
+              "front",
+              9
+            ],
+            [
+              "history",
+              "front",
+              9
+            ],
+            [
+              "history",
+              "back",
+              6
+            ],
+            [
+              "history",
+              "back",
+              6
+            ]
+          ],
+          "totalRows": 4
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nfrom datascience import make_array\ndifferences = make_array()\nfor genre in reports.group('genre').sort('genre').column('genre'):\n    same_genre = reports.where('genre', are.equal_to(genre))\n    front = same_genre.where('display', are.equal_to('front')).column('checkouts')\n    back = same_genre.where('display', are.equal_to('back')).column('checkouts')\n    differences = np.append(differences, np.mean(front) - np.mean(back))\ndeliver(np.mean(differences))",
+  "naive": [
+    {
+      "code": "import numpy as np\nfront = reports.where('display', are.equal_to('front')).column('checkouts')\nback = reports.where('display', are.equal_to('back')).column('checkouts')\ndeliver(np.mean(front) - np.mean(back))",
+      "fails": "silent",
+      "hazard": "picture_books_crowd_the_front"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "confounding"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 12,
+    "oil": 0
+  },
+  "setPiece": "trustees-scales",
+  "hazards": [
+    "picture_books_crowd_the_front",
+    "one_genre_only"
+  ],
+  "stochastic": false
+}

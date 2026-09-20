@@ -1,0 +1,186 @@
+{
+  "id": "ch11-show-1",
+  "chapter": 11,
+  "kind": "show",
+  "title": "How Far Apart Are Two Books",
+  "patron": "Shelby",
+  "request": "Measure the straight-line distance between the two slips on the desk, using both of their recorded numbers: the shelf they sit on and the reading level.",
+  "objective": "Compute Euclidean distance between two rows of attributes.",
+  "concepts": [
+    "distance",
+    "euclidean",
+    "attributes"
+  ],
+  "requiredApi": [
+    "np.sqrt",
+    "sum",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "deliver(sum(first - second))",
+  "hints": [
+    "Walking around the corner is longer than cutting straight across the aisle.",
+    "Square each difference, add the squares together, then take the root of the total.",
+    "Deliver np.sqrt(sum((first - second) ** 2))."
+  ],
+  "inputCode": "import random\nfrom datascience import make_array\nsame_level = random.choice([True, False, False])\nshelf_one = random.randint(1, 9)\nshelf_two = random.randint(1, 9)\nlevel_one = random.randint(1, 9)\nlevel_two = level_one if same_level else random.randint(1, 9)\nfirst = make_array(shelf_one, level_one)\nsecond = make_array(shelf_two, level_two)\ndel same_level, shelf_one, shelf_two, level_one, level_two",
+  "visibleSeed": 4,
+  "visibleInputs": {
+    "first": {
+      "kind": "array",
+      "values": [
+        2,
+        5
+      ]
+    },
+    "second": {
+      "kind": "array",
+      "values": [
+        6,
+        5
+      ]
+    }
+  },
+  "fixtures": [
+    {
+      "name": "both_numbers_differ",
+      "predicate": "first.item(0) != second.item(0) and first.item(1) != second.item(1)",
+      "inputs": {
+        "first": {
+          "kind": "array",
+          "values": [
+            1,
+            2
+          ]
+        },
+        "second": {
+          "kind": "array",
+          "values": [
+            4,
+            6
+          ]
+        }
+      }
+    },
+    {
+      "name": "the_two_slips_are_identical",
+      "predicate": "sum(np.abs(first - second)) == 0",
+      "inputs": {
+        "first": {
+          "kind": "array",
+          "values": [
+            3,
+            7
+          ]
+        },
+        "second": {
+          "kind": "array",
+          "values": [
+            3,
+            7
+          ]
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\ndeliver(np.sqrt(sum((first - second) ** 2)))",
+  "naive": [
+    {
+      "code": "import numpy as np\ndeliver(sum(np.abs(first - second)))",
+      "fails": "silent",
+      "hazard": "both_numbers_differ"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "distance"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 11,
+    "oil": 0
+  },
+  "setPiece": "lantern-aisle",
+  "hazards": [
+    "both_numbers_differ",
+    "the_two_slips_are_identical"
+  ],
+  "stochastic": false
+}

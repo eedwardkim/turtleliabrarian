@@ -128,9 +128,9 @@ export function OutputPanel({ result, diff }: { result: RunResult | null; diff?:
       <p>{result.error.friendly}</p><span className="line-badge">{format(text.output.line, { line: result.error.line })}</span>
       <details><summary>{text.output.raw}</summary><pre>{result.error.type}: {result.error.message}</pre></details>
     </section>}
-    {result.stdout && <section><h3 className="output-label">{text.output.stdout}</h3><pre className="stdout">{result.stdout}</pre></section>}
-    <section><h3 className="output-label">{text.output.value}</h3><ValueDisplay value={result.value} diff={result.delivered === null ? diff : undefined} /></section>
     {result.delivered !== null && <section><h3 className="output-label">{text.output.delivered}</h3><ValueDisplay value={result.delivered} diff={diff} /></section>}
+    {result.stdout && <section><h3 className="output-label">{text.output.stdout}</h3><pre className="stdout">{result.stdout}</pre></section>}
+    {(result.value !== null || result.delivered === null) && <section><h3 className="output-label">{text.output.value}</h3><ValueDisplay value={result.value} diff={result.delivered === null ? diff : undefined} /></section>}
     {diff && !diff.pass && <section className="diff-card"><h3><Icon name="book" />{text.output.diff}</h3><p>{diff.message}</p><ul>
       {diff.extraRows.length > 0 && <li>{format(text.output.extra, { count: diff.extraRows.length })}</li>}
       {diff.missingRows.length > 0 && <li>{format(text.output.missing, { count: diff.missingRows.length })}</li>}

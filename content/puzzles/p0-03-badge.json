@@ -1,22 +1,21 @@
 {
-  "id": "p0-03-badge", "chapter": 0, "kind": "vary",
-  "title": "Letters on Brass", "patron": "Hazel",
-  "request": "Make my badge by joining prefix and number with nothing between them. The brass engraver accepts text; it is very literal.",
-  "objective": "Convert a number to text before concatenating it.",
-  "concepts": ["strings", "conversion", "str_plus_int"],
-  "requiredApi": ["str", "deliver"],
-  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str"],
-  "starter": "badge = prefix\ndeliver(badge)",
-  "hints": ["The two parts of a badge must speak the same type of language.", "str(value) makes a text representation of a value.", "Keep prefix as text and convert only the number part before joining them with +."],
-  "inputCode": "import random\nprefix = random.choice(['Fern-', 'Moss-', 'Cloud-'])\nnumber = random.randint(1, 99)",
-  "visibleSeed": 13, "visibleInputs": {"prefix": "Fern-", "number": "7"},
+  "id": "p0-03-badge", "chapter": 0, "kind": "show", "lesson": true,
+  "title": "Use the names", "patron": "Mr. Heron",
+  "request": "My fee is days times rate. The names already hold my numbers.",
+  "objective": "Multiply two named numbers.",
+  "concepts": ["names", "multiplication", "deliver"],
+  "requiredApi": ["deliver"], "learnedApi": ["deliver", "print"],
+  "starter": "deliver(___)",
+  "hints": ["Multiply days by rate.", "In Python, * multiplies: days * rate.", "deliver(days * rate)"],
+  "inputCode": "import random\ndays = random.randint(1, 12)\nrate = random.randint(1, 5)",
+  "visibleSeed": 13, "visibleInputs": {"days": 3, "rate": 2},
   "fixtures": [
-    {"name": "str_plus_int", "inputs": {"prefix": "Moss-", "number": 12}, "predicate": "isinstance(prefix, str) and isinstance(number, int)"},
-    {"name": "zero_badge", "inputs": {"prefix": "Cloud-", "number": 0}, "predicate": "number == 0"}
+    {"name": "names_present", "inputs": {"days": 3, "rate": 2}, "predicate": "days > 0 and rate > 0"}
   ],
-  "queueSize": 6, "reference": "badge = prefix + str(number)\ndeliver(badge)",
-  "naive": [{"code": "deliver(prefix + number)", "fails": "loud", "hazard": "str_plus_int"}],
+  "queueSize": 6, "reference": "deliver(days * rate)",
+  "naive": [],
   "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
-  "unlocks": ["str", "int", "float"], "standingOrder": {"eligible": true, "ink": 1, "oil": 0},
-  "setPiece": "brass-nameplate", "hazards": ["str_plus_int"], "stochastic": false
+  "unlocks": [],
+  "standingOrder": {"eligible": false, "ink": 0, "oil": 0}, "setPiece": "fee-stamp",
+  "hazards": [], "stochastic": false
 }

@@ -7,7 +7,7 @@
   "requiredApi": ["int", "make_array", "deliver"],
   "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero"],
   "starter": "readings = make_array(first, second)\ndeliver(readings)",
-  "hints": ["One text value can turn a whole tray into strings; the printed digits can be deceptive.", "int converts each whole-number reading before make_array chooses a common type.", "Build the tray from two converted readings, then apply bonus to the completed numeric tray."],
+  "hints": ["Compute a numeric reading for first and second, then add bonus to each value in the resulting array.", "Use int(first) and int(second) before make_array; + adds bonus element-wise to an array.", "Write readings = make_array(int(first), ___), then deliver(readings + bonus)."],
   "inputCode": "import random\nfirst = str(random.randint(1, 20)) if random.randint(0, 1) else random.randint(1, 20)\nsecond = str(random.randint(1, 20)) if random.randint(0, 1) else random.randint(1, 20)\nbonus = random.randint(1, 5)",
   "visibleSeed": 26, "visibleInputs": {"first": 4, "second": 7, "bonus": 2},
   "fixtures": [

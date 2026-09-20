@@ -1,6 +1,10 @@
 import type { ArrayValue, Json, Scalar, TableValue, TraceEvent, Value, WorldProps } from '../contracts';
 
 export const BOOK_LIMIT = 40;
+export const BIN_LIMIT = 5;
+export const DRAWER_LIMIT = 5;
+export const THREAD_LIMIT = 12;
+export const POINT_LIMIT = 40;
 export const FULL_LOOP_TRIPS = 5;
 export const CATEGORY_COLORS = ['#3E5C8A', '#B5475A', '#4F8A6B', '#C28A2E', '#7A5C9A'] as const;
 export type Motion = 'inspect' | 'create' | 'sieve' | 'reshuffle' | 'tray' | 'stamp'
@@ -65,6 +69,7 @@ export interface SceneObject {
 export interface DirectorState {
   objects: Record<string, SceneObject>;
   bindings: Record<string, string>;
+  bindingNames: Record<string, string>;
   delivered: Value;
   lastOutput: string | null;
   error: { line: number; message: string } | null;
@@ -83,7 +88,10 @@ export function parseValue(value: Json | undefined): Value | undefined {
   if (isScalar(value)) return value;
   if (!isRecord(value)) return undefined;
   if (value.kind === 'array' && Array.isArray(value.values) && value.values.every(isScalar)) {
-    return { kind: 'array', values: [...value.values], ...(typeof value.id === 'string' ? { id: value.id } : {}) };
+    const totalValues = typeof value.totalValues === 'number' && Number.isSafeInteger(value.totalValues)
+      && value.totalValues >= value.values.length ? { totalValues: value.totalValues } : {};
+    return { kind: 'array', values: [...value.values], ...totalValues,
+      ...(typeof value.id === 'string' ? { id: value.id } : {}) };
   }
   if (value.kind === 'table' && Array.isArray(value.labels) && value.labels.every((label) => typeof label === 'string')
     && Array.isArray(value.rows) && value.rows.every((row) => Array.isArray(row) && row.every(isScalar))) {
@@ -110,7 +118,8 @@ export function isArray(value: Value | undefined): value is ArrayValue {
   return typeof value === 'object' && value !== null && value.kind === 'array';
 }
 export function valueCount(value: Value | undefined): number {
-  return isTable(value) ? value.totalRows : isArray(value) ? value.values.length : value === undefined || value === null ? 0 : 1;
+  return isTable(value) ? value.totalRows : isArray(value) ? value.totalValues ?? value.values.length
+    : value === undefined || value === null ? 0 : 1;
 }
 
 export function initialState(inputs: Record<string, Value> = {}): DirectorState {
@@ -122,14 +131,40 @@ export function initialState(inputs: Record<string, Value> = {}): DirectorState 
     objects[id] = { id, value: copyValue(value), names: [...(existing?.names ?? []), name], visible: true };
     bindings[name] = id;
   }
-  return { objects, bindings, delivered: null, lastOutput: null, error: null, loops: {}, lastSeq: -1 };
+  return { objects, bindings, bindingNames: Object.fromEntries(Object.keys(bindings).map(name => [name, name])),
+    delivered: null, lastOutput: null, error: null, loops: {}, lastSeq: -1 };
+}
+
+function bindingKey(event: TraceEvent, name: string): string {
+  const scope = event.payload.scope;
+  return typeof scope === 'string' && scope !== 'global' ? JSON.stringify([scope, name]) : name;
+}
+
+function refreshNames(state: DirectorState, id: string) {
+  const object = state.objects[id];
+  if (!object) return;
+  const names = [...new Set(Object.entries(state.bindings)
+    .filter(([, target]) => target === id).map(([key]) => state.bindingNames[key]))];
+  state.objects[id] = { ...object, names, visible: names.length > 0 };
+}
+
+function loopKey(event: TraceEvent): string {
+  if (event.payload.invocationId !== undefined) {
+    return JSON.stringify([event.payload.scope ?? 'global', event.payload.loopId, event.payload.invocationId]);
+  }
+  return String(event.payload.loopId ?? event.payload.loop_id ?? event.line);
 }
 
 export function reduceEvent(state: DirectorState, event: TraceEvent): DirectorState {
   const next: DirectorState = { ...state, objects: { ...state.objects }, bindings: { ...state.bindings },
+    bindingNames: { ...state.bindingNames },
     loops: { ...state.loops }, lastSeq: event.seq };
   const type = eventType(event);
   const value = parseValue(event.payload.value);
+  if (isArray(value) && typeof event.payload.totalValues === 'number'
+    && Number.isSafeInteger(event.payload.totalValues) && event.payload.totalValues >= value.values.length) {
+    value.totalValues = event.payload.totalValues;
+  }
   const id = event.output ?? event.inputs[0] ?? null;
   if (event.output !== null && value !== undefined) {
     const previous = next.objects[event.output];
@@ -137,30 +172,28 @@ export function reduceEvent(state: DirectorState, event: TraceEvent): DirectorSt
     next.lastOutput = event.output;
   }
   const name = typeof event.payload.name === 'string' ? event.payload.name : null;
-  if (type === 'bind' && id && name) {
-    const oldId = next.bindings[name];
-    if (oldId && oldId !== id && next.objects[oldId]) {
-      const old = next.objects[oldId];
-      const names = old.names.filter((entry) => entry !== name);
-      next.objects[oldId] = { ...old, names, visible: names.length > 0 };
-    }
-    next.bindings[name] = id;
-    const object = next.objects[id];
-    if (object) next.objects[id] = { ...object, names: [...new Set([...object.names, name])], visible: true };
+  const key = name ? bindingKey(event, name) : null;
+  if (type === 'bind' && id && name && key) {
+    const oldId = next.bindings[key];
+    next.bindings[key] = id;
+    next.bindingNames[key] = name;
+    if (oldId && oldId !== id) refreshNames(next, oldId);
+    refreshNames(next, id);
   }
   if (type === 'unbind') {
-    const oldId = name ? next.bindings[name] : id;
-    if (name) delete next.bindings[name];
-    else {
+    const oldId = key ? next.bindings[key] : id;
+    if (key) {
+      delete next.bindings[key];
+      delete next.bindingNames[key];
+    } else {
       for (const [alias, target] of Object.entries(next.bindings)) {
-        if (target === oldId) delete next.bindings[alias];
+        if (target === oldId) {
+          delete next.bindings[alias];
+          delete next.bindingNames[alias];
+        }
       }
     }
-    if (oldId && next.objects[oldId]) {
-      const object = next.objects[oldId];
-      const names = name ? object.names.filter((entry) => entry !== name) : [];
-      next.objects[oldId] = { ...object, names, visible: names.length > 0 };
-    }
+    if (oldId) refreshNames(next, oldId);
   }
   if (type === 'deliver') {
     next.delivered = copyValue(value !== undefined ? value : (id ? next.objects[id]?.value : undefined) ?? null);
@@ -170,11 +203,12 @@ export function reduceEvent(state: DirectorState, event: TraceEvent): DirectorSt
       message: typeof event.payload.message === 'string' ? event.payload.message : 'Python error' };
   }
   if (type.startsWith('loop_')) {
-    const loop = String(event.payload.loop_id ?? event.line);
+    const loop = loopKey(event);
+    const count = event.payload.count ?? event.payload.iterations;
     if (type === 'loop_start') next.loops[loop] = 0;
     if (type === 'loop_iter' || type === 'loop_iteration') next.loops[loop] = (next.loops[loop] ?? 0) + 1;
-    if (type === 'loop_end' && typeof event.payload.iterations === 'number') {
-      next.loops[loop] = Math.max(0, Math.floor(event.payload.iterations));
+    if (typeof count === 'number' && Number.isSafeInteger(count) && count >= 0) {
+      next.loops[loop] = count;
     }
   }
   return next;
@@ -218,6 +252,44 @@ export const OUTPUT_CART: Position = [0.93, 1.98, 0.5];
 export const SIEVE: Position = [0.03, 2.83, -0.62];
 export const STAMP: Position = [-1.72, 3.0, 0.67];
 export const PATRON: Position = [1.4, 1.98, 1.65];
+export const SHELBY_HOME: Position = [0.02, 1.98, 1.24];
+export const WALK_FRACTION = 0.35;
+
+const STACKS_STAND: Position = [-0.9, 1.98, -1.0];
+const STACKS_FACE: Position = [-0.9, 2.8, -1.68];
+const STATIONS: Partial<Record<Motion, { stand: Position; face: Position }>> = {
+  stamp: { stand: [-1.3, 1.98, 0.85], face: [-1.45, 2.83, 0.95] },
+  create: { stand: STACKS_STAND, face: STACKS_FACE },
+  reshuffle: { stand: STACKS_STAND, face: STACKS_FACE },
+  tray: { stand: STACKS_STAND, face: STACKS_FACE },
+  bins: { stand: STACKS_STAND, face: STACKS_FACE },
+  drawers: { stand: STACKS_STAND, face: STACKS_FACE },
+  sample: { stand: STACKS_STAND, face: STACKS_FACE },
+  sieve: { stand: [0.3, 1.98, -0.25], face: SIEVE },
+};
+
+export interface ShelbyPose {
+  position: Position;
+  /** Yaw in radians; 0 faces +z, matching the model's resting rotation of -0.25. */
+  yaw: number;
+  clip: string;
+  clipProgress: number;
+}
+
+export function shelbyPose(animation: AnimationSpec, progress: number, reducedMotion = false): ShelbyPose {
+  const p = reducedMotion ? 1 : clampProgress(progress);
+  const { motion, clip } = animation;
+  if (motion === 'trip') return { position: [Math.sin(p * Math.PI * 2) * 0.7, 1.98, 1.24], yaw: -0.25, clip, clipProgress: p };
+  if (motion === 'deliver') return { position: [0.2 + p * 0.7, 1.98, 1.25], yaw: -0.25, clip, clipProgress: p };
+  const station = STATIONS[motion];
+  if (!station) return { position: [...SHELBY_HOME], yaw: -0.25, clip, clipProgress: p };
+  if (reducedMotion || p >= WALK_FRACTION) {
+    const yaw = Math.atan2(station.face[0] - station.stand[0], station.face[2] - station.stand[2]);
+    return { position: [...station.stand], yaw, clip, clipProgress: reducedMotion ? p : (p - WALK_FRACTION) / (1 - WALK_FRACTION) };
+  }
+  const yaw = Math.atan2(station.stand[0] - SHELBY_HOME[0], station.stand[2] - SHELBY_HOME[2]);
+  return { position: mix(SHELBY_HOME, station.stand, p / WALK_FRACTION), yaw, clip: 'walk', clipProgress: p / WALK_FRACTION };
+}
 
 export function bookPosition(index: number, origin: Position): Position {
   const i = Math.min(BOOK_LIMIT - 1, Math.max(0, Math.floor(Number.isFinite(index) ? index : 0)));
@@ -309,7 +381,8 @@ export function frameForWorld(props: Pick<WorldProps, 'result' | 'event' | 'feed
       ? props.result.delivered : props.result.delivered ?? props.result.value;
     output = { id: 'final', value, names: output?.names ?? [], visible: true };
   }
-  const loopCount = Math.max(0, ...Object.values(state.loops));
+  const loopCount = props.event && eventType(props.event).startsWith('loop_')
+    ? state.loops[loopKey(props.event)] ?? 0 : Math.max(0, ...Object.values(state.loops));
   const animation = props.event ? animationFor(props.event) : spec('inspect', 'idle');
   if (animation.motion === 'trip' && loopCount > FULL_LOOP_TRIPS) {
     return { state, input, output, animation: spec('summary', 'idle', 0.08),

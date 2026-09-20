@@ -19,6 +19,8 @@ acceptance thresholds, is authoritative.
 - O12 Only original/permissively licensed code, fonts and audio; document dependencies/licenses in CREDITS.md.
 - O13 HackMIT orientation: education and entertainment, an engaging concrete demonstration for AI skeptics; consider public-data feasibility without misrepresenting synthetic data.
 - O14 Use eedwardkim/turtleliabrarian (user follow-up); do not change unrelated repositories.
+- O15 Performance takes priority over visual complexity: preserve the simple, charming low-poly look and target smooth MacBook Air play. Prefer lightweight materials and restrained effects; measure frame times before adding visual cost (user follow-up).
+- O16 Expedite the remaining release: parallelize independent work, keep one approval PR, and prioritize completion and correctness over additional visual polish (user follow-up).
 
 ## Product, stack and platform
 - P01 Shelby is the young head librarian on giant sky turtle Atlas; Mrs. Quill retires.

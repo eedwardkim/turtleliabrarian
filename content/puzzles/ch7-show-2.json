@@ -1,0 +1,287 @@
+{
+  "id": "ch7-show-2",
+  "chapter": 7,
+  "kind": "show",
+  "title": "The Geese Say It Is Even",
+  "patron": "the Gossip Geese",
+  "request": "We say returns fall evenly between the west and east chutes, honk. Simulate two hundred even nights and tell us what fraction of them pile up at least as many west returns as tonight did.",
+  "objective": "Simulate a statistic under a stated null model and read a p-value off the simulation.",
+  "concepts": [
+    "null_model",
+    "simulation",
+    "p_value",
+    "sample_proportions"
+  ],
+  "requiredApi": [
+    "sample_proportions",
+    "np.append",
+    "np.count_nonzero",
+    "make_array",
+    "range",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std",
+    "percentile"
+  ],
+  "starter": "from datascience import make_array\ndeliver(returns.where('chute', are.equal_to('west')).num_rows)",
+  "hints": [
+    "A single night proves nothing; the geese asked how ordinary tonight looks.",
+    "sample_proportions(n, make_array(0.5, 0.5)) deals one even night, and np.append keeps each simulated west count in a jar.",
+    "Run the jar two hundred times, then divide the number of simulated counts at or above tonight's count by two hundred."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nnights = random.randint(14, 22)\nlean = random.choice([0.5, 0.55, 0.62, 0.7, 0.8])\nchutes = ['west' if random.random() < lean else 'east' for _ in range(nights)]\nslots = [random.randint(1, 40) for _ in range(nights)]\nreturns = Table().with_columns('slot', make_array(*slots), 'chute', make_array(*chutes))\ndel nights, lean, chutes, slots",
+  "visibleSeed": 12,
+  "visibleInputs": {
+    "returns": {
+      "kind": "table",
+      "labels": [
+        "slot",
+        "chute"
+      ],
+      "rows": [
+        [
+          3,
+          "west"
+        ],
+        [
+          7,
+          "west"
+        ],
+        [
+          11,
+          "west"
+        ],
+        [
+          14,
+          "west"
+        ],
+        [
+          18,
+          "west"
+        ],
+        [
+          21,
+          "west"
+        ],
+        [
+          24,
+          "west"
+        ],
+        [
+          29,
+          "west"
+        ],
+        [
+          33,
+          "west"
+        ],
+        [
+          36,
+          "west"
+        ],
+        [
+          38,
+          "west"
+        ],
+        [
+          39,
+          "west"
+        ]
+      ],
+      "totalRows": 12
+    }
+  },
+  "fixtures": [
+    {
+      "name": "ordinary_even_night",
+      "predicate": "returns.where('chute', are.equal_to('west')).num_rows * 2 == returns.num_rows",
+      "inputs": {
+        "returns": {
+          "kind": "table",
+          "labels": [
+            "slot",
+            "chute"
+          ],
+          "rows": [
+            [
+              2,
+              "west"
+            ],
+            [
+              5,
+              "east"
+            ],
+            [
+              9,
+              "west"
+            ],
+            [
+              12,
+              "east"
+            ],
+            [
+              16,
+              "west"
+            ],
+            [
+              19,
+              "east"
+            ],
+            [
+              23,
+              "west"
+            ],
+            [
+              27,
+              "east"
+            ]
+          ],
+          "totalRows": 8
+        }
+      }
+    },
+    {
+      "name": "east_heavy_night",
+      "predicate": "returns.where('chute', are.equal_to('west')).num_rows * 3 < returns.num_rows",
+      "inputs": {
+        "returns": {
+          "kind": "table",
+          "labels": [
+            "slot",
+            "chute"
+          ],
+          "rows": [
+            [
+              4,
+              "east"
+            ],
+            [
+              6,
+              "east"
+            ],
+            [
+              10,
+              "east"
+            ],
+            [
+              13,
+              "east"
+            ],
+            [
+              17,
+              "east"
+            ],
+            [
+              20,
+              "east"
+            ],
+            [
+              26,
+              "east"
+            ],
+            [
+              31,
+              "west"
+            ],
+            [
+              35,
+              "east"
+            ]
+          ],
+          "totalRows": 9
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nfrom datascience import make_array\nobserved = returns.where('chute', are.equal_to('west')).num_rows\nnights = returns.num_rows\nsimulated = make_array()\nfor repetition in range(200):\n    even = sample_proportions(nights, make_array(0.5, 0.5))\n    simulated = np.append(simulated, even.item(0) * nights)\ndeliver(np.count_nonzero(simulated >= observed) / 200)",
+  "naive": [
+    {
+      "code": "import numpy as np\nfrom datascience import make_array\nobserved = returns.where('chute', are.equal_to('west')).num_rows\nnights = returns.num_rows\nsimulated = make_array()\nfor repetition in range(10):\n    even = sample_proportions(nights, make_array(0.5, 0.5))\n    simulated = np.append(simulated, even.item(0) * nights)\ndeliver(np.count_nonzero(simulated >= observed) / 10)",
+      "fails": "silent",
+      "hazard": "ordinary_even_night"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 0.02,
+    "relativeTolerance": 0.0
+  },
+  "unlocks": [
+    "null-model",
+    "p-value"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 11,
+    "oil": 0
+  },
+  "setPiece": "observed-flag",
+  "hazards": [
+    "ordinary_even_night"
+  ],
+  "stochastic": true
+}

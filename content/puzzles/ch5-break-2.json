@@ -1,0 +1,30 @@
+{
+  "id": "ch5-break-2", "chapter": 5, "kind": "break",
+  "title": "Cards Written in Ink", "patron": "Dr. Newt",
+  "request": "Some slips come from the ink desk, where the card number is written out as text rather than stamped as a number. Match every slip to the register anyway and deliver the borrower name beside the days, sorted by name.",
+  "objective": "Reconcile key columns whose types differ before joining them.",
+  "concepts": ["join", "key_type_mismatch", "text_vs_number", "coercion"],
+  "requiredApi": ["join", "with_columns", "make_array", "select", "sort", "deliver"],
+  "learnedApi": ["deliver","print","round","abs","max","min","len","int","float","str","range","make_array","np.arange","item","sum","np.mean","np.count_nonzero","np.max","np.min","np.sum","Table","with_columns","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","are.contained_in","barh","hist","scatter","plot","apply","group","pivot","join","read_table","strip","lower"],
+  "starter": "matched = slips.join('card', register)\ndeliver(matched.select('name', 'days').sort('days'))",
+  "hints": ["The number 108 and the text '108' look identical on paper and identical to nobody else.", "A join compares the key values themselves, so a column of text keys matches a column of numeric keys exactly never — and an empty join hands back nothing at all.", "Rebuild the slips' card column as integers with int on each value, then join on that repaired column before selecting and sorting."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nnames = ['Alder Finch', 'Bryony Sable', 'Corvin Reed', 'Delphine Wren', 'Eamon Thistle']\ncards = [101, 102, 103, 104, 105]\nsize = random.randint(3, 5)\nchosen = sorted(random.sample(range(5), size))\nregister = Table().with_columns('card', make_array(*[cards[index] for index in chosen]), 'name', make_array(*[names[index] for index in chosen]))\nn = random.randint(2, 5)\nborrowed = [cards[random.choice(chosen)] for _ in range(n)]\nink_desk = random.random() < 0.5\nwritten = [str(card) for card in borrowed] if ink_desk else borrowed\nslips = Table().with_columns('card', make_array(*written), 'days', make_array(*[random.randint(1, 26) for _ in range(n)]))",
+  "visibleSeed": 2,
+  "visibleInputs": {
+    "slips": {"kind": "table", "labels": ["card", "days"], "rows": [[102, 11], [105, 4], [102, 18]], "totalRows": 3},
+    "register": {"kind": "table", "labels": ["card", "name"], "rows": [[102, "Bryony Sable"], [104, "Delphine Wren"], [105, "Eamon Thistle"]], "totalRows": 3}
+  },
+  "fixtures": [
+    {"name": "ink_desk_slips", "inputs": {"slips": {"kind": "table", "labels": ["card", "days"], "rows": [["103", 6], ["101", 22]], "totalRows": 2}, "register": {"kind": "table", "labels": ["card", "name"], "rows": [[101, "Alder Finch"], [103, "Corvin Reed"]], "totalRows": 2}}, "predicate": "bool(all(isinstance(card, str) for card in slips.column('card').tolist()))"},
+    {"name": "one_ink_slip", "inputs": {"slips": {"kind": "table", "labels": ["card", "days"], "rows": [["104", 9]], "totalRows": 1}, "register": {"kind": "table", "labels": ["card", "name"], "rows": [[103, "Corvin Reed"], [104, "Delphine Wren"], [105, "Eamon Thistle"]], "totalRows": 3}}, "predicate": "slips.num_rows == 1 and isinstance(slips.column('card').item(0), str)"}
+  ],
+  "queueSize": 8,
+  "reference": "stamped = make_array(*[int(card) for card in slips.column('card')])\nrepaired = slips.with_columns('card', stamped)\nmatched = repaired.join('card', register)\ndeliver(matched.select('name', 'days').sort('name'))",
+  "naive": [
+    {"code": "matched = slips.join('card', register)\ndeliver(matched.select('name', 'days').sort('name'))", "fails": "loud", "hazard": "ink_desk_slips"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["join"],
+  "standingOrder": {"eligible": true, "ink": 8, "oil": 2},
+  "setPiece": "ink-desk", "hazards": ["ink_desk_slips", "one_ink_slip"], "stochastic": false
+}

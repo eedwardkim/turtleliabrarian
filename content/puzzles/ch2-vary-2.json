@@ -1,0 +1,27 @@
+{
+  "id": "ch2-vary-2", "chapter": 2, "kind": "vary",
+  "title": "Fees Before Closing", "patron": "Bramble",
+  "request": "Charge rate pennies for every late day, then hand me only the books that actually owe something, largest fee first. The wing column is no use at the desk.",
+  "objective": "Add a computed column, filter it strictly, drop an unwanted column and order the result.",
+  "concepts": ["with_columns", "computed_columns", "where", "drop", "sort", "empty_results"],
+  "requiredApi": ["with_columns", "column", "where", "are.above", "drop", "sort", "deliver"],
+  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero", "Table", "with_columns", "column", "select", "drop", "relabeled", "labels", "num_rows", "num_columns", "where", "sort", "take", "are.above_or_equal_to", "are.above", "are.equal_to", "are.below", "are.below_or_equal_to", "are.between", "are.not_equal_to", "are.containing"],
+  "starter": "billed = shelf.with_columns('fee', shelf.column('days_late'))\ndeliver(billed)",
+  "hints": ["A book returned on the day it was due owes nothing, and the desk ledger has no room for the wing.", "Multiply the days_late column by rate inside with_columns, then filter with are.above rather than an inclusive cutoff.", "Build the billed cart, keep only the rows above zero, drop the wing and sort the fee column downward before delivering."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ntitles = ['Salt and Moss and Patience', 'The Bookbinder\\'s Daughter', 'A Short History of Waiting', 'The Weight of Open Windows', 'Instructions for Slow Travel', 'What the Archivist Kept', 'Ledgers of the Sky Turtle']\nwings = ['Nature', 'Fiction', 'Science', 'Travel', 'Mystery']\nn = random.randint(3, 6)\npicked = random.sample(titles, n)\nlate = [random.choice([0, 0, 1, 2, 3, 5, 8, 11, 14]) for _ in range(n)]\nshelf = Table().with_columns('title', make_array(*picked), 'wing', make_array(*[random.choice(wings) for _ in range(n)]), 'days_late', make_array(*late))\nrate = random.choice([15, 20, 25, 40])",
+  "visibleSeed": 18,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "wing", "days_late"], "rows": [["Salt and Moss and Patience", "Nature", 3], ["What the Archivist Kept", "Mystery", 11], ["A Short History of Waiting", "Science", 1]], "totalRows": 3}, "rate": 25},
+  "fixtures": [
+    {"name": "returned_on_time", "inputs": {"shelf": {"kind": "table", "labels": ["title", "wing", "days_late"], "rows": [["The Weight of Open Windows", "Fiction", 0], ["Ledgers of the Sky Turtle", "Reference", 4], ["Instructions for Slow Travel", "Travel", 0]], "totalRows": 3}, "rate": 20}, "predicate": "bool((shelf.column('days_late') == 0).any()) and bool((shelf.column('days_late') > 0).any())"},
+    {"name": "nothing_owed", "inputs": {"shelf": {"kind": "table", "labels": ["title", "wing", "days_late"], "rows": [["The Bookbinder's Daughter", "Fiction", 0], ["Salt and Moss and Patience", "Nature", 0]], "totalRows": 2}, "rate": 40}, "predicate": "bool((shelf.column('days_late') == 0).all())"}
+  ],
+  "queueSize": 8,
+  "reference": "billed = shelf.with_columns('fee', shelf.column('days_late') * rate)\nowing = billed.where('fee', are.above(0))\ndeliver(owing.drop('wing').sort('fee', descending=True))",
+  "naive": [
+    {"code": "billed = shelf.with_columns('fee', shelf.column('days_late') * rate)\ndeliver(billed.where('fee', are.above_or_equal_to(0)).drop('wing').sort('fee', descending=True))", "fails": "silent", "hazard": "returned_on_time"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["drop", "with_columns"],
+  "standingOrder": {"eligible": true, "ink": 5, "oil": 0},
+  "setPiece": "fee-ledger", "hazards": ["returned_on_time", "nothing_owed"], "stochastic": false
+}

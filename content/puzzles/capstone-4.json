@@ -1,0 +1,337 @@
+{
+  "id": "capstone-4",
+  "chapter": 13,
+  "kind": "capstone",
+  "title": "Bookends Around the Rope",
+  "patron": "Dr. Newt",
+  "request": "Bootstrap the cart two hundred times, fit the least squares slope of loans on shelf height each time, and set the bookends of a ninety-five percent interval around that slope.",
+  "objective": "Bootstrap a regression slope and report a confidence interval.",
+  "concepts": [
+    "bootstrap",
+    "confidence_interval",
+    "regression_line",
+    "percentile"
+  ],
+  "requiredApi": [
+    "sample",
+    "column",
+    "np.mean",
+    "np.append",
+    "percentile",
+    "make_array",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "import numpy as np\nheights = cart.column('height')\nloans = cart.column('loans')\nr = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\ndeliver(r * np.std(loans) / np.std(heights))",
+  "hints": [
+    "One cart gives one rope; the interval comes from the carts you could have had.",
+    "Resample the cart with replacement to its own size, fit the slope, and keep the slope.",
+    "After two hundred slopes, deliver make_array(percentile(2.5, slopes), percentile(97.5, slopes))."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(8, 12)\ntilt = random.choice([-3, -1, 2, 5])\nspread = random.choice([0, 2, 6])\nheights = [random.randint(1, 9) for _ in range(count)]\nif len(set(heights)) < 3:\n    heights = [1 + index % 9 for index in range(count)]\nloans = [60 + tilt * height + random.randint(-spread, spread) for height in heights]\ncart = Table().with_columns('height', make_array(*heights), 'loans', make_array(*loans))\ndel count, tilt, spread, heights, loans",
+  "visibleSeed": 202,
+  "visibleInputs": {
+    "cart": {
+      "kind": "table",
+      "labels": [
+        "height",
+        "loans"
+      ],
+      "rows": [
+        [
+          1,
+          23
+        ],
+        [
+          2,
+          26
+        ],
+        [
+          3,
+          29
+        ],
+        [
+          4,
+          32
+        ],
+        [
+          5,
+          35
+        ],
+        [
+          6,
+          38
+        ],
+        [
+          7,
+          41
+        ],
+        [
+          8,
+          44
+        ]
+      ],
+      "totalRows": 8
+    }
+  },
+  "fixtures": [
+    {
+      "name": "the_cart_is_noisy",
+      "predicate": "cart.num_rows >= 8 and np.std(cart.column('loans')) > 3",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              1,
+              31
+            ],
+            [
+              2,
+              24
+            ],
+            [
+              3,
+              35
+            ],
+            [
+              4,
+              28
+            ],
+            [
+              5,
+              41
+            ],
+            [
+              6,
+              33
+            ],
+            [
+              7,
+              46
+            ],
+            [
+              8,
+              38
+            ]
+          ],
+          "totalRows": 8
+        }
+      }
+    },
+    {
+      "name": "the_rope_runs_downhill",
+      "predicate": "np.mean((cart.column('height') - np.mean(cart.column('height'))) * (cart.column('loans') - np.mean(cart.column('loans')))) < 0",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              1,
+              60
+            ],
+            [
+              2,
+              54
+            ],
+            [
+              3,
+              49
+            ],
+            [
+              4,
+              41
+            ],
+            [
+              5,
+              38
+            ],
+            [
+              6,
+              30
+            ],
+            [
+              7,
+              25
+            ],
+            [
+              8,
+              18
+            ]
+          ],
+          "totalRows": 8
+        }
+      }
+    },
+    {
+      "name": "the_cart_holds_only_two_heights",
+      "predicate": "len(set(cart.column('height'))) == 2",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              2,
+              20
+            ],
+            [
+              2,
+              23
+            ],
+            [
+              2,
+              19
+            ],
+            [
+              2,
+              22
+            ],
+            [
+              9,
+              44
+            ],
+            [
+              9,
+              47
+            ],
+            [
+              9,
+              41
+            ],
+            [
+              9,
+              45
+            ]
+          ],
+          "totalRows": 8
+        }
+      }
+    },
+    {
+      "name": "constant_loans",
+      "predicate": "len(set(cart.column('loans'))) == 1 and len(set(cart.column('height'))) > 1",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": ["height", "loans"],
+          "rows": [[1, 20], [2, 20], [3, 20], [4, 20], [5, 20], [6, 20], [7, 20], [8, 20]],
+          "totalRows": 8
+        }
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "import numpy as np\nslopes = make_array()\nfor _ in range(200):\n    again = cart.sample(cart.num_rows)\n    heights = again.column('height')\n    loans = again.column('loans')\n    centered = heights - np.mean(heights)\n    variance = np.mean(centered ** 2)\n    if variance == 0:\n        continue\n    slope = np.mean(centered * (loans - np.mean(loans))) / variance\n    slopes = np.append(slopes, slope)\ndeliver(make_array(percentile(2.5, slopes), percentile(97.5, slopes)))",
+  "naive": [
+    {
+      "code": "import numpy as np\nslopes = make_array()\nfor _ in range(200):\n    again = cart.sample(cart.num_rows, with_replacement=False)\n    heights = again.column('height')\n    loans = again.column('loans')\n    if np.std(heights) == 0:\n        continue\n    r = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\n    slopes = np.append(slopes, r * np.std(loans) / np.std(heights))\ndeliver(make_array(percentile(2.5, slopes), percentile(97.5, slopes)))",
+      "fails": "silent",
+      "hazard": "the_cart_is_noisy"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 0.6,
+    "relativeTolerance": 0.0
+  },
+  "unlocks": [
+    "capstone-bookends"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 20,
+    "oil": 2
+  },
+  "setPiece": "bookends",
+  "hazards": [
+    "the_cart_is_noisy",
+    "the_rope_runs_downhill",
+    "the_cart_holds_only_two_heights",
+    "constant_loans"
+  ],
+  "stochastic": true
+}

@@ -1,0 +1,25 @@
+{
+  "id": "ch4-show-2", "chapter": 4, "kind": "show",
+  "title": "Counting the Wings", "patron": "Mrs. Quill",
+  "request": "How many books belong to each wing? One row per wing, wings in alphabetical order, and the tally column named count.",
+  "objective": "Group rows by a categorical column to count them.",
+  "concepts": ["group", "counts", "categories", "sort"],
+  "requiredApi": ["group", "sort", "deliver"],
+  "learnedApi": ["deliver","print","round","abs","max","min","len","int","float","str","range","make_array","np.arange","item","sum","np.mean","np.count_nonzero","np.max","np.min","np.sum","Table","with_columns","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","barh","hist","scatter","plot","apply","group","pivot","strip","lower"],
+  "starter": "deliver(shelf.select('wing'))",
+  "hints": ["A wing that appears nine times still deserves exactly one row in the tally.", "group collapses repeated values of one column and adds a count column on its own.", "Group the cart on the wing column and sort the grouped table by wing before delivering it."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nwings = ['Reference', 'Nature', 'Travel', 'Poetry', 'Mystery']\ntitles = ['Lanterns of the Slow Tide', 'Winter Comes to the Aviary', 'Nine Ways to Fold a Map', 'The Brass Hour', 'Eleven Rooms of Rain', 'The Lamp Under the Stair', 'Salt and Moss and Patience', 'Instructions for Slow Travel', 'The Index of Small Storms']\nn = random.randint(4, 9)\npicked = random.sample(titles, n)\nshelf = Table().with_columns('title', make_array(*picked), 'wing', make_array(*[random.choice(wings) for _ in range(n)]))",
+  "visibleSeed": 33,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "wing"], "rows": [["Lanterns of the Slow Tide", "Nature"], ["The Brass Hour", "Mystery"], ["Nine Ways to Fold a Map", "Travel"], ["Eleven Rooms of Rain", "Nature"]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "everything_in_one_wing", "inputs": {"shelf": {"kind": "table", "labels": ["title", "wing"], "rows": [["The Lamp Under the Stair", "Mystery"], ["The Brass Hour", "Mystery"], ["Winter Comes to the Aviary", "Mystery"]], "totalRows": 3}}, "predicate": "int(len(set(shelf.column('wing').tolist()))) == 1"},
+    {"name": "no_wing_repeats", "inputs": {"shelf": {"kind": "table", "labels": ["title", "wing"], "rows": [["Salt and Moss and Patience", "Nature"], ["Instructions for Slow Travel", "Travel"], ["The Index of Small Storms", "Reference"]], "totalRows": 3}}, "predicate": "int(len(set(shelf.column('wing').tolist()))) == shelf.num_rows"}
+  ],
+  "queueSize": 7,
+  "reference": "tally = shelf.group('wing')\ndeliver(tally.sort('wing'))",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["group"],
+  "standingOrder": {"eligible": true, "ink": 5, "oil": 1},
+  "setPiece": "card-catalog", "hazards": ["no_wing_repeats"], "stochastic": false
+}

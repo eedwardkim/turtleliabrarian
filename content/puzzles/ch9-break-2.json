@@ -1,0 +1,297 @@
+{
+  "id": "ch9-break-2",
+  "chapter": 9,
+  "kind": "break",
+  "title": "Three Rods From the Middle",
+  "patron": "Mr. Heron",
+  "request": "Hand me a table of just the titles and page counts of the books lying more than three standard deviations from the mean, in the order they sit on the shelf.",
+  "objective": "Flag far-out rows using standard units rather than an eyeballed cutoff.",
+  "concepts": [
+    "standard_units",
+    "outliers",
+    "row_filtering"
+  ],
+  "requiredApi": [
+    "column",
+    "np.mean",
+    "np.std",
+    "np.abs",
+    "with_column",
+    "where",
+    "are.above",
+    "select",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "import numpy as np\npages = shelf.column('pages')\ndeliver(shelf.where('pages', are.above(np.mean(pages) + 3 * np.mean(np.abs(pages - np.mean(pages))))))",
+  "hints": [
+    "Far out means far in both directions, and the rod is the standard deviation, not the average wobble.",
+    "Add a column of |standard units| to the shelf so you can filter on it.",
+    "Filter that column with are.above(3), then select title and pages before delivering."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(8, 16)\npages = [random.randint(120, 180) for _ in range(count)]\nshock = random.choice([0, 0, 1, 1, 2])\nfor _ in range(shock):\n    pages[random.randrange(count)] = random.choice([12, 1400, 2600])\nshelf = Table().with_columns('title', make_array(*['Volume ' + str(i + 1) for i in range(count)]), 'pages', make_array(*pages), 'wing', make_array(*[random.choice(['Display Hall', 'Sealed Archive']) for _ in range(count)]))\ndel count, pages, shock",
+  "visibleSeed": 52,
+  "visibleInputs": {
+    "shelf": {
+      "kind": "table",
+      "labels": [
+        "title",
+        "pages",
+        "wing"
+      ],
+      "rows": [
+        [
+          "Volume 1",
+          150,
+          "Display Hall"
+        ],
+        [
+          "Volume 2",
+          160,
+          "Sealed Archive"
+        ],
+        [
+          "Volume 3",
+          140,
+          "Display Hall"
+        ],
+        [
+          "Volume 4",
+          155,
+          "Sealed Archive"
+        ],
+        [
+          "Volume 5",
+          145,
+          "Display Hall"
+        ]
+      ],
+      "totalRows": 5
+    }
+  },
+  "fixtures": [
+    {
+      "name": "a_long_volume_that_is_still_inside_three_rods",
+      "predicate": "2 < max(np.abs((shelf.column('pages') - np.mean(shelf.column('pages'))) / np.std(shelf.column('pages')))) <= 3",
+      "inputs": {
+        "shelf": {
+          "kind": "table",
+          "labels": [
+            "title",
+            "pages",
+            "wing"
+          ],
+          "rows": [
+            [
+              "Volume 1",
+              150,
+              "Display Hall"
+            ],
+            [
+              "Volume 2",
+              150,
+              "Sealed Archive"
+            ],
+            [
+              "Volume 3",
+              150,
+              "Display Hall"
+            ],
+            [
+              "Volume 4",
+              150,
+              "Sealed Archive"
+            ],
+            [
+              "Volume 5",
+              150,
+              "Display Hall"
+            ],
+            [
+              "Volume 6",
+              150,
+              "Display Hall"
+            ],
+            [
+              "Volume 7",
+              150,
+              "Sealed Archive"
+            ],
+            [
+              "Volume 8",
+              550,
+              "Display Hall"
+            ]
+          ],
+          "totalRows": 8
+        }
+      }
+    },
+    {
+      "name": "a_tiny_pamphlet_sits_below",
+      "predicate": "min((shelf.column('pages') - np.mean(shelf.column('pages'))) / np.std(shelf.column('pages'))) < -2.5",
+      "inputs": {
+        "shelf": {
+          "kind": "table",
+          "labels": [
+            "title",
+            "pages",
+            "wing"
+          ],
+          "rows": [
+            [
+              "Volume 1",
+              300,
+              "Display Hall"
+            ],
+            [
+              "Volume 2",
+              305,
+              "Sealed Archive"
+            ],
+            [
+              "Volume 3",
+              298,
+              "Display Hall"
+            ],
+            [
+              "Volume 4",
+              302,
+              "Sealed Archive"
+            ],
+            [
+              "Volume 5",
+              301,
+              "Display Hall"
+            ],
+            [
+              "Volume 6",
+              299,
+              "Display Hall"
+            ],
+            [
+              "Volume 7",
+              303,
+              "Sealed Archive"
+            ],
+            [
+              "Volume 8",
+              297,
+              "Display Hall"
+            ],
+            [
+              "Volume 9",
+              304,
+              "Sealed Archive"
+            ],
+            [
+              "Volume 10",
+              12,
+              "Display Hall"
+            ]
+          ],
+          "totalRows": 10
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\npages = shelf.column('pages')\nunits = np.abs((pages - np.mean(pages)) / np.std(pages))\nflagged = shelf.with_column('rods', units).where('rods', are.above(3))\ndeliver(flagged.select('title', 'pages'))",
+  "naive": [
+    {
+      "code": "import numpy as np\npages = shelf.column('pages')\nwobble = np.mean(np.abs(pages - np.mean(pages)))\nflagged = shelf.with_column('rods', np.abs(pages - np.mean(pages)) / wobble).where('rods', are.above(3))\ndeliver(flagged.select('title', 'pages'))",
+      "fails": "silent",
+      "hazard": "a_long_volume_that_is_still_inside_three_rods"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "outlier-flags"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 14,
+    "oil": 1
+  },
+  "setPiece": "measuring-rod",
+  "hazards": [
+    "a_long_volume_that_is_still_inside_three_rods",
+    "a_tiny_pamphlet_sits_below"
+  ],
+  "stochastic": false
+}

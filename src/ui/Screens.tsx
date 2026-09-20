@@ -63,11 +63,13 @@ export function IntroScreen({ onFinish, onBeat, reducedMotion }: { onFinish: (na
   </main>;
 }
 
-export function CreditsScreen({ onBack }: { onBack: () => void }) {
+export function CreditsScreen({ onBack, onSandbox }: { onBack: () => void; onSandbox?: () => void }) {
   return <main className="credits-screen"><article className="credits-page">
     <TurtleMark /><span className="eyebrow">{text.brand.footer}</span><h1>{text.credits.title}</h1>
     <p>{text.credits.body}</p><p>{text.credits.design}</p><p>{text.credits.technology}</p><p>{text.credits.api}</p><p>{text.credits.curriculum}</p><p>{text.credits.fonts}</p>
-    <p className="thanks">{text.credits.thanks}</p><button className="button" onClick={onBack}><Icon name="back" />{text.menu.back}</button>
+    <p className="thanks">{text.credits.thanks}</p>
+    {onSandbox && <button className="button primary" onClick={onSandbox}>{text.sandbox.enter}<Icon name="arrow" /></button>}
+    <button className="button" onClick={onBack}><Icon name="back" />{text.menu.back}</button>
   </article></main>;
 }
 

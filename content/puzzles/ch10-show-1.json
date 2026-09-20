@@ -1,0 +1,227 @@
+{
+  "id": "ch10-show-1",
+  "chapter": 10,
+  "kind": "show",
+  "title": "How Tight Is the Rope",
+  "patron": "Dr. Newt",
+  "request": "Give me the correlation between the shelf height a book sits at and how many times it went out this season. One number, computed from standard units on both sides.",
+  "objective": "Compute a correlation as the average product of standard units.",
+  "concepts": [
+    "correlation",
+    "standard_units",
+    "linear_association"
+  ],
+  "requiredApi": [
+    "column",
+    "np.mean",
+    "np.std",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\ndeliver(np.mean(heights * loans))",
+  "hints": [
+    "Correlation cannot depend on whether you measure in shelves or in centimetres.",
+    "Put both columns into standard units first: subtract the mean, divide by the standard deviation.",
+    "Then deliver the mean of the two standard-unit arrays multiplied together."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(5, 10)\ntilt = random.choice([-2, -1, 0, 1, 3])\nnoise = random.choice([0, 1, 4])\nheights = [random.randint(1, 9) for _ in range(count)]\nif max(heights) == min(heights):\n    heights[0] = heights[0] + 2\nloans = [20 + tilt * height + random.randint(-noise, noise) for height in heights]\nif max(loans) == min(loans):\n    loans[0] = loans[0] + 1\nscatter_cart = Table().with_columns('height', make_array(*heights), 'loans', make_array(*loans))\ndel count, tilt, noise, heights, loans",
+  "visibleSeed": 6,
+  "visibleInputs": {
+    "scatter_cart": {
+      "kind": "table",
+      "labels": [
+        "height",
+        "loans"
+      ],
+      "rows": [
+        [
+          1,
+          -1
+        ],
+        [
+          2,
+          -1
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          7,
+          1
+        ]
+      ],
+      "totalRows": 4
+    }
+  },
+  "fixtures": [
+    {
+      "name": "loans_are_counted_in_raw_units",
+      "predicate": "min(scatter_cart.column('loans')) > 5",
+      "inputs": {
+        "scatter_cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              1,
+              26
+            ],
+            [
+              3,
+              22
+            ],
+            [
+              5,
+              19
+            ],
+            [
+              7,
+              14
+            ],
+            [
+              9,
+              11
+            ]
+          ],
+          "totalRows": 5
+        }
+      }
+    },
+    {
+      "name": "the_rope_runs_downhill",
+      "predicate": "np.mean((scatter_cart.column('height') - np.mean(scatter_cart.column('height'))) * (scatter_cart.column('loans') - np.mean(scatter_cart.column('loans')))) < 0",
+      "inputs": {
+        "scatter_cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans"
+          ],
+          "rows": [
+            [
+              2,
+              31
+            ],
+            [
+              4,
+              27
+            ],
+            [
+              6,
+              24
+            ],
+            [
+              8,
+              18
+            ]
+          ],
+          "totalRows": 4
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nheight_units = (heights - np.mean(heights)) / np.std(heights)\nloan_units = (loans - np.mean(loans)) / np.std(loans)\ndeliver(np.mean(height_units * loan_units))",
+  "naive": [
+    {
+      "code": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nheight_units = (heights - np.mean(heights)) / np.std(heights)\ndeliver(np.mean(height_units * loans))",
+      "fails": "silent",
+      "hazard": "loans_are_counted_in_raw_units"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "correlation"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 12,
+    "oil": 0
+  },
+  "setPiece": "rope-line",
+  "hazards": [
+    "loans_are_counted_in_raw_units",
+    "the_rope_runs_downhill"
+  ],
+  "stochastic": false
+}

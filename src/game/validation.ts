@@ -57,6 +57,8 @@ function assertPuzzle(value: unknown): asserts value is Puzzle {
     throw new Error(`Invalid metadata for ${value.id}`);
   }
   if (value.visibleInputs !== undefined && !inputsAreValid(value.visibleInputs)) throw new Error('Invalid visible inputs');
+  if (value.lesson !== undefined && typeof value.lesson !== 'boolean') throw new Error('Invalid lesson flag');
+  if (value.verifyOnRun !== undefined && typeof value.verifyOnRun !== 'boolean') throw new Error('Invalid Run verification flag');
   if (!Array.isArray(value.fixtures) || !value.fixtures.every((fixture: unknown) =>
     record(fixture) && typeof fixture.name === 'string' && typeof fixture.predicate === 'string' && inputsAreValid(fixture.inputs))) {
     throw new Error('Invalid fixtures');

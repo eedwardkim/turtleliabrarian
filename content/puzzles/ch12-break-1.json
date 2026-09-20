@@ -1,0 +1,151 @@
+{
+  "id": "ch12-break-1",
+  "chapter": 12,
+  "kind": "break",
+  "title": "The Forgery Lamp",
+  "patron": "the Trustees",
+  "request": "The forgery lamp flags this book; you know the forgery rate and the lamp's chances of flagging forged and honest books. What is the chance the flagged book is really a forgery?",
+  "objective": "Combine a base rate with test accuracy instead of trusting the test alone.",
+  "concepts": [
+    "base_rate",
+    "bayes_rule",
+    "false_positives"
+  ],
+  "requiredApi": [
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "deliver(rarity * lamp_catches)",
+  "hints": [
+    "A lamp that flags one honest book in twenty will flag a great many honest books in a library this size.",
+    "Weigh the flagged forgeries, rarity * lamp_catches, against the flagged honest books, (1 - rarity) * false_flag.",
+    "Deliver the forgery weight divided by the total weight of every flagged book."
+  ],
+  "inputCode": "import random\nrarity = random.choice([0.002, 0.01, 0.05, 0.2, 0.5])\nlamp_catches = random.choice([0.8, 0.9, 0.95, 0.99])\nfalse_flag = random.choice([0.01, 0.05, 0.1])\nif rarity == 0.5:\n    false_flag = 1 - lamp_catches",
+  "visibleSeed": 2,
+  "visibleInputs": {
+    "rarity": 0.5,
+    "lamp_catches": 0.95,
+    "false_flag": 0.05
+  },
+  "fixtures": [
+    {
+      "name": "forgeries_are_one_in_five_hundred",
+      "predicate": "rarity <= 0.002",
+      "inputs": {
+        "rarity": 0.002,
+        "lamp_catches": 0.95,
+        "false_flag": 0.05
+      }
+    },
+    {
+      "name": "the_lamp_never_flags_an_honest_book",
+      "predicate": "false_flag == 0",
+      "inputs": {
+        "rarity": 0.01,
+        "lamp_catches": 0.9,
+        "false_flag": 0.0
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "flagged_forgeries = rarity * lamp_catches\nflagged_honest = (1 - rarity) * false_flag\ndeliver(flagged_forgeries / (flagged_forgeries + flagged_honest))",
+  "naive": [
+    {
+      "code": "deliver(lamp_catches)",
+      "fails": "silent",
+      "hazard": "forgeries_are_one_in_five_hundred"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-12,
+    "relativeTolerance": 1e-12
+  },
+  "unlocks": [
+    "base-rate"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 16,
+    "oil": 1
+  },
+  "setPiece": "branching-chutes",
+  "hazards": [
+    "forgeries_are_one_in_five_hundred",
+    "the_lamp_never_flags_an_honest_book"
+  ],
+  "stochastic": false
+}

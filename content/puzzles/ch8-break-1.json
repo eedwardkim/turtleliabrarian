@@ -1,0 +1,256 @@
+{
+  "id": "ch8-break-1",
+  "chapter": 8,
+  "kind": "break",
+  "title": "Is the Trustees' Number Inside",
+  "patron": "the Trustees",
+  "request": "We published an average wait of exactly this many days. Build a ninety-five percent interval from two hundred re-grabs and tell us true or false: does our number sit inside the bookends, counting the bookends themselves as inside?",
+  "objective": "Compare a claimed value against a bootstrap interval, boundary included.",
+  "concepts": [
+    "confidence_interval",
+    "boundary_cases",
+    "inference_decision"
+  ],
+  "requiredApi": [
+    "sample",
+    "num_rows",
+    "column",
+    "np.mean",
+    "np.append",
+    "percentile",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std"
+  ],
+  "starter": "import numpy as np\ndeliver(np.mean(cart.column('days')) - claim)",
+  "hints": [
+    "The trustees asked about the interval, not about the cart's own average.",
+    "Build the bookends first with percentile(2.5, means) and percentile(97.5, means).",
+    "Then deliver whether claim sits between them, remembering that landing exactly on a bookend counts as inside."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(8, 13)\nspread = random.choice([0, 3, 8, 15])\ndays = [random.randint(4, 4 + spread) for _ in range(count)]\nwing = [random.choice(['Display Hall', 'Sealed Archive']) for _ in range(count)]\ncart = Table().with_columns('wing', make_array(*wing), 'days', make_array(*days))\nclaim = random.choice([4, 6, 9, 13, 24])\ndel count, spread, days, wing",
+  "visibleSeed": 8,
+  "visibleInputs": {
+    "cart": {
+      "kind": "table",
+      "labels": [
+        "wing",
+        "days"
+      ],
+      "rows": [
+        [
+          "Display Hall",
+          6
+        ],
+        [
+          "Sealed Archive",
+          9
+        ],
+        [
+          "Display Hall",
+          7
+        ],
+        [
+          "Sealed Archive",
+          8
+        ],
+        [
+          "Display Hall",
+          7
+        ],
+        [
+          "Sealed Archive",
+          9
+        ],
+        [
+          "Display Hall",
+          6
+        ],
+        [
+          "Sealed Archive",
+          8
+        ]
+      ],
+      "totalRows": 8
+    },
+    "claim": 7
+  },
+  "fixtures": [
+    {
+      "name": "claim_sits_on_the_left_bookend",
+      "predicate": "claim == min(cart.column('days')) and max(cart.column('days')) == min(cart.column('days'))",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "wing",
+            "days"
+          ],
+          "rows": [
+            [
+              "Display Hall",
+              5
+            ],
+            [
+              "Sealed Archive",
+              5
+            ],
+            [
+              "Display Hall",
+              5
+            ],
+            [
+              "Sealed Archive",
+              5
+            ],
+            [
+              "Display Hall",
+              5
+            ],
+            [
+              "Sealed Archive",
+              5
+            ]
+          ],
+          "totalRows": 6
+        },
+        "claim": 5
+      }
+    },
+    {
+      "name": "claim_is_far_outside",
+      "predicate": "claim > 3 * max(cart.column('days'))",
+      "inputs": {
+        "cart": {
+          "kind": "table",
+          "labels": [
+            "wing",
+            "days"
+          ],
+          "rows": [
+            [
+              "Display Hall",
+              6
+            ],
+            [
+              "Sealed Archive",
+              9
+            ],
+            [
+              "Display Hall",
+              4
+            ],
+            [
+              "Sealed Archive",
+              11
+            ],
+            [
+              "Display Hall",
+              7
+            ],
+            [
+              "Sealed Archive",
+              8
+            ]
+          ],
+          "totalRows": 6
+        },
+        "claim": 40
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "import numpy as np\nfrom datascience import make_array\nmeans = make_array()\nfor repetition in range(200):\n    means = np.append(means, np.mean(cart.sample(cart.num_rows).column('days')))\nleft = percentile(2.5, means)\nright = percentile(97.5, means)\nif left <= claim <= right:\n    deliver(True)\nelse:\n    deliver(False)",
+  "naive": [
+    {
+      "code": "import numpy as np\nfrom datascience import make_array\nmeans = make_array()\nfor repetition in range(200):\n    means = np.append(means, np.mean(cart.sample(cart.num_rows).column('days')))\nleft = percentile(2.5, means)\nright = percentile(97.5, means)\nif left < claim < right:\n    deliver(True)\nelse:\n    deliver(False)",
+      "fails": "silent",
+      "hazard": "claim_sits_on_the_left_bookend"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 0.0,
+    "relativeTolerance": 0.0
+  },
+  "unlocks": [
+    "interval-decision"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 15,
+    "oil": 1
+  },
+  "setPiece": "bookends",
+  "hazards": [
+    "claim_sits_on_the_left_bookend"
+  ],
+  "stochastic": true
+}

@@ -3,6 +3,8 @@
 from contextvars import ContextVar
 from typing import Protocol
 
+import numpy as np
+
 
 class Observer(Protocol):
     def operation(
@@ -13,6 +15,9 @@ class Observer(Protocol):
 
 
 observer: ContextVar[Observer | None] = ContextVar("shelf_observer", default=None)
+sampling_rng: ContextVar[np.random.Generator | None] = ContextVar(
+    "shelf_sampling_rng", default=None
+)
 
 
 def emit(name: str, inputs: tuple, output: object, **details) -> None:

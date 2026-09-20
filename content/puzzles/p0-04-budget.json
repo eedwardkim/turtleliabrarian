@@ -1,22 +1,21 @@
 {
-  "id": "p0-04-budget", "chapter": 0, "kind": "break",
-  "title": "A Price Written in Words", "patron": "Bramble",
-  "request": "The fee on this card is a whole number written as text. Deliver True if my allowance covers it, or False if I must grumble.",
-  "objective": "Convert numeric text before comparing quantities; include equality.",
-  "concepts": ["comparisons", "booleans", "numeric_text"],
-  "requiredApi": ["int", "deliver"],
-  "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str"],
-  "starter": "can_pay = False\ndeliver(can_pay)",
-  "hints": ["A dictionary puts '12' before '5'; a purse does not.", "int turns whole-number text into a quantity; <= includes the exact price.", "Convert fee_text before the comparison, and compare that quantity with allowance."],
-  "inputCode": "import random\nfee_text = str(random.randint(1, 30))\nallowance = random.randint(1, 30)",
-  "visibleSeed": 14, "visibleInputs": {"fee_text": "3", "allowance": 5},
+  "id": "p0-04-budget", "chapter": 0, "kind": "show", "lesson": true,
+  "title": "Give it a name", "patron": "Ms. Ash",
+  "request": "Split the biscuit weight between the readers. Keep the crumbs.",
+  "objective": "Divide two named numbers and keep the fraction.",
+  "concepts": ["names", "division", "deliver"],
+  "requiredApi": ["deliver"], "learnedApi": ["deliver", "print"],
+  "starter": "share = ___\ndeliver(share)",
+  "hints": ["Each reader gets weight divided by readers.", "In Python, / divides: weight / readers.", "share = weight / readers"],
+  "inputCode": "import random\nweight = random.randint(2, 12)\nreaders = random.randint(1, 4)",
+  "visibleSeed": 14, "visibleInputs": {"weight": 9, "readers": 2},
   "fixtures": [
-    {"name": "lexicographic_price", "inputs": {"fee_text": "12", "allowance": 5}, "predicate": "(fee_text <= str(allowance)) != (int(fee_text) <= allowance)"},
-    {"name": "exact_change", "inputs": {"fee_text": "7", "allowance": 7}, "predicate": "int(fee_text) == allowance"}
+    {"name": "readers_present", "inputs": {"weight": 9, "readers": 2}, "predicate": "readers > 0"}
   ],
-  "queueSize": 7, "reference": "can_pay = int(fee_text) <= allowance\ndeliver(can_pay)",
-  "naive": [{"code": "deliver(fee_text <= str(allowance))", "fails": "silent", "hazard": "lexicographic_price"}],
+  "queueSize": 6, "reference": "share = weight / readers\ndeliver(share)",
+  "naive": [],
   "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
-  "unlocks": ["comparisons"], "standingOrder": {"eligible": true, "ink": 2, "oil": 0},
-  "setPiece": "fee-stamp", "hazards": ["lexicographic_price"], "stochastic": false
+  "unlocks": ["str", "int", "float"],
+  "standingOrder": {"eligible": false, "ink": 0, "oil": 0}, "setPiece": "fee-stamp",
+  "hazards": [], "stochastic": false
 }

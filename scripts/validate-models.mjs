@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { NodeIO, getBounds } from '@gltf-transform/core';
 import validator from 'gltf-validator';
@@ -10,6 +10,10 @@ export async function validateModels() {
   const manifest = JSON.parse(await readFile('asset-manifest.json', 'utf8'));
   const io = new NodeIO();
   const reports = [];
+  const shipped = (await readdir('public/models'))
+    .filter((file) => file.endsWith('.glb')).map((file) => file.slice(0, -4));
+  const declared = new Set(manifest.assets.map((asset) => asset.name));
+  const orphans = shipped.filter((name) => !declared.has(name));
   for (const asset of manifest.assets) {
     const path = `public/models/${asset.name}.glb`;
     const bytes = await readFile(path);
@@ -30,6 +34,20 @@ export async function validateModels() {
     }
     for (const name of asset.nodes) if (!names.includes(name)) errors.push(`Missing node ${name}`);
     for (const name of asset.clips) if (!clips.includes(name)) errors.push(`Missing clip ${name}`);
+    for (const name of clips) if (!asset.clips.includes(name)) errors.push(`Undeclared clip ${name}`);
+    for (const animation of root.listAnimations()) {
+      const channels = animation.listChannels();
+      if (!channels.length) errors.push(`Empty clip ${animation.getName()}`);
+      for (const channel of channels) {
+        if (!channel.getTargetNode()) errors.push(`Dangling channel in ${animation.getName()}`);
+      }
+      for (const sampler of animation.listSamplers()) {
+        const input = sampler.getInput();
+        const first = input.getElement(0, [])[0];
+        const span = input.getElement(input.getCount() - 1, [])[0] - first;
+        if (span > 2.01) errors.push(`Clip ${animation.getName()} runs ${span}s over 2s`);
+      }
+    }
     if (root.listSkins().length) errors.push('Rigid asset contains skinning');
     if (root.listTextures().length) errors.push('Unexpected image texture');
     for (const node of root.listNodes()) {
@@ -67,6 +85,9 @@ export async function validateModels() {
     }
     const bounds = getBounds(root.listScenes()[0]);
     const height = bounds.max[1] - bounds.min[1];
+    if (asset.grounded !== false && bounds.min[1] < -0.005) {
+      errors.push(`Origin is not at ground level (min Y ${bounds.min[1]})`);
+    }
     if (asset.maxHeight && height > asset.maxHeight) errors.push(`Height ${height} exceeds ${asset.maxHeight}`);
     if (triangles > asset.maxTriangles) errors.push(`${triangles} triangles exceeds ${asset.maxTriangles}`);
     if (validation.issues.numErrors) errors.push(...validation.issues.messages
@@ -74,6 +95,11 @@ export async function validateModels() {
     reports.push({ name: asset.name, triangles, primitives, bytes: bytes.length, nodes: names,
       clips, bounds, validatorErrors: validation.issues.numErrors,
       validatorWarnings: validation.issues.numWarnings, errors });
+  }
+  if (orphans.length) {
+    reports.push({ name: 'manifest', triangles: 0, primitives: 0, bytes: 0, nodes: [],
+      clips: [], bounds: null, validatorErrors: 0, validatorWarnings: 0,
+      errors: orphans.map((name) => `Unmanifested model ${name}.glb`) });
   }
   return reports;
 }

@@ -1,0 +1,245 @@
+{
+  "id": "ch9-show-2",
+  "chapter": 9,
+  "kind": "show",
+  "title": "Everything in Rods",
+  "patron": "Mx. Wren",
+  "request": "Convert every reading-room temperature into standard units, in the order the readings were taken, so I can compare them against the humidity log later.",
+  "objective": "Centre and scale a column into standard units.",
+  "concepts": [
+    "standard_units",
+    "centering",
+    "scaling"
+  ],
+  "requiredApi": [
+    "column",
+    "np.mean",
+    "np.std",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "import numpy as np\nreadings = log.column('degrees')\ndeliver(readings - np.mean(readings))",
+  "hints": [
+    "Standard units answer 'how many rods above the middle', so the middle has to move to zero first.",
+    "Subtract the mean from every reading, then divide the whole array by the standard deviation.",
+    "One line does it: (readings - np.mean(readings)) / np.std(readings), delivered as an array."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(5, 9)\nshift = random.choice([0, 0, 12, -7, 30])\ndegrees = [shift + random.randint(-6, 6) for _ in range(count)]\nif max(degrees) == min(degrees):\n    degrees[0] = degrees[0] + 3\nhours = [7 + i for i in range(count)]\nlog = Table().with_columns('hour', make_array(*hours), 'degrees', make_array(*degrees))\ndel count, shift, degrees, hours",
+  "visibleSeed": 61,
+  "visibleInputs": {
+    "log": {
+      "kind": "table",
+      "labels": [
+        "hour",
+        "degrees"
+      ],
+      "rows": [
+        [
+          7,
+          -4
+        ],
+        [
+          8,
+          -2
+        ],
+        [
+          9,
+          0
+        ],
+        [
+          10,
+          2
+        ],
+        [
+          11,
+          4
+        ]
+      ],
+      "totalRows": 5
+    }
+  },
+  "fixtures": [
+    {
+      "name": "readings_sit_far_from_zero",
+      "predicate": "min(log.column('degrees')) > 10",
+      "inputs": {
+        "log": {
+          "kind": "table",
+          "labels": [
+            "hour",
+            "degrees"
+          ],
+          "rows": [
+            [
+              7,
+              18
+            ],
+            [
+              8,
+              21
+            ],
+            [
+              9,
+              24
+            ],
+            [
+              10,
+              19
+            ],
+            [
+              11,
+              23
+            ]
+          ],
+          "totalRows": 5
+        }
+      }
+    },
+    {
+      "name": "one_cold_hour_pulls_the_middle",
+      "predicate": "min(log.column('degrees')) < np.mean(log.column('degrees')) - 2 * np.std(log.column('degrees'))",
+      "inputs": {
+        "log": {
+          "kind": "table",
+          "labels": [
+            "hour",
+            "degrees"
+          ],
+          "rows": [
+            [
+              7,
+              -30
+            ],
+            [
+              8,
+              4
+            ],
+            [
+              9,
+              5
+            ],
+            [
+              10,
+              6
+            ],
+            [
+              11,
+              5
+            ],
+            [
+              12,
+              4
+            ],
+            [
+              13,
+              6
+            ],
+            [
+              14,
+              5
+            ]
+          ],
+          "totalRows": 8
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nreadings = log.column('degrees')\ndeliver((readings - np.mean(readings)) / np.std(readings))",
+  "naive": [
+    {
+      "code": "import numpy as np\nreadings = log.column('degrees')\ndeliver(readings / np.std(readings))",
+      "fails": "silent",
+      "hazard": "readings_sit_far_from_zero"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "standard-units"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 11,
+    "oil": 0
+  },
+  "setPiece": "measuring-rod",
+  "hazards": [
+    "readings_sit_far_from_zero"
+  ],
+  "stochastic": false
+}

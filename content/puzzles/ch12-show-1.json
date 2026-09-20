@@ -1,0 +1,149 @@
+{
+  "id": "ch12-show-1",
+  "chapter": 12,
+  "kind": "show",
+  "title": "Down the Left Chute and Damaged",
+  "patron": "Shelby",
+  "request": "Returns fall down the left chute with this chance, and a slip that goes left comes out damaged with this chance. Give me the chance that tonight's slip goes left and comes out damaged.",
+  "objective": "Multiply along one branch of a chance tree to get a joint chance.",
+  "concepts": [
+    "chance_tree",
+    "joint_probability",
+    "prior",
+    "likelihood"
+  ],
+  "requiredApi": [
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "deliver(goes_left + damaged_if_left)",
+  "hints": [
+    "Two things have to happen in a row, not just the second one.",
+    "Walking a branch of the chute multiplies the chances you pass on the way down.",
+    "Deliver goes_left times damaged_if_left."
+  ],
+  "inputCode": "import random\ngoes_left = random.choice([0.1, 0.25, 0.4, 0.5, 0.75, 1.0])\ndamaged_if_left = random.choice([0.02, 0.1, 0.3, 0.6])",
+  "visibleSeed": 13,
+  "visibleInputs": {
+    "goes_left": 1.0,
+    "damaged_if_left": 0.3
+  },
+  "fixtures": [
+    {
+      "name": "most_slips_never_go_left",
+      "predicate": "goes_left < 0.5",
+      "inputs": {
+        "goes_left": 0.2,
+        "damaged_if_left": 0.5
+      }
+    },
+    {
+      "name": "the_left_chute_is_gentle",
+      "predicate": "damaged_if_left < 0.05",
+      "inputs": {
+        "goes_left": 0.75,
+        "damaged_if_left": 0.02
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "deliver(goes_left * damaged_if_left)",
+  "naive": [
+    {
+      "code": "deliver(damaged_if_left)",
+      "fails": "silent",
+      "hazard": "most_slips_never_go_left"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-12,
+    "relativeTolerance": 1e-12
+  },
+  "unlocks": [
+    "chance-tree"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 12,
+    "oil": 0
+  },
+  "setPiece": "branching-chutes",
+  "hazards": [
+    "most_slips_never_go_left",
+    "the_left_chute_is_gentle"
+  ],
+  "stochastic": false
+}

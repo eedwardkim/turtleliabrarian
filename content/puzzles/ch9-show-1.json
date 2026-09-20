@@ -1,0 +1,208 @@
+{
+  "id": "ch9-show-1",
+  "chapter": 9,
+  "kind": "show",
+  "title": "How Wide Is the Cart",
+  "patron": "Dr. Newt",
+  "request": "Give me the standard deviation of the page counts on this cart, measured across every book on it, not across some smaller estimate.",
+  "objective": "Measure spread with the standard deviation of the whole collection in hand.",
+  "concepts": [
+    "standard_deviation",
+    "spread",
+    "population_vs_sample"
+  ],
+  "requiredApi": [
+    "column",
+    "np.std",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "import numpy as np\npages = shelf.column('pages')\ndeliver(np.mean(pages))",
+  "hints": [
+    "The widest gap between two books is not the same as the usual distance from the middle.",
+    "np.std measures the root mean squared distance from the mean of the values you hand it.",
+    "Pull the pages column off the shelf and deliver np.std of it, with no other adjustment."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(4, 9)\nspread = random.choice([0, 5, 40, 160])\nmiddle = random.randint(90, 260)\npages = [middle + random.randint(-spread, spread) for _ in range(count)]\nnames = ['Ledger ' + str(i + 1) for i in range(count)]\nshelf = Table().with_columns('title', make_array(*names), 'pages', make_array(*pages))\ndel count, spread, middle, pages, names",
+  "visibleSeed": 44,
+  "visibleInputs": {
+    "shelf": {
+      "kind": "table",
+      "labels": [
+        "title",
+        "pages"
+      ],
+      "rows": [
+        [
+          "Ledger 1",
+          120
+        ],
+        [
+          "Ledger 2",
+          120
+        ],
+        [
+          "Ledger 3",
+          120
+        ],
+        [
+          "Ledger 4",
+          120
+        ]
+      ],
+      "totalRows": 4
+    }
+  },
+  "fixtures": [
+    {
+      "name": "pages_actually_vary",
+      "predicate": "max(shelf.column('pages')) > min(shelf.column('pages'))",
+      "inputs": {
+        "shelf": {
+          "kind": "table",
+          "labels": [
+            "title",
+            "pages"
+          ],
+          "rows": [
+            [
+              "Ledger 1",
+              80
+            ],
+            [
+              "Ledger 2",
+              140
+            ],
+            [
+              "Ledger 3",
+              200
+            ],
+            [
+              "Ledger 4",
+              100
+            ]
+          ],
+          "totalRows": 4
+        }
+      }
+    },
+    {
+      "name": "one_book_on_the_cart",
+      "predicate": "shelf.num_rows == 1",
+      "inputs": {
+        "shelf": {
+          "kind": "table",
+          "labels": [
+            "title",
+            "pages"
+          ],
+          "rows": [
+            [
+              "Ledger 9",
+              310
+            ]
+          ],
+          "totalRows": 1
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\ndeliver(np.std(shelf.column('pages')))",
+  "naive": [
+    {
+      "code": "import numpy as np\ndeliver(np.std(shelf.column('pages'), ddof=1))",
+      "fails": "silent",
+      "hazard": "pages_actually_vary"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "standard-deviation"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 10,
+    "oil": 0
+  },
+  "setPiece": "measuring-rod",
+  "hazards": [
+    "pages_actually_vary"
+  ],
+  "stochastic": false
+}

@@ -457,5 +457,1174 @@
     "validatorErrors": 0,
     "validatorWarnings": 0,
     "errors": []
+  },
+  {
+    "name": "hatchling",
+    "triangles": 1344,
+    "primitives": 8,
+    "bytes": 162420,
+    "nodes": [
+      "BellyPocket_mesh",
+      "BellyPocket",
+      "Body_mesh",
+      "Head_mesh",
+      "Head",
+      "Body",
+      "Foot_BL_mesh",
+      "Foot_BL",
+      "Foot_BR_mesh",
+      "Foot_BR",
+      "Foot_FL_mesh",
+      "Foot_FL",
+      "Foot_FR_mesh",
+      "Foot_FR",
+      "Hatchling"
+    ],
+    "clips": [
+      "cheer",
+      "flip",
+      "get_up",
+      "carry_walk",
+      "stamp",
+      "flail_loop",
+      "idle",
+      "push_cart",
+      "drop_marble",
+      "think",
+      "deliver",
+      "walk",
+      "pull_lever"
+    ],
+    "bounds": {
+      "min": [
+        -0.10439999774098396,
+        0.0018000006675720215,
+        -0.18449998833239079
+      ],
+      "max": [
+        0.10439999774098396,
+        0.2137499898672104,
+        0.2114999908953905
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "heron",
+    "triangles": 568,
+    "primitives": 1,
+    "bytes": 65120,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Heron"
+    ],
+    "clips": [
+      "step_forward",
+      "happy",
+      "leave",
+      "queue_idle",
+      "puzzled"
+    ],
+    "bounds": {
+      "min": [
+        -0.13500000536441803,
+        0,
+        -0.23000001162290573
+      ],
+      "max": [
+        0.13500000536441803,
+        0.8350000232458115,
+        0.11900000274181366
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "badger",
+    "triangles": 712,
+    "primitives": 1,
+    "bytes": 81460,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Badger"
+    ],
+    "clips": [
+      "step_forward",
+      "happy",
+      "leave",
+      "queue_idle",
+      "puzzled"
+    ],
+    "bounds": {
+      "min": [
+        -0.14624999463558197,
+        0,
+        -0.14000000059604645
+      ],
+      "max": [
+        0.17499999701976776,
+        0.5150000005960464,
+        0.17499999701976776
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "newt",
+    "triangles": 618,
+    "primitives": 1,
+    "bytes": 72096,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Newt"
+    ],
+    "clips": [
+      "step_forward",
+      "happy",
+      "leave",
+      "queue_idle",
+      "puzzled"
+    ],
+    "bounds": {
+      "min": [
+        -0.14999999105930328,
+        0,
+        -0.3699999749660492
+      ],
+      "max": [
+        0.14999999105930328,
+        0.38200001418590546,
+        0.20500001311302185
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "geese",
+    "triangles": 880,
+    "primitives": 2,
+    "bytes": 98580,
+    "nodes": [
+      "Goose_L_mesh",
+      "Goose_L",
+      "Goose_R_mesh",
+      "Goose_R",
+      "Geese"
+    ],
+    "clips": [
+      "step_forward",
+      "leave",
+      "queue_idle",
+      "happy",
+      "puzzled"
+    ],
+    "bounds": {
+      "min": [
+        -0.29499998688697815,
+        0,
+        -0.17000000551342964
+      ],
+      "max": [
+        0.29499998688697815,
+        0.6950000077486038,
+        0.20599999651312828
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "hedgehog",
+    "triangles": 590,
+    "primitives": 1,
+    "bytes": 69292,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Hedgehog"
+    ],
+    "clips": [
+      "step_forward",
+      "happy",
+      "leave",
+      "queue_idle",
+      "puzzled"
+    ],
+    "bounds": {
+      "min": [
+        -0.13500000536441803,
+        0,
+        -0.12327318638563156
+      ],
+      "max": [
+        0.13500000536441803,
+        0.3799999952316284,
+        0.1809999942779541
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "bookworm",
+    "triangles": 164,
+    "primitives": 2,
+    "bytes": 23784,
+    "nodes": [
+      "Body_mesh",
+      "Head_mesh",
+      "Head",
+      "Body",
+      "Bookworm"
+    ],
+    "clips": [
+      "wiggle",
+      "nibble"
+    ],
+    "bounds": {
+      "min": [
+        -0.02771281823515892,
+        0.0020000003278255463,
+        -0.07751667127013206
+      ],
+      "max": [
+        0.02771281637251377,
+        0.0690000019967556,
+        0.11500000022351742
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "magpie",
+    "triangles": 378,
+    "primitives": 4,
+    "bytes": 51444,
+    "nodes": [
+      "Body_mesh",
+      "Head_mesh",
+      "Head",
+      "Wing_L_mesh",
+      "Wing_L",
+      "Wing_R_mesh",
+      "Wing_R",
+      "Body",
+      "Magpie"
+    ],
+    "clips": [
+      "hop",
+      "fly_off",
+      "peck",
+      "flap"
+    ],
+    "bounds": {
+      "min": [
+        -0.11251666769385338,
+        0.04999999701976776,
+        -0.26959291845560074
+      ],
+      "max": [
+        0.11251666583120823,
+        0.2500000037252903,
+        0.1640000008046627
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "slip",
+    "triangles": 132,
+    "primitives": 1,
+    "bytes": 13840,
+    "nodes": [
+      "Paper_mesh",
+      "Paper",
+      "Slip"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.10000000149011612,
+        0.0010000001639127731,
+        -0.15000000596046448
+      ],
+      "max": [
+        0.10000000149011612,
+        0.009500000393018126,
+        0.15000000596046448
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "request",
+    "triangles": 124,
+    "primitives": 1,
+    "bytes": 13788,
+    "nodes": [
+      "Paper_mesh",
+      "Paper",
+      "Request"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.10999999847263098,
+        0.0010000001639127731,
+        -0.10999999940395355
+      ],
+      "max": [
+        0.11000000033527613,
+        0.009000000427477062,
+        0.07999999821186066
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "cabinet",
+    "triangles": 552,
+    "primitives": 6,
+    "bytes": 62308,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Drawer_0_mesh",
+      "Drawer_0",
+      "Drawer_1_mesh",
+      "Drawer_1",
+      "Drawer_2_mesh",
+      "Drawer_2",
+      "Drawer_3_mesh",
+      "Drawer_3",
+      "Drawer_4_mesh",
+      "Drawer_4",
+      "Cabinet"
+    ],
+    "clips": [
+      "rummage",
+      "open_drawer"
+    ],
+    "bounds": {
+      "min": [
+        -0.4099999964237213,
+        0,
+        -0.34000000171363354
+      ],
+      "max": [
+        0.4099999964237213,
+        1.1850000023841858,
+        0.29499999806284904
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "ledger",
+    "triangles": 260,
+    "primitives": 4,
+    "bytes": 31848,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Leaf_mesh",
+      "Leaf",
+      "Lectern_mesh",
+      "Lectern",
+      "Pages_mesh",
+      "Pages",
+      "Ledger"
+    ],
+    "clips": [
+      "turn_page"
+    ],
+    "bounds": {
+      "min": [
+        -0.4300000071525574,
+        0,
+        -0.29246196150779724
+      ],
+      "max": [
+        0.4300000071525574,
+        0.9366577565670013,
+        0.29246196150779724
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "bin",
+    "triangles": 276,
+    "primitives": 2,
+    "bytes": 31272,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "CountTag_mesh",
+      "CountTag",
+      "Bin"
+    ],
+    "clips": [
+      "fill"
+    ],
+    "bounds": {
+      "min": [
+        -0.25999999046325684,
+        -5.587935447692871e-9,
+        -0.2549999952316284
+      ],
+      "max": [
+        0.25999999046325684,
+        0.37999998964369297,
+        0.2840000013820827
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "lost_found",
+    "triangles": 344,
+    "primitives": 2,
+    "bytes": 38180,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Lid_mesh",
+      "Lid",
+      "LostFound"
+    ],
+    "clips": [
+      "toss_in"
+    ],
+    "bounds": {
+      "min": [
+        -0.3400000035762787,
+        -1.862645149230957e-9,
+        -0.33000001311302185
+      ],
+      "max": [
+        0.3400000035762787,
+        0.5100000090897083,
+        0.3330000042915344
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "board",
+    "triangles": 480,
+    "primitives": 2,
+    "bytes": 49716,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Orders_mesh",
+      "Orders",
+      "Board"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.550000011920929,
+        0,
+        -0.05999999772757292
+      ],
+      "max": [
+        0.550000011920929,
+        1.0099999904632568,
+        0.04100000113248825
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "trapdoor",
+    "triangles": 140,
+    "primitives": 2,
+    "bytes": 16840,
+    "nodes": [
+      "Door_mesh",
+      "Door",
+      "Frame_mesh",
+      "Frame",
+      "Trapdoor"
+    ],
+    "clips": [
+      "open"
+    ],
+    "bounds": {
+      "min": [
+        -0.5799999833106995,
+        -0.6000000052154064,
+        -0.5799999833106995
+      ],
+      "max": [
+        0.5799999833106995,
+        0.0859999991953373,
+        0.5800000112503767
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "stairs",
+    "triangles": 528,
+    "primitives": 1,
+    "bytes": 55244,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Stairs"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.5,
+        -1.0800000131130219,
+        -1.5399999618530273
+      ],
+      "max": [
+        0.5,
+        0.004999995231628418,
+        0.14000000059604645
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "archive",
+    "triangles": 456,
+    "primitives": 2,
+    "bytes": 49364,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Shutter_mesh",
+      "Shutter",
+      "Archive"
+    ],
+    "clips": [
+      "open_shutter"
+    ],
+    "bounds": {
+      "min": [
+        -0.6899999976158142,
+        0,
+        -0.25
+      ],
+      "max": [
+        0.6899999976158142,
+        1.909999966621399,
+        0.272000003606081
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "wing",
+    "triangles": 196,
+    "primitives": 2,
+    "bytes": 22820,
+    "nodes": [
+      "Base_mesh",
+      "Base",
+      "Post_mesh",
+      "Post",
+      "Wing"
+    ],
+    "clips": [
+      "grow"
+    ],
+    "bounds": {
+      "min": [
+        -0.38999998569488525,
+        0,
+        -0.38999998569488525
+      ],
+      "max": [
+        0.38999998569488525,
+        0.9700000062584877,
+        0.38999998569488525
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "sky",
+    "triangles": 224,
+    "primitives": 1,
+    "bytes": 23752,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Sky"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -39.999996185302734,
+        -26,
+        -40
+      ],
+      "max": [
+        40,
+        26,
+        40
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "scale",
+    "triangles": 428,
+    "primitives": 4,
+    "bytes": 42624,
+    "nodes": [
+      "Beam_mesh",
+      "Pan_L_mesh",
+      "Pan_L",
+      "Pan_R_mesh",
+      "Pan_R",
+      "Beam",
+      "Body_mesh",
+      "Body",
+      "Scale"
+    ],
+    "clips": [
+      "weigh"
+    ],
+    "bounds": {
+      "min": [
+        -0.5700000077486038,
+        0,
+        -0.23999999463558197
+      ],
+      "max": [
+        0.5700000077486038,
+        0.8599999994039536,
+        0.23999999463558197
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "press",
+    "triangles": 404,
+    "primitives": 3,
+    "bytes": 44580,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Platen_mesh",
+      "Platen",
+      "Wheel_mesh",
+      "Wheel",
+      "Press"
+    ],
+    "clips": [
+      "press"
+    ],
+    "bounds": {
+      "min": [
+        -0.4300000071525574,
+        0,
+        -0.30000001192092896
+      ],
+      "max": [
+        0.4300000071525574,
+        1.339999943971634,
+        0.30000001192092896
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "spool",
+    "triangles": 264,
+    "primitives": 2,
+    "bytes": 27672,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Reel_mesh",
+      "Reel",
+      "Spool"
+    ],
+    "clips": [
+      "spin"
+    ],
+    "bounds": {
+      "min": [
+        -0.17000000178813934,
+        0,
+        -0.12999999523162842
+      ],
+      "max": [
+        0.17000000178813934,
+        0.4300000071525574,
+        0.12999999523162842
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "jar",
+    "triangles": 612,
+    "primitives": 3,
+    "bytes": 66496,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Marbles_mesh",
+      "Marbles",
+      "Jar"
+    ],
+    "clips": [
+      "shake"
+    ],
+    "bounds": {
+      "min": [
+        -0.2800000011920929,
+        -5.587935447692871e-9,
+        -0.2800000011920929
+      ],
+      "max": [
+        0.2800000011920929,
+        0.6300000194460154,
+        0.2800000011920929
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "marble",
+    "triangles": 48,
+    "primitives": 1,
+    "bytes": 6628,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Marble"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.034999996423721313,
+        0,
+        -0.034999996423721313
+      ],
+      "max": [
+        0.034999996423721313,
+        0.07000000029802322,
+        0.034999996423721313
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "flag",
+    "triangles": 74,
+    "primitives": 2,
+    "bytes": 11168,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Cloth_mesh",
+      "Cloth",
+      "Flag"
+    ],
+    "clips": [
+      "wave"
+    ],
+    "bounds": {
+      "min": [
+        -0.017320508137345314,
+        0,
+        -0.019999999552965164
+      ],
+      "max": [
+        0.2199999988079071,
+        0.6649999916553497,
+        0.019999999552965164
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "bookends",
+    "triangles": 176,
+    "primitives": 2,
+    "bytes": 19808,
+    "nodes": [
+      "End_L_mesh",
+      "End_L",
+      "End_R_mesh",
+      "End_R",
+      "Bookends"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.5199999883770943,
+        0,
+        -0.09000000357627869
+      ],
+      "max": [
+        0.5199999883770943,
+        0.28000000678002834,
+        0.09000000357627869
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "residual",
+    "triangles": 92,
+    "primitives": 1,
+    "bytes": 9812,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Residual"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.15100000007078052,
+        0,
+        -0.1509999930858612
+      ],
+      "max": [
+        0.1510000079870224,
+        0.016000000294297934,
+        0.1509999930858612
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "grid",
+    "triangles": 204,
+    "primitives": 1,
+    "bytes": 20584,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Grid"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -3.015000104904175,
+        0,
+        -3.006999969482422
+      ],
+      "max": [
+        3.006999969482422,
+        0.018000000156462193,
+        3.014999999664724
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "galton",
+    "triangles": 976,
+    "primitives": 4,
+    "bytes": 98916,
+    "nodes": [
+      "Ball_mesh",
+      "Ball",
+      "Bins_mesh",
+      "Bins",
+      "Body_mesh",
+      "Body",
+      "Pins_mesh",
+      "Pins",
+      "Galton"
+    ],
+    "clips": [
+      "drop"
+    ],
+    "bounds": {
+      "min": [
+        -0.6850000023841858,
+        0,
+        -0.09999999776482582
+      ],
+      "max": [
+        0.6850000023841858,
+        1.6800000071525574,
+        0.07999999821186066
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "chute",
+    "triangles": 352,
+    "primitives": 2,
+    "bytes": 39788,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Gate_mesh",
+      "Gate",
+      "Chute"
+    ],
+    "clips": [
+      "split"
+    ],
+    "bounds": {
+      "min": [
+        -0.639642596244812,
+        0.26028530299663544,
+        -0.6703364849090576
+      ],
+      "max": [
+        0.6396426558494568,
+        1.2813852429389954,
+        0.6671168506145477
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "cap",
+    "triangles": 152,
+    "primitives": 1,
+    "bytes": 16596,
+    "nodes": [
+      "Crown_mesh",
+      "Crown",
+      "Cap"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.09045085310935974,
+        -0.02500000037252903,
+        -0.09986092895269394
+      ],
+      "max": [
+        0.09045085310935974,
+        0.08799999766051769,
+        0.1600000001490116
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "beret",
+    "triangles": 160,
+    "primitives": 1,
+    "bytes": 16632,
+    "nodes": [
+      "Crown_mesh",
+      "Crown",
+      "Beret"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.10937148332595825,
+        -0.011999999172985554,
+        -0.11937148123979568
+      ],
+      "max": [
+        0.10937149822711945,
+        0.07499999459832907,
+        0.09937148541212082
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "gradcap",
+    "triangles": 156,
+    "primitives": 2,
+    "bytes": 17504,
+    "nodes": [
+      "Crown_mesh",
+      "Crown",
+      "Tassel_mesh",
+      "Tassel",
+      "Gradcap"
+    ],
+    "clips": [
+      "swing"
+    ],
+    "bounds": {
+      "min": [
+        -0.14000000059604645,
+        0,
+        -0.14000000059604645
+      ],
+      "max": [
+        0.14000000059604645,
+        0.08900000154972076,
+        0.14000000059604645
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "lantern_hat",
+    "triangles": 200,
+    "primitives": 2,
+    "bytes": 23068,
+    "nodes": [
+      "Crown_mesh",
+      "Crown",
+      "Lantern_mesh",
+      "Lantern",
+      "LanternHat"
+    ],
+    "clips": [
+      "flicker"
+    ],
+    "bounds": {
+      "min": [
+        -0.10400000214576721,
+        -0.019999997690320015,
+        -0.10400000214576721
+      ],
+      "max": [
+        0.10400000214576721,
+        0.09000000171363354,
+        0.12800000235438347
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "beanie",
+    "triangles": 172,
+    "primitives": 1,
+    "bytes": 18464,
+    "nodes": [
+      "Crown_mesh",
+      "Crown",
+      "Beanie"
+    ],
+    "clips": [],
+    "bounds": {
+      "min": [
+        -0.10700000077486038,
+        -0.030000001192092896,
+        -0.10700000077486038
+      ],
+      "max": [
+        0.10700000077486038,
+        0.1470000073313713,
+        0.10700000077486038
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
+  },
+  {
+    "name": "egg",
+    "triangles": 172,
+    "primitives": 2,
+    "bytes": 21684,
+    "nodes": [
+      "Body_mesh",
+      "Body",
+      "Shell_mesh",
+      "Shell",
+      "Egg"
+    ],
+    "clips": [
+      "rock",
+      "hatch"
+    ],
+    "bounds": {
+      "min": [
+        -0.10999999940395355,
+        -0.0005000010132789612,
+        -0.10999999940395355
+      ],
+      "max": [
+        0.10999999940395355,
+        0.18000000715255737,
+        0.10999999940395355
+      ]
+    },
+    "validatorErrors": 0,
+    "validatorWarnings": 0,
+    "errors": []
   }
 ]

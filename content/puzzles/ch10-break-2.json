@@ -1,0 +1,246 @@
+{
+  "id": "ch10-break-2",
+  "chapter": 10,
+  "kind": "break",
+  "title": "The Mis-Scanned Slips",
+  "patron": "Mr. Heron",
+  "request": "Some rows are marked mis-scan by the desk. Drop those rows first, then give me the slope of the least squares line through what is left.",
+  "objective": "Clean flagged rows out before fitting, and see how much one bad row moves a slope.",
+  "concepts": [
+    "outliers",
+    "influence",
+    "data_cleaning",
+    "regression_line"
+  ],
+  "requiredApi": [
+    "where",
+    "are.equal_to",
+    "column",
+    "np.mean",
+    "np.std",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nr = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\ndeliver(r)",
+  "hints": [
+    "One mis-scanned row can swing the rope further than every honest row together.",
+    "Filter the cart down to the rows whose scan column reads 'clean' before you touch any means.",
+    "Fit slope = r * sd(loans) / sd(heights) on the filtered cart and deliver that slope alone."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(6, 10)\ntilt = random.choice([-3, 2, 4])\nheights = [random.randint(1, 9) for _ in range(count)]\nif max(heights) == min(heights):\n    heights[0] = heights[0] + 2\nloans = [24 + tilt * height + random.randint(-2, 2) for height in heights]\nscans = ['clean'] * count\nspot = 0\nfor _ in range(random.choice([0, 1, 1, 2])):\n    spot = random.randrange(count)\n    scans[spot] = 'mis-scan'\n    loans[spot] = random.choice([0, 480, 999])\nif scans.count('clean') < 3:\n    scans = ['clean'] * count\n    loans = [24 + tilt * height for height in heights]\nclean_heights = [heights[i] for i in range(count) if scans[i] == 'clean']\nif max(clean_heights) == min(clean_heights):\n    scans = ['clean'] * count\nscatter_cart = Table().with_columns('height', make_array(*heights), 'loans', make_array(*loans), 'scan', make_array(*scans))\ndel count, tilt, heights, loans, scans, spot, clean_heights",
+  "visibleSeed": 17,
+  "visibleInputs": {
+    "scatter_cart": {
+      "kind": "table",
+      "labels": [
+        "height",
+        "loans",
+        "scan"
+      ],
+      "rows": [
+        [
+          1,
+          26,
+          "clean"
+        ],
+        [
+          2,
+          28,
+          "clean"
+        ],
+        [
+          3,
+          30,
+          "clean"
+        ],
+        [
+          4,
+          32,
+          "clean"
+        ]
+      ],
+      "totalRows": 4
+    }
+  },
+  "fixtures": [
+    {
+      "name": "one_row_is_flagged_mis_scan",
+      "predicate": "scatter_cart.where('scan', are.equal_to('mis-scan')).num_rows == 1",
+      "inputs": {
+        "scatter_cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans",
+            "scan"
+          ],
+          "rows": [
+            [
+              1,
+              26,
+              "clean"
+            ],
+            [
+              2,
+              28,
+              "clean"
+            ],
+            [
+              3,
+              30,
+              "clean"
+            ],
+            [
+              4,
+              32,
+              "clean"
+            ],
+            [
+              5,
+              999,
+              "mis-scan"
+            ]
+          ],
+          "totalRows": 5
+        }
+      }
+    },
+    {
+      "name": "every_row_survives_the_desk",
+      "predicate": "scatter_cart.where('scan', are.equal_to('mis-scan')).num_rows == 0",
+      "inputs": {
+        "scatter_cart": {
+          "kind": "table",
+          "labels": [
+            "height",
+            "loans",
+            "scan"
+          ],
+          "rows": [
+            [
+              2,
+              18,
+              "clean"
+            ],
+            [
+              4,
+              14,
+              "clean"
+            ],
+            [
+              6,
+              11,
+              "clean"
+            ],
+            [
+              8,
+              6,
+              "clean"
+            ]
+          ],
+          "totalRows": 4
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\nclean = scatter_cart.where('scan', are.equal_to('clean'))\nheights = clean.column('height')\nloans = clean.column('loans')\nr = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\ndeliver(r * np.std(loans) / np.std(heights))",
+  "naive": [
+    {
+      "code": "import numpy as np\nheights = scatter_cart.column('height')\nloans = scatter_cart.column('loans')\nr = np.mean(((heights - np.mean(heights)) / np.std(heights)) * ((loans - np.mean(loans)) / np.std(loans)))\ndeliver(r * np.std(loans) / np.std(heights))",
+      "fails": "silent",
+      "hazard": "one_row_is_flagged_mis_scan"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "influence"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 15,
+    "oil": 1
+  },
+  "setPiece": "residual-tiles",
+  "hazards": [
+    "one_row_is_flagged_mis_scan",
+    "every_row_survives_the_desk"
+  ],
+  "stochastic": false
+}

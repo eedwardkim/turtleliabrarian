@@ -1,0 +1,30 @@
+{
+  "id": "ch5-vary-1", "chapter": 5, "kind": "vary",
+  "title": "Slips That Fall Off the Edge", "patron": "Fen",
+  "request": "Before we trust any matched list, tell me what it costs: deliver an array of two counts, the slips whose card is in the register and the slips whose card is not.",
+  "objective": "Measure how many rows a join would discard instead of trusting its output silently.",
+  "concepts": ["join", "unmatched_rows", "row_loss", "are.contained_in"],
+  "requiredApi": ["where", "are.contained_in", "num_rows", "make_array", "deliver"],
+  "learnedApi": ["deliver","print","round","abs","max","min","len","int","float","str","range","make_array","np.arange","item","sum","np.mean","np.count_nonzero","np.max","np.min","np.sum","Table","with_columns","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","are.contained_in","barh","hist","scatter","plot","apply","group","pivot","join","read_table","strip","lower"],
+  "starter": "matched = slips.join('card', register)\ndeliver(matched.num_rows)",
+  "hints": ["A join answers quietly: the slips it cannot match simply stop existing, and it has nothing at all to say when none of them match.", "are.contained_in keeps the rows whose value appears in an array you hand it, and it survives the day when nothing matches.", "Filter the slips on cards contained in the register's card column, then deliver that count beside the rest of the slips."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nnames = ['Alder Finch', 'Bryony Sable', 'Corvin Reed', 'Delphine Wren', 'Eamon Thistle']\ncards = [101, 102, 103, 104, 105]\nstrangers = [201, 202, 203]\nsize = random.randint(2, 5)\nchosen = sorted(random.sample(range(5), size))\nregister = Table().with_columns('card', make_array(*[cards[index] for index in chosen]), 'name', make_array(*[names[index] for index in chosen]))\nn = random.randint(3, 7)\npool = [cards[index] for index in chosen] + strangers\nslips = Table().with_columns('card', make_array(*[random.choice(pool) for _ in range(n)]), 'days', make_array(*[random.randint(1, 30) for _ in range(n)]))",
+  "visibleSeed": 8,
+  "visibleInputs": {
+    "slips": {"kind": "table", "labels": ["card", "days"], "rows": [[101, 6], [202, 13], [103, 4], [101, 19]], "totalRows": 4},
+    "register": {"kind": "table", "labels": ["card", "name"], "rows": [[101, "Alder Finch"], [103, "Corvin Reed"]], "totalRows": 2}
+  },
+  "fixtures": [
+    {"name": "all_slips_unknown", "inputs": {"slips": {"kind": "table", "labels": ["card", "days"], "rows": [[201, 5], [203, 12]], "totalRows": 2}, "register": {"kind": "table", "labels": ["card", "name"], "rows": [[104, "Delphine Wren"], [105, "Eamon Thistle"]], "totalRows": 2}}, "predicate": "int(np.count_nonzero([card in register.column('card').tolist() for card in slips.column('card').tolist()])) == 0"},
+    {"name": "every_slip_registered", "inputs": {"slips": {"kind": "table", "labels": ["card", "days"], "rows": [[102, 9], [104, 3], [102, 16]], "totalRows": 3}, "register": {"kind": "table", "labels": ["card", "name"], "rows": [[102, "Bryony Sable"], [104, "Delphine Wren"]], "totalRows": 2}}, "predicate": "int(np.count_nonzero([card in register.column('card').tolist() for card in slips.column('card').tolist()])) == slips.num_rows"}
+  ],
+  "queueSize": 8,
+  "reference": "known = slips.where('card', are.contained_in(register.column('card')))\ndeliver(make_array(known.num_rows, slips.num_rows - known.num_rows))",
+  "naive": [
+    {"code": "matched = slips.join('card', register)\ndeliver(make_array(matched.num_rows, slips.num_rows - matched.num_rows))", "fails": "loud", "hazard": "all_slips_unknown"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["are.contained_in"],
+  "standingOrder": {"eligible": true, "ink": 7, "oil": 2},
+  "setPiece": "register-desk", "hazards": ["all_slips_unknown", "every_slip_registered"], "stochastic": false
+}

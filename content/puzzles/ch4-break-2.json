@@ -1,0 +1,27 @@
+{
+  "id": "ch4-break-2", "chapter": 4, "kind": "break",
+  "title": "Two Rooms, Two Stories", "patron": "Dr. Newt",
+  "request": "Compare the East and West reading rooms format by format: for the folios and then for the scrolls, deliver East's return rate minus West's, rounded to three decimals. Pooling the two formats into one number has fooled this desk before.",
+  "objective": "Compare rates within each category instead of pooling groups of different sizes.",
+  "concepts": ["pivot", "rates", "simpsons_paradox", "aggregation", "confounding"],
+  "requiredApi": ["pivot", "with_columns", "column", "make_array", "deliver"],
+  "learnedApi": ["deliver","print","round","abs","max","min","len","int","float","str","range","make_array","np.arange","item","sum","np.mean","np.count_nonzero","np.max","np.min","np.sum","Table","with_columns","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","barh","hist","scatter","plot","apply","group","pivot","strip","lower"],
+  "starter": "rates = shelf.column('returned') / shelf.column('loans')\ndeliver(shelf.with_columns('rate', rates))",
+  "hints": ["A room that mostly handles the harder format can win every format and still lose the pooled tally.", "Turn each row into its own rate first, then pivot the rooms across the formats so the two rates sit side by side.", "Build the rate column, pivot room over format collecting that rate, subtract the West column from the East column, and round both differences."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nrooms = ['East', 'East', 'West', 'West']\nformats = ['folio', 'scroll', 'folio', 'scroll']\nloans = [random.choice([4, 5, 8, 10, 16, 20]) for _ in range(4)]\nreturned = [random.randint(0, count) for count in loans]\nshelf = Table().with_columns('room', make_array(*rooms), 'format', make_array(*formats), 'loans', make_array(*loans), 'returned', make_array(*returned))",
+  "visibleSeed": 4,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["room", "format", "loans", "returned"], "rows": [["East", "folio", 4, 3], ["East", "scroll", 4, 1], ["West", "folio", 4, 2], ["West", "scroll", 4, 0]], "totalRows": 4}},
+  "fixtures": [
+    {"name": "paradox_rooms", "inputs": {"shelf": {"kind": "table", "labels": ["room", "format", "loans", "returned"], "rows": [["East", "folio", 2, 2], ["East", "scroll", 8, 4], ["West", "folio", 8, 7], ["West", "scroll", 2, 0]], "totalRows": 4}}, "predicate": "bool(((shelf.column('returned')[:2] / shelf.column('loans')[:2]) > (shelf.column('returned')[2:] / shelf.column('loans')[2:])).all()) and bool(shelf.column('returned')[:2].sum() / shelf.column('loans')[:2].sum() < shelf.column('returned')[2:].sum() / shelf.column('loans')[2:].sum())"},
+    {"name": "east_never_returns_scrolls", "inputs": {"shelf": {"kind": "table", "labels": ["room", "format", "loans", "returned"], "rows": [["East", "folio", 10, 6], ["East", "scroll", 5, 0], ["West", "folio", 10, 5], ["West", "scroll", 5, 4]], "totalRows": 4}}, "predicate": "bool(shelf.column('returned').item(1) == 0)"}
+  ],
+  "queueSize": 8,
+  "reference": "detailed = shelf.with_columns('rate', shelf.column('returned') / shelf.column('loans'))\nrates = detailed.pivot('room', 'format', values='rate', collect=sum)\ngaps = rates.column('East') - rates.column('West')\ndeliver(make_array(*[round(gap, 3) for gap in gaps]))",
+  "naive": [
+    {"code": "pooled = shelf.select('room', 'loans', 'returned').group('room', sum)\nshares = pooled.column('returned sum') / pooled.column('loans sum')\ngap = round(shares.item(0) - shares.item(1), 3)\ndeliver(make_array(gap, gap))", "fails": "silent", "hazard": "paradox_rooms"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["pivot"],
+  "standingOrder": {"eligible": true, "ink": 8, "oil": 2},
+  "setPiece": "two-reading-rooms", "hazards": ["paradox_rooms", "east_never_returns_scrolls"], "stochastic": false
+}

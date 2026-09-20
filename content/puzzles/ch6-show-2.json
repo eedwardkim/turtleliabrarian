@@ -1,0 +1,25 @@
+{
+  "id": "ch6-show-2", "chapter": 6, "kind": "show",
+  "title": "Turns of the Return Wheel", "patron": "Fen",
+  "request": "The returns wheel drops each book down one of the chutes, every chute equally likely. Spin it 600 times and deliver the share of the spins that landed in the repair chute, rounded to three decimals.",
+  "objective": "Draw repeated random outcomes and summarise them as an empirical proportion.",
+  "concepts": ["np.random.choice", "simulation", "empirical_proportion", "randomness"],
+  "requiredApi": ["np.random.choice", "np.count_nonzero", "deliver"],
+  "learnedApi": ["deliver","print","round","abs","max","min","len","int","float","str","range","make_array","np.arange","np.append","item","sum","np.mean","np.std","np.count_nonzero","np.max","np.min","np.sum","np.random.choice","percentile","sample_proportions","Table","with_columns","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","sample","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","are.contained_in","barh","hist","scatter","plot","apply","group","pivot","join","read_table","strip","lower"],
+  "starter": "spin = np.random.choice(chutes)\ndeliver(spin)",
+  "hints": ["One spin tells you nothing about the wheel; six hundred spins start to.", "np.random.choice takes the array of chutes and how many draws you want, and hands back an array of that length.", "Draw 600 chute names at once, count how many equal 'repair' with np.count_nonzero, and divide by 600 before rounding."],
+  "inputCode": "import random\nfrom datascience import make_array\npool = ['shelving', 'repair', 'reserve', 'binding']\ncount = random.randint(2, 4)\npicked = ['repair'] + random.sample([name for name in pool if name != 'repair'], count - 1)\npicked.sort()\nchutes = make_array(*picked)",
+  "visibleSeed": 3,
+  "visibleInputs": {"chutes": {"kind": "array", "values": ["binding", "repair", "shelving"], "length": 3}},
+  "fixtures": [
+    {"name": "only_two_chutes", "inputs": {"chutes": {"kind": "array", "values": ["repair", "shelving"], "length": 2}}, "predicate": "int(len(chutes)) == 2"},
+    {"name": "every_chute_open", "inputs": {"chutes": {"kind": "array", "values": ["binding", "repair", "reserve", "shelving"], "length": 4}}, "predicate": "int(len(chutes)) == 4"}
+  ],
+  "queueSize": 7,
+  "reference": "spins = np.random.choice(chutes, 600)\ndeliver(round(int(np.count_nonzero(spins == 'repair')) / 600, 3))",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["np.random.choice"],
+  "standingOrder": {"eligible": true, "ink": 7, "oil": 2},
+  "setPiece": "return-wheel", "hazards": ["only_two_chutes"], "stochastic": true
+}

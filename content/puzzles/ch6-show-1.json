@@ -1,0 +1,28 @@
+{
+  "id": "ch6-show-1", "chapter": 6, "kind": "show",
+  "title": "The Grace Days Ledger", "patron": "Clerk Odo",
+  "request": "Anything returned within the grace days owes nothing; everything later owes 15 pennies for each day past grace. Build the fee column one slip at a time and deliver the cart with it attached.",
+  "objective": "Use a loop, a conditional and np.append to build a column value by value.",
+  "concepts": ["for", "if", "np.append", "accumulation", "iteration"],
+  "requiredApi": ["np.append", "make_array", "column", "with_columns", "deliver"],
+  "learnedApi": ["deliver","print","round","abs","max","min","len","int","float","str","range","make_array","np.arange","np.append","item","sum","np.mean","np.std","np.count_nonzero","np.max","np.min","np.sum","np.random.choice","percentile","sample_proportions","Table","with_columns","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","sample","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","are.contained_in","barh","hist","scatter","plot","apply","group","pivot","join","read_table","strip","lower"],
+  "starter": "deliver(shelf.with_columns('fee', shelf.column('days_late') * 15))",
+  "hints": ["Every slip inside the grace window owes nothing at all, not a small amount.", "Start from an empty array, walk the days_late column with a for loop, and grow the array with np.append on each pass.", "Inside the loop, an if decides between appending 0 and appending fifteen pennies for each day past grace, and the finished array becomes the fee column."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ntitles = ['The Brass Hour', 'Eleven Rooms of Rain', 'Nine Ways to Fold a Map', 'The Lamp Under the Stair', 'Salt and Moss and Patience', 'Winter Comes to the Aviary', 'A Short History of Waiting']\nn = random.randint(3, 7)\npicked = random.sample(titles, n)\nlate = [random.choice([0, 1, 2, 3, 5, 8, 12, 19]) for _ in range(n)]\ngrace = random.choice([2, 3, 5])\nshelf = Table().with_columns('title', make_array(*picked), 'days_late', make_array(*late))",
+  "visibleSeed": 14,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "days_late"], "rows": [["The Brass Hour", 8], ["Nine Ways to Fold a Map", 1], ["Winter Comes to the Aviary", 12]], "totalRows": 3}, "grace": 3},
+  "fixtures": [
+    {"name": "all_within_grace", "inputs": {"shelf": {"kind": "table", "labels": ["title", "days_late"], "rows": [["Salt and Moss and Patience", 0], ["Eleven Rooms of Rain", 2]], "totalRows": 2}, "grace": 5}, "predicate": "bool((shelf.column('days_late') <= grace).all())"},
+    {"name": "no_grace_at_all", "inputs": {"shelf": {"kind": "table", "labels": ["title", "days_late"], "rows": [["A Short History of Waiting", 1], ["The Lamp Under the Stair", 19], ["The Brass Hour", 0]], "totalRows": 3}, "grace": 0}, "predicate": "grace == 0"}
+  ],
+  "queueSize": 7,
+  "reference": "fees = make_array()\nfor days in shelf.column('days_late'):\n    if days <= grace:\n        fees = np.append(fees, 0)\n    else:\n        fees = np.append(fees, (days - grace) * 15)\n\ndeliver(shelf.with_columns('fee', fees))",
+  "naive": [
+    {"code": "fees = make_array()\nfor days in shelf.column('days_late'):\n    if days == 0:\n        np.append(fees, 0)\n    elif days <= grace:\n        fees = np.append(fees, 0)\n    else:\n        fees = np.append(fees, (days - grace) * 15)\n\ndeliver(shelf.with_columns('fee', fees))", "fails": "loud", "hazard": "all_within_grace"},
+    {"code": "fees = make_array()\nfor days in shelf.column('days_late'):\n    if days <= 3:\n        fees = np.append(fees, 0)\n    else:\n        fees = np.append(fees, (days - 3) * 15)\n\ndeliver(shelf.with_columns('fee', fees))", "fails": "silent", "hazard": "no_grace_at_all"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["np.append"],
+  "standingOrder": {"eligible": true, "ink": 6, "oil": 1},
+  "setPiece": "fee-drawer", "hazards": ["all_within_grace", "no_grace_at_all"], "stochastic": false
+}

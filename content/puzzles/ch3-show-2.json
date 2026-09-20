@@ -1,0 +1,25 @@
+{
+  "id": "ch3-show-2", "chapter": 3, "kind": "show",
+  "title": "Bins of the Reading Room", "patron": "Fen",
+  "request": "Sort these books into the reading-room bins 100 to 200, 200 to 300, 300 to 400 and 400 to 500 pages, draw the histogram, and deliver how many books land in each bin. A book of exactly 300 pages belongs to the bin that starts at 300.",
+  "objective": "Bin a numeric column with explicit edges and count the books in each bin.",
+  "concepts": ["hist", "bins", "bin_edges", "left_closed_bins", "counts"],
+  "requiredApi": ["hist", "column", "np.count_nonzero", "make_array", "deliver"],
+  "learnedApi": ["deliver","print","round","abs","max","min","len","int","float","str","range","make_array","np.arange","item","sum","np.mean","np.count_nonzero","np.max","np.min","np.sum","Table","with_columns","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","barh","hist","scatter","plot","strip","lower"],
+  "starter": "edges = make_array(100, 200, 300, 400, 500)\nshelf.hist('pages', bins=edges)\ndeliver(shelf.num_rows)",
+  "hints": ["Every bin holds its left edge and hands the right edge to the bin next door.", "hist accepts bins=make_array(...); np.count_nonzero counts how many entries of a comparison are true.", "Walk the four bins with range, count pages at or above the left edge and below the right edge, and deliver those counts as one array."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ntitles = ['Lanterns of the Slow Tide', 'The Mapmaker Who Waited', 'Winter Comes to the Aviary', 'The Quiet Arithmetic of Bees', 'An Atlas of Borrowed Weather', 'Soft Machinery of Libraries', 'Nine Ways to Fold a Map', 'The Bookbinder\\'s Daughter', 'Eleven Rooms of Rain']\nn = random.randint(4, 9)\npicked = random.sample(titles, n)\npages = [random.choice([100, 145, 199, 200, 265, 299, 300, 348, 399, 400, 455, 499]) for _ in range(n)]\nshelf = Table().with_columns('title', make_array(*picked), 'pages', make_array(*pages))",
+  "visibleSeed": 23,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Lanterns of the Slow Tide", 145], ["Nine Ways to Fold a Map", 265], ["Eleven Rooms of Rain", 199], ["An Atlas of Borrowed Weather", 455], ["Winter Comes to the Aviary", 348]], "totalRows": 5}},
+  "fixtures": [
+    {"name": "books_on_the_edges", "inputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Soft Machinery of Libraries", 300], ["The Mapmaker Who Waited", 200], ["The Quiet Arithmetic of Bees", 400], ["The Bookbinder's Daughter", 299]], "totalRows": 4}}, "predicate": "int(np.count_nonzero((shelf.column('pages') % 100) == 0)) >= 3"},
+    {"name": "one_bin_holds_everything", "inputs": {"shelf": {"kind": "table", "labels": ["title", "pages"], "rows": [["Eleven Rooms of Rain", 145], ["Lanterns of the Slow Tide", 199], ["Nine Ways to Fold a Map", 100]], "totalRows": 3}}, "predicate": "bool((shelf.column('pages') < 200).all())"}
+  ],
+  "queueSize": 7,
+  "reference": "edges = make_array(100, 200, 300, 400, 500)\nshelf.hist('pages', bins=edges)\npages = shelf.column('pages')\ncounts = make_array(*[int(np.count_nonzero((pages >= edges.item(index)) & (pages < edges.item(index + 1)))) for index in range(len(edges) - 1)])\ndeliver(counts)",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["hist"],
+  "standingOrder": {"eligible": true, "ink": 6, "oil": 1},
+  "setPiece": "sorting-bins", "hazards": ["books_on_the_edges"], "stochastic": false
+}

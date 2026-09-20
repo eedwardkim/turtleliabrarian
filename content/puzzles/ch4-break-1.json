@@ -1,0 +1,27 @@
+{
+  "id": "ch4-break-1", "chapter": 4, "kind": "break",
+  "title": "Busy Is Not Crowded", "patron": "Trustee Pellan",
+  "request": "Deliver the name of the single wing that lent the most books this season. A wing with a hundred titles nobody opened is not our busiest wing.",
+  "objective": "Aggregate a numeric column by group instead of counting rows before ranking.",
+  "concepts": ["group", "collect", "counts_vs_totals", "ranking"],
+  "requiredApi": ["group", "sort", "column", "item", "deliver"],
+  "learnedApi": ["deliver","print","round","abs","max","min","len","int","float","str","range","make_array","np.arange","item","sum","np.mean","np.count_nonzero","np.max","np.min","np.sum","Table","with_columns","column","select","drop","relabeled","labels","num_rows","num_columns","where","sort","take","are.above_or_equal_to","are.above","are.equal_to","are.below","are.below_or_equal_to","are.between","are.not_equal_to","are.containing","barh","hist","scatter","plot","apply","group","pivot","strip","lower"],
+  "starter": "tally = shelf.group('wing').sort('count', descending=True)\ndeliver(tally)",
+  "hints": ["Two wings can hold the same number of titles while one of them never leaves the building.", "group with no second argument counts rows; group with sum adds the loans inside each wing.", "Total the loans per wing, sort that total downward, and read the first entry of the wing column with item(0)."],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nwings = ['Reference', 'Nature', 'Travel', 'Poetry', 'Mystery']\nn = random.randint(5, 9)\nchosen = [random.choice(wings) for _ in range(n)]\nloans = random.sample(range(1, 90), n)\nshelf = Table().with_columns('wing', make_array(*chosen), 'loans', make_array(*loans))",
+  "visibleSeed": 19,
+  "visibleInputs": {"shelf": {"kind": "table", "labels": ["wing", "loans"], "rows": [["Nature", 30], ["Nature", 26], ["Travel", 11], ["Mystery", 9], ["Nature", 21]], "totalRows": 5}},
+  "fixtures": [
+    {"name": "small_wing_big_loans", "inputs": {"shelf": {"kind": "table", "labels": ["wing", "loans"], "rows": [["Poetry", 2], ["Poetry", 3], ["Poetry", 4], ["Reference", 80]], "totalRows": 4}}, "predicate": "int(np.count_nonzero(shelf.column('wing') == 'Poetry')) == 3 and int(shelf.column('loans')[shelf.column('wing') == 'Reference'].sum()) > int(shelf.column('loans')[shelf.column('wing') == 'Poetry'].sum())"},
+    {"name": "every_wing_once", "inputs": {"shelf": {"kind": "table", "labels": ["wing", "loans"], "rows": [["Travel", 44], ["Nature", 12], ["Mystery", 31]], "totalRows": 3}}, "predicate": "int(len(set(shelf.column('wing').tolist()))) == shelf.num_rows"}
+  ],
+  "queueSize": 8,
+  "reference": "totals = shelf.select('wing', 'loans').group('wing', sum)\nranked = totals.sort('loans sum', descending=True)\ndeliver(ranked.column('wing').item(0))",
+  "naive": [
+    {"code": "counted = shelf.group('wing').sort('count', descending=True)\ndeliver(counted.column('wing').item(0))", "fails": "silent", "hazard": "small_wing_big_loans"}
+  ],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["group"],
+  "standingOrder": {"eligible": true, "ink": 7, "oil": 2},
+  "setPiece": "trustee-wall", "hazards": ["small_wing_big_loans", "every_wing_once"], "stochastic": false
+}

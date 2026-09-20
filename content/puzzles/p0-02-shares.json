@@ -1,22 +1,21 @@
 {
-  "id": "p0-02-shares", "chapter": 0, "kind": "show",
-  "title": "The Last Biscuit", "patron": "Pip",
-  "request": "Share the biscuit weight equally among the readers, including every crumb. Please deliver the weight per reader before I eat the evidence.",
-  "objective": "Distinguish true division from floor division.",
-  "concepts": ["division", "floats", "floor_division", "call_expressions"],
-  "requiredApi": ["deliver"], "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len"],
-  "starter": "# weight is in grams; readers is a count.\nshare = 0\ndeliver(share)",
-  "hints": ["A fair share can be less than a whole gram.", "Compare / with // in the scratch console; one discards a remainder.", "Write share = ... using weight and readers, then deliver share without rounding it."],
-  "inputCode": "import random\nweight = random.randint(1, 80)\nreaders = random.randint(2, 9)",
-  "visibleSeed": 12, "visibleInputs": {"weight": 12, "readers": 3},
+  "id": "p0-02-shares", "chapter": 0, "kind": "show", "lesson": true,
+  "title": "Two plus five", "patron": "Mr. Heron",
+  "request": "Two books on the desk, five on the cart. How many is that?",
+  "objective": "Add two numbers.",
+  "concepts": ["expressions", "addition", "deliver"],
+  "requiredApi": ["deliver"], "learnedApi": ["deliver", "print"],
+  "starter": "deliver(___)",
+  "hints": ["Add the two counts.", "In Python, + adds: 2 + 5.", "deliver(2 + 5)"],
+  "inputCode": "day = 1",
+  "visibleSeed": 12, "visibleInputs": {},
   "fixtures": [
-    {"name": "fractional_share", "inputs": {"weight": 10, "readers": 4}, "predicate": "weight % readers != 0"},
-    {"name": "less_than_one_gram", "inputs": {"weight": 2, "readers": 5}, "predicate": "0 < weight < readers"}
+    {"name": "always_true", "inputs": {}, "predicate": "2 + 5 == 7"}
   ],
-  "queueSize": 6, "reference": "share = weight / readers\ndeliver(share)",
-  "naive": [{"code": "deliver(weight // readers)", "fails": "silent", "hazard": "fractional_share"}],
+  "queueSize": 6, "reference": "deliver(2 + 5)",
+  "naive": [],
   "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
   "unlocks": ["division", "round", "abs", "max", "min", "len"],
-  "standingOrder": {"eligible": true, "ink": 1, "oil": 0}, "setPiece": "fee-stamp",
-  "hazards": ["fractional_share"], "stochastic": false
+  "standingOrder": {"eligible": false, "ink": 0, "oil": 0}, "setPiece": "fee-stamp",
+  "hazards": [], "stochastic": false
 }

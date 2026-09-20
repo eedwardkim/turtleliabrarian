@@ -1,13 +1,13 @@
 {
   "id": "ch1-show-2", "chapter": 1, "kind": "show",
   "title": "The Last Brass Plate", "patron": "Hazel",
-  "request": "Number the shelf plates from first, stepping by step, up to and including last if a step lands there. Deliver the numbers in order.",
-  "objective": "Use an exclusive stop to describe an inclusive integer range.",
+  "request": "Use np.arange with first, last and step to number the shelf plates, including last when a step lands there. Run checks changing inputs, so use these variables instead of fixed numbers.",
+  "objective": "The stop is excluded: use last + 1 to allow the last plate.",
   "concepts": ["ranges", "exclusive_stop"],
   "requiredApi": ["np.arange", "deliver"],
   "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange"],
-  "starter": "import numpy as np\nplates = make_array()\ndeliver(plates)",
-  "hints": ["The stop is a fence, not a plate.", "np.arange(start, stop, step) leaves stop out.", "Place the fence just beyond the allowed final integer; keep the requested step."],
+  "starter": "import numpy as np\nplates = np.arange(first, last + 1, 1)\ndeliver(plates)",
+  "hints": ["Use first, last and step with np.arange so the answer changes with the inputs; allow last by adding 1 to the stop.", "Use np.arange(first, last + 1, step); np.arange excludes its stop value.", "Write plates = np.arange(first, ___ + 1, step), then deliver(plates)."],
   "inputCode": "import random\nfirst = random.randint(0, 8)\nlast = first + random.randint(2, 18)\nstep = random.randint(1, 4)",
   "visibleSeed": 22, "visibleInputs": {"first": 2, "last": 8, "step": 4},
   "fixtures": [
@@ -15,8 +15,13 @@
     {"name": "single_plate", "inputs": {"first": 6, "last": 6, "step": 1}, "predicate": "first == last"}
   ],
   "queueSize": 7, "reference": "import numpy as np\nplates = np.arange(first, last + 1, step)\ndeliver(plates)",
-  "naive": [{"code": "import numpy as np\ndeliver(np.arange(first, last, step))", "fails": "silent", "hazard": "lands_on_last"}],
+  "naive": [
+    {"code": "import numpy as np\ndeliver(np.arange(first, last, step))", "fails": "silent", "hazard": "lands_on_last"},
+    {"code": "deliver(make_array(2, 6))", "fails": "silent", "hazard": "single_plate"},
+    {"code": "import numpy as np\ndeliver(np.arange(2, 9, 4))", "fails": "silent", "hazard": "lands_on_last"}
+  ],
   "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "verifyOnRun": true,
   "unlocks": ["np.arange"], "standingOrder": {"eligible": true, "ink": 2, "oil": 0},
   "setPiece": "index-plates", "hazards": ["lands_on_last"], "stochastic": false
 }

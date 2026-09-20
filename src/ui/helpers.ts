@@ -1,12 +1,13 @@
-import type { CheckDiff, Json, Puzzle, Scalar, TableValue, TraceEvent, Value, WindowLayout } from '../contracts';
+import type { CheckDiff, Json, Scalar, TableValue, TraceEvent, Value, WindowLayout } from '../contracts';
 import { text } from './text';
+export { canReveal } from '../game/guidance';
 
 export interface Viewport { width: number; height: number }
-export type WindowId = 'editor' | 'output' | 'request' | 'queue' | 'replay' | 'scratch';
+export type WindowId = 'editor' | 'output' | 'request' | 'queue' | 'replay' | 'scratch' | 'sandbox';
 const PYTHON_KEYWORDS = new Set(['False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield']);
 
 function isWindowId(id: string): id is WindowId {
-  return ['editor', 'output', 'request', 'queue', 'replay', 'scratch'].includes(id);
+  return ['editor', 'output', 'request', 'queue', 'replay', 'scratch', 'sandbox'].includes(id);
 }
 
 export function compactNumber(value: number): string {
@@ -51,10 +52,11 @@ export function defaultLayout(id: string, viewport: Viewport): WindowLayout {
   const positions: Record<WindowId, [number, number, number, number]> = {
     editor: [24, 100, width, editorHeight],
     output: [24, 114 + editorHeight, width, viewport.height - editorHeight - 164],
-    request: [viewport.width - 322, 112, 298, Math.min(470, viewport.height - 170)],
+    request: [viewport.width - 322, 112, 298, Math.min(600, viewport.height - 170)],
     queue: [viewport.width - 350, 110, 326, 430],
     replay: [width + 48, viewport.height - 166, Math.min(420, viewport.width - width - 410), 140],
     scratch: [width + 52, 106, 420, 350],
+    sandbox: [width + 40, 100, 620, Math.min(600, viewport.height - 150)],
   };
   const [x, y, w, h] = positions[isWindowId(id) ? id : 'editor'];
   return clampLayout({ x, y, width: w, height: h, minimized: false, closed: false, z: 1 }, viewport);
@@ -68,6 +70,22 @@ export function adjustLayout(layout: WindowLayout, key: string, resize: boolean,
     : { ...layout, x: layout.x + dx, y: layout.y + dy }, viewport);
 }
 
+export const RESIZE_EDGES = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] as const;
+export type ResizeEdge = typeof RESIZE_EDGES[number];
+
+export function resizeLayout(layout: WindowLayout, edge: ResizeEdge, dx: number, dy: number, viewport: Viewport): WindowLayout {
+  const current = clampLayout(layout, viewport);
+  let left = current.x;
+  let top = current.y;
+  let right = left + current.width;
+  let bottom = top + current.height;
+  if (edge.includes('w')) left = Math.max(16, Math.min(left + dx, right - 280));
+  if (edge.includes('e')) right = Math.min(viewport.width - 16, Math.max(right + dx, left + 280));
+  if (edge.includes('n')) top = Math.max(86, Math.min(top + dy, bottom - 140));
+  if (edge.includes('s')) bottom = Math.min(viewport.height - 44, Math.max(bottom + dy, top + 140));
+  return { ...current, x: left, y: top, width: right - left, height: bottom - top };
+}
+
 export function tablePreview(table: TableValue): { rows: Scalar[][]; omitted: number } {
   const rows = table.rows.slice(0, 10);
   return { rows, omitted: Math.max(0, table.totalRows - rows.length) };
@@ -79,12 +97,6 @@ export function cellState(diff: CheckDiff | null | undefined, row: number, colum
   if (diff.extraRows.includes(row)) return 'extra-row';
   if (diff.misorderedRows.includes(row)) return 'misordered-row';
   return '';
-}
-
-export function canReveal(puzzle: Puzzle, completed: string[], feature: 'queue' | 'almanac' | 'scratch' | 'replay' | 'scripts'): boolean {
-  if (puzzle.chapter > 0 || puzzle.unlocks.includes(feature)) return true;
-  const thresholds = { queue: 1, almanac: 1, replay: 1, scratch: 2, scripts: 3 };
-  return completed.length >= thresholds[feature];
 }
 
 export interface ChartPoint {

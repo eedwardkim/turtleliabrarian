@@ -5,16 +5,16 @@ import ast
 import importlib
 import json
 import math
+import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ORDER = (
-    "p0-01-stamp", "p0-02-shares", "p0-03-badge", "p0-04-budget",
-    "ch1-show-1", "ch1-show-2", "ch1-vary-1", "ch1-vary-2",
-    "ch1-break-1", "ch1-break-2", "ch2-show-1", "ch2-show-2",
-)
+RELEASE_SIZE = 78
+KIND_ORDER = {"show": 0, "vary": 1, "break": 2, "capstone": 3}
+ID_PATTERN = re.compile(r"^(p0-\d{2}-[a-z]+|ch([1-9]|1[0-2])-(show|vary|break)-[12]|capstone-[1-4])$")
 
 
 def require(condition, message):
@@ -22,12 +22,42 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def sequence(identity):
+    digits = re.findall(r"\d+", identity)
+    return int(digits[-1]) if digits else 0
+
+
+def shelf_order(puzzle):
+    """Curriculum order, identical to the sort in src/game/catalog.ts."""
+    chapter = sys.maxsize if puzzle["kind"] == "capstone" else puzzle["chapter"]
+    return (chapter, KIND_ORDER[puzzle["kind"]], sequence(puzzle["id"]), puzzle["id"])
+
+
+def campaign(puzzles):
+    expected = {0: 5, **dict.fromkeys(range(1, 12), 6), 12: 3, 13: 4}
+    require(Counter(puzzle["chapter"] for puzzle in puzzles) == expected, "campaign chapter distribution must be 5, 11×6, 3, 4")
+    learned = set()
+    for puzzle in sorted(puzzles, key=shelf_order):
+        missing = learned - set(puzzle["learnedApi"])
+        require(not missing, f"{puzzle['id']} forgets learned API: {', '.join(sorted(missing))}")
+        learned.update(puzzle["learnedApi"])
+    for chapter in range(1, 13):
+        counts = Counter(puzzle["kind"] for puzzle in puzzles if puzzle["chapter"] == chapter)
+        expected_kinds = dict.fromkeys(("show", "vary", "break"), 1 if chapter == 12 else 2)
+        require(counts == expected_kinds, f"chapter {chapter} needs Show, Vary and Break requests")
+    require(all(puzzle["kind"] == "capstone" for puzzle in puzzles if puzzle["chapter"] == 13), "chapter 13 is the capstone")
+
+
 def metadata(puzzle):
-    require(puzzle["id"] in ORDER, "unknown M1 identity")
+    require(bool(ID_PATTERN.match(puzzle["id"])), f"unrecognized shelf identity {puzzle['id']}")
+    require(puzzle["kind"] in KIND_ORDER, "unknown shelf kind")
+    request_text = re.sub(r"\b(?:Dr|Mr|Mrs)\.", "", puzzle["request"])
+    require(len(re.split(r"(?<=[.!?])\s+(?=[A-Z])", request_text)) <= 2, "request exceeds two sentences")
     require(5 <= puzzle["queueSize"] <= 10, "queue outside 5–10")
     require(0 < len(puzzle["fixtures"]) < puzzle["queueSize"], "queue needs curated and random shelves")
     require(len(puzzle["hints"]) == 3, "exactly three hints required")
-    require(all(puzzle["reference"].strip() not in hint for hint in puzzle["hints"]), "hint contains full answer")
+    if not puzzle.get("lesson"):
+        require(all(puzzle["reference"].strip() not in hint for hint in puzzle["hints"]), "hint contains full answer")
     require(puzzle["requiredApi"] and set(puzzle["requiredApi"]) <= set(puzzle["learnedApi"]), "required API not learned")
     names = [fixture["name"] for fixture in puzzle["fixtures"]]
     require(len(names) == len(set(names)), "duplicate fixture")
@@ -57,10 +87,21 @@ def metadata(puzzle):
         if isinstance(function, ast.Name):
             api = aliases.get(function.id, function.id)
         elif isinstance(function, ast.Attribute):
-            base = function.value.id if isinstance(function.value, ast.Name) else ""
-            api = f"np.{function.attr}" if aliases.get(base) == "np" else (
-                f"are.{function.attr}" if base == "are" else function.attr
-            )
+            parts = []
+            root = function
+            while isinstance(root, ast.Attribute):
+                parts.insert(0, root.attr)
+                root = root.value
+            base = root.id if isinstance(root, ast.Name) else ""
+            # The engine preloads numpy as np and the datascience names, so an
+            # unimported `np.` prefix still refers to numpy. Submodules stay in the
+            # path, so np.random.choice is spelled out rather than reduced to choice.
+            if aliases.get(base) == "np" or base == "np":
+                api = "np." + ".".join(parts)
+            elif base == "are":
+                api = f"are.{parts[-1]}"
+            else:
+                api = parts[-1]
         else:
             raise ValueError("reference calls an unrecognized callable")
         require(api in puzzle["learnedApi"], f"reference calls unlearned API {api}")
@@ -161,15 +202,18 @@ def main():
     require(args.seeds is None or args.seeds > 0, "seed count must be positive")
     paths = list((ROOT / "content" / "puzzles").glob("*.json"))
     data = [json.loads(path.read_text()) for path in paths]
-    require(len(data) == 12 and {item["id"] for item in data} == set(ORDER), "exactly twelve M1 puzzles required")
-    puzzles = sorted(data, key=lambda item: ORDER.index(item["id"]))
+    identities = [item["id"] for item in data]
+    require(len(identities) == len(set(identities)), "duplicate shelf identity")
+    require(len(data) == RELEASE_SIZE, f"exactly {RELEASE_SIZE} release puzzles required, found {len(data)}")
+    puzzles = sorted(data, key=shelf_order)
+    campaign(puzzles)
     for puzzle in puzzles:
         try:
             metadata(puzzle)
         except (ValueError, SyntaxError, KeyError) as error:
             raise ValueError(f"{puzzle['id']}: {error}") from error
     if args.metadata_only:
-        print("Metadata and Python syntax passed for 12 puzzles. Engine execution NOT tested.")
+        print(f"Metadata and Python syntax passed for {len(puzzles)} puzzles. Engine execution NOT tested.")
         return 0
     engine = args.engine.resolve()
     if not (engine / "shelf_runtime.py").is_file():

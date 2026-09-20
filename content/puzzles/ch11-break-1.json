@@ -1,0 +1,274 @@
+{
+  "id": "ch11-break-1",
+  "chapter": 11,
+  "kind": "break",
+  "title": "Four Lanterns, Two Votes Each",
+  "patron": "Mr. Heron",
+  "request": "Use the four closest catalogued books this time. If the vote splits evenly, do not guess: hand me back the word 'unsure'.",
+  "objective": "Handle a tied vote instead of silently picking a side.",
+  "concepts": [
+    "k_nearest_neighbours",
+    "ties",
+    "even_k"
+  ],
+  "requiredApi": [
+    "column",
+    "with_column",
+    "sort",
+    "take",
+    "group",
+    "np.arange",
+    "np.sqrt",
+    "item",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "import numpy as np\ngaps = np.sqrt((catalogue.column('level') - stranger.item(0)) ** 2 + (catalogue.column('borrows') - stranger.item(1)) ** 2)\nnearest = catalogue.with_column('gap', gaps).sort('gap').take(np.arange(4))\nvotes = nearest.group('genre').sort('count', descending=True)\ndeliver(votes.column('count').item(0))",
+  "hints": [
+    "An even number of voters can split down the middle, and the sort will still hand you a winner.",
+    "After grouping the four neighbours, look at the counts, not only at the first label.",
+    "If the table has two genres with the same count, deliver 'unsure'; otherwise deliver the top genre."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ncount = random.randint(6, 10)\nlevels = random.sample(range(1, 40), count)\nborrows = random.sample(range(1, 40), count)\nkinds = [random.choice(['picture', 'history']) for _ in range(count)]\nif kinds.count('picture') < 2:\n    kinds = ['picture', 'picture'] + kinds[2:]\nif kinds.count('history') < 2:\n    kinds = kinds[:-2] + ['history', 'history']\ncatalogue = Table().with_columns('level', make_array(*levels), 'borrows', make_array(*borrows), 'genre', make_array(*kinds))\nstranger = make_array(random.randint(1, 39), random.randint(1, 39))\ndel count, levels, borrows, kinds",
+  "visibleSeed": 66,
+  "visibleInputs": {
+    "catalogue": {
+      "kind": "table",
+      "labels": [
+        "level",
+        "borrows",
+        "genre"
+      ],
+      "rows": [
+        [
+          1,
+          1,
+          "picture"
+        ],
+        [
+          2,
+          2,
+          "picture"
+        ],
+        [
+          3,
+          3,
+          "picture"
+        ],
+        [
+          4,
+          4,
+          "history"
+        ],
+        [
+          30,
+          30,
+          "history"
+        ]
+      ],
+      "totalRows": 5
+    },
+    "stranger": {
+      "kind": "array",
+      "values": [
+        2,
+        2
+      ]
+    }
+  },
+  "fixtures": [
+    {
+      "name": "the_four_neighbours_split_two_and_two",
+      "predicate": "catalogue.num_rows == 4 and catalogue.group('genre').column('count').item(0) == 2",
+      "inputs": {
+        "catalogue": {
+          "kind": "table",
+          "labels": [
+            "level",
+            "borrows",
+            "genre"
+          ],
+          "rows": [
+            [
+              1,
+              1,
+              "picture"
+            ],
+            [
+              2,
+              2,
+              "picture"
+            ],
+            [
+              3,
+              3,
+              "history"
+            ],
+            [
+              4,
+              4,
+              "history"
+            ]
+          ],
+          "totalRows": 4
+        },
+        "stranger": {
+          "kind": "array",
+          "values": [
+            2,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "name": "one_genre_owns_every_near_lantern",
+      "predicate": "catalogue.group('genre').num_rows > 1 and catalogue.column('genre').item(0) == catalogue.column('genre').item(1)",
+      "inputs": {
+        "catalogue": {
+          "kind": "table",
+          "labels": [
+            "level",
+            "borrows",
+            "genre"
+          ],
+          "rows": [
+            [
+              5,
+              5,
+              "poetry"
+            ],
+            [
+              6,
+              6,
+              "poetry"
+            ],
+            [
+              7,
+              7,
+              "poetry"
+            ],
+            [
+              8,
+              8,
+              "poetry"
+            ],
+            [
+              35,
+              35,
+              "history"
+            ]
+          ],
+          "totalRows": 5
+        },
+        "stranger": {
+          "kind": "array",
+          "values": [
+            6,
+            6
+          ]
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\ngaps = np.sqrt((catalogue.column('level') - stranger.item(0)) ** 2 + (catalogue.column('borrows') - stranger.item(1)) ** 2)\nnearest = catalogue.with_column('gap', gaps).sort('gap').take(np.arange(4))\nvotes = nearest.group('genre').sort('count', descending=True)\nif votes.num_rows > 1 and votes.column('count').item(0) == votes.column('count').item(1):\n    deliver('unsure')\nelse:\n    deliver(votes.column('genre').item(0))",
+  "naive": [
+    {
+      "code": "import numpy as np\ngaps = np.sqrt((catalogue.column('level') - stranger.item(0)) ** 2 + (catalogue.column('borrows') - stranger.item(1)) ** 2)\nnearest = catalogue.with_column('gap', gaps).sort('gap').take(np.arange(4))\nvotes = nearest.group('genre').sort('count', descending=True)\ndeliver(votes.column('genre').item(0))",
+      "fails": "silent",
+      "hazard": "the_four_neighbours_split_two_and_two"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 0.0,
+    "relativeTolerance": 0.0
+  },
+  "unlocks": [
+    "tie-breaks"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 14,
+    "oil": 1
+  },
+  "setPiece": "lantern-aisle",
+  "hazards": [
+    "the_four_neighbours_split_two_and_two",
+    "one_genre_owns_every_near_lantern"
+  ],
+  "stochastic": false
+}

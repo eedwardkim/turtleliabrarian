@@ -1,19 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { puzzles } from '../../src/game/catalog';
+import { getPuzzle, puzzles } from '../../src/game/catalog';
 import { canEnterPuzzle, completePuzzle, enterWing, offlineSeconds, orderTrips, purchaseItem } from '../../src/game/economy';
 import { freshSave } from '../../src/game/saves';
 
 describe('M1 economy', () => {
   it('finishes every required lesson with no idling, hints throughout, and no bonus', () => {
     let save = freshSave();
-    for (const puzzle of puzzles) {
+    const m1 = [
+      'p0-01-stamp', 'p0-02-shares', 'p0-03-badge', 'p0-04-budget', 'p0-05-badge',
+      'ch1-show-1', 'ch1-show-2', 'ch1-vary-1', 'ch1-vary-2', 'ch1-break-1', 'ch1-break-2',
+      'ch2-show-1', 'ch2-show-2',
+    ].map(getPuzzle);
+    for (const puzzle of m1) {
       expect(canEnterPuzzle(save, puzzle)).toBe(true);
       save = { ...save, ...enterWing(save, puzzle.chapter) };
       expect(save.resources.stars).toBeGreaterThanOrEqual(0);
       save = { ...save, ...completePuzzle(save, puzzle, false) };
     }
-    expect(save.completed).toHaveLength(12);
-    expect(save.resources.stars).toBe(13);
+    expect(save.completed).toHaveLength(13);
+    expect(save.resources.stars).toBe(15);
     expect(save.resources.eggs).toBe(2);
   });
   it('does not duplicate completion rewards and gates future requests', () => {

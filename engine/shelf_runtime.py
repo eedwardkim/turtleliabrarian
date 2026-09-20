@@ -3,9 +3,12 @@
 import ast
 import builtins
 import contextlib
+import dis
+import functools
 import importlib.abc
 import importlib.util
 import io
+import itertools
 import json
 import math
 import random
@@ -17,13 +20,65 @@ from itertools import islice
 from pathlib import PurePosixPath
 
 import numpy as np
-from datascience import Table, are, make_array
+from datascience import Table, are, make_array, minimize, percentile, sample_proportions
 
-from shelf_events import observer
+from shelf_events import observer, sampling_rng
 
 SNAPSHOT_LIMIT = 40
 TEXT_LIMIT = 500
 EVENT_LIMIT = 2000
+PAYLOAD_LIMIT = SNAPSHOT_LIMIT * SNAPSHOT_LIMIT
+
+
+def player_frame(frame):
+    filename = frame.f_code.co_filename
+    return filename == "<player>" or filename.startswith("<file:")
+
+
+def suspended(frame):
+    return frame.f_code.co_code[frame.f_lasti] == dis.opmap["YIELD_VALUE"]
+
+
+def numpy_name(function):
+    if isinstance(function, types.MethodType):
+        module = function.__func__.__module__ or ""
+        name = function.__func__.__name__
+    elif isinstance(
+        function,
+        (
+            types.FunctionType,
+            types.BuiltinFunctionType,
+            types.MethodDescriptorType,
+            type(np.mean),
+            type(np.random.default_rng),
+            np.ufunc,
+            type,
+        ),
+    ):
+        name = function.__name__
+        if isinstance(function, types.MethodDescriptorType):
+            module = function.__objclass__.__module__
+        elif isinstance(function, np.ufunc):
+            module = "numpy"
+        else:
+            module = function.__module__ or ""
+        if isinstance(function, types.BuiltinFunctionType):
+            receiver = function.__self__
+            if isinstance(receiver, np.ndarray):
+                module = "numpy.ndarray"
+            elif isinstance(receiver, np.ufunc):
+                module = "numpy"
+                name = f"{receiver.__name__}.{name}"
+    else:
+        module = type(function).__module__
+        name = type(function).__name__
+    if module == "numpy" or module.startswith("numpy."):
+        if module.startswith("numpy.random"):
+            return f"numpy.random.{name}"
+        if module == "numpy.ndarray":
+            return f"numpy.ndarray.{name}"
+        return f"numpy.{name}"
+    return None
 
 
 class LockedAPIError(Exception):
@@ -109,6 +164,7 @@ class Trace:
         self.enabled = enabled
         self.allowed = None if allowed is None else set(allowed)
         self.events = []
+        self.pending_delivery = None
         self.objects = {}
         self.next_id = 1
         self.bindings = {}
@@ -116,6 +172,45 @@ class Trace:
         self.filename = "<player>"
         self.omitted = {}
         self.loops = {}
+        self.next_loop = 1
+        self.reserved_ends = 0
+        self.frames = {}
+        self.next_scope = 1
+        self.closed = False
+        self.callbacks = {}
+        self.callback_codes = set()
+        self.numpy_calls = []
+        self.tracer = None
+
+    def resume_tracing(self, frame):
+        if self.tracer is not None and sys.gettrace() is not self.tracer:
+            sys.settrace(self.tracer)
+            frame.f_trace = self.tracer
+
+    def location(self, frame, line=None):
+        self.line = frame.f_lineno if line is None else line
+        self.filename = frame.f_code.co_filename
+
+    def frame_state(self, frame):
+        key = id(frame)
+        if key not in self.frames:
+            if frame.f_code.co_name == "<module>":
+                scope = (
+                    "global"
+                    if frame.f_code.co_filename == "<player>"
+                    else f"{frame.f_code.co_filename}:<module>"
+                )
+            else:
+                scope = (
+                    f"{frame.f_code.co_filename}:{frame.f_code.co_qualname}"
+                    f":{self.next_scope}"
+                )
+                self.next_scope += 1
+            self.frames[key] = {"scope": scope, "line": frame.f_lineno}
+        return self.frames[key]
+
+    def has_room(self, extra=0):
+        return len(self.events) + self.reserved_ends + extra < EVENT_LIMIT - 1
 
     def object_id(self, value):
         if not isinstance(value, (Table, np.ndarray)):
@@ -135,33 +230,75 @@ class Trace:
         except (TypeError, ValueError):
             return f"<{type(value).__name__}>"
 
-    def bounded(self, value, depth=0):
-        if depth >= 8:
+    def bounded(self, value, depth=0, budget=None, counts=None, path=""):
+        if budget is None:
+            budget = [PAYLOAD_LIMIT]
+        if budget[0] <= 0 or depth >= 8:
             return "<nested value>"
+        budget[0] -= 1
         if isinstance(value, np.ndarray):
-            value = value.flat[:SNAPSHOT_LIMIT].tolist()
-        if isinstance(value, (tuple, list)):
-            return [self.bounded(item, depth + 1) for item in value[:SNAPSHOT_LIMIT]]
+            count = int(value.size)
+            selected = value.flat[: min(SNAPSHOT_LIMIT, budget[0])]
+        elif isinstance(value, (tuple, list, range)):
+            count = len(value)
+            selected = value[: min(SNAPSHOT_LIMIT, budget[0])]
+        else:
+            selected = None
+        if selected is not None:
+            if (
+                counts is not None
+                and count > len(selected)
+                and len(counts) < SNAPSHOT_LIMIT
+            ):
+                counts[path] = count
+            return [
+                self.bounded(item, depth + 1, budget, counts, f"{path}.{i}")
+                for i, item in enumerate(selected)
+                if budget[0] > 0
+            ]
         if isinstance(value, dict):
-            return {
-                str(key): self.bounded(item, depth + 1)
-                for key, item in islice(value.items(), SNAPSHOT_LIMIT)
-            }
+            result = {}
+            if (
+                counts is not None
+                and len(value) > SNAPSHOT_LIMIT
+                and len(counts) < SNAPSHOT_LIMIT
+            ):
+                counts[path] = len(value)
+            for key, item in islice(value.items(), SNAPSHOT_LIMIT):
+                if budget[0] <= 0:
+                    break
+                label = (
+                    str(key)[:TEXT_LIMIT]
+                    if type(key) in (str, int, float, bool, type(None))
+                    else f"<{type(key).__name__}>"
+                )
+                result[label] = self.bounded(
+                    item, depth + 1, budget, counts, f"{path}.{label}"
+                )
+            return result
         if isinstance(value, slice):
             return [value.start, value.stop, value.step]
         return self.snapshot(value)
 
     def event(self, name, inputs=(), output=None, details=None, force=False):
-        if not self.enabled:
-            return
-        if len(self.events) >= EVENT_LIMIT and not force:
+        if not self.enabled or self.closed:
+            return False
+        deferred = not self.has_room() and not force
+        if deferred:
             self.omitted[name] = self.omitted.get(name, 0) + 1
-            return
+            if name != "deliver":
+                return False
         details = {} if details is None else details
-        payload = {key: self.bounded(value) for key, value in details.items()}
-        for key, value in details.items():
-            if isinstance(value, (np.ndarray, list, tuple)):
+        budget, counts = [PAYLOAD_LIMIT], {}
+        payload = {}
+        for key, value in islice(details.items(), SNAPSHOT_LIMIT):
+            payload[key] = self.bounded(value, budget=budget, counts=counts, path=key)
+            if isinstance(value, np.ndarray):
+                payload[f"{key}Count"] = int(value.size)
+            elif isinstance(value, (dict, list, tuple, range)):
                 payload[f"{key}Count"] = len(value)
+        if counts:
+            payload["truncatedCounts"] = counts
         payload["value"] = self.snapshot(output)
         payload["inputValues"] = [
             self.snapshot(item) for item in inputs[:SNAPSHOT_LIMIT]
@@ -175,44 +312,54 @@ class Trace:
         if isinstance(output, np.ndarray):
             payload["totalValues"] = int(output.size)
             payload["shape"] = list(output.shape)
-            payload["dtype"] = (
-                "integer"
-                if np.issubdtype(output.dtype, np.signedinteger)
-                else str(output.dtype)
+            payload["dtype"] = {"i": "integer", "U": "unicode", "S": "bytes"}.get(
+                output.dtype.kind, str(output.dtype)
             )
-        self.events.append(
-            {
-                "version": 1,
-                "seq": len(self.events),
-                "type": name,
-                "line": self.line,
-                "inputs": [
-                    key
-                    for item in inputs[:SNAPSHOT_LIMIT]
-                    if (key := self.object_id(item)) is not None
-                ],
-                "output": self.object_id(output),
-                "payload": payload,
-            }
-        )
+        elif isinstance(output, (list, tuple, range)):
+            payload["totalValues"] = len(output)
+        event = {
+            "version": 1,
+            "seq": len(self.events),
+            "type": name,
+            "line": self.line,
+            "inputs": [
+                key
+                for item in inputs[:SNAPSHOT_LIMIT]
+                if (key := self.object_id(item)) is not None
+            ],
+            "output": self.object_id(output),
+            "payload": payload,
+        }
+        if deferred:
+            self.pending_delivery = event
+            return False
+        self.events.append(event)
+        return True
 
     def operation(self, name, inputs, output, details):
+        frame = sys._getframe(1)
+        while frame is not None and not player_frame(frame):
+            frame = frame.f_back
+        if frame is not None:
+            self.location(frame)
         self.event(name, inputs, output, details)
 
     def check_api(self, name):
         if self.allowed is None:
             return
         caller = sys._getframe(3)
-        if caller.f_code.co_filename not in ("<player>",) and not (
-            caller.f_code.co_filename.startswith("<file:")
-        ):
+        if caller.f_globals.get("__name__", "").startswith("datascience"):
+            return
+        while caller is not None and not player_frame(caller):
+            caller = caller.f_back
+        if caller is None:
             return
         candidates = {name, f"Table.{name}", f"np.{name}", f"numpy.{name}"}
         if not candidates.intersection(self.allowed):
             raise LockedAPIError(f"{name} is not unlocked in this chapter.")
 
     def scan(self, namespace, scope="global"):
-        if not self.enabled or len(self.events) >= EVENT_LIMIT:
+        if not self.enabled or self.closed or not self.has_room():
             return
         current = {
             name: (id(value), self.object_id(value))
@@ -250,57 +397,288 @@ class Trace:
                 )
         self.bindings[scope] = current
 
-    def loop(self, phase, loop_id, line):
-        self.line = line
+    def loop(self, phase, loop_id, line, frame=None):
+        frame = sys._getframe(1) if frame is None else frame
+        self.resume_tracing(frame)
+        if not self.enabled or self.closed:
+            return
+        self.location(frame, line)
+        key = (id(frame), loop_id)
         if phase == "start":
-            self.loops.setdefault(loop_id, []).append(0)
-        stack = self.loops[loop_id]
+            state = {
+                "loopId": loop_id,
+                "invocationId": self.next_loop,
+                "scope": self.frame_state(frame)["scope"],
+                "count": 0,
+                "line": line,
+                "filename": self.filename,
+                "recorded": self.has_room(1),
+            }
+            self.next_loop += 1
+            self.loops[key] = state
+            if state["recorded"]:
+                self.reserved_ends += 1
+        state = self.loops.get(key)
+        if state is None:
+            return
         if phase == "iteration":
-            stack[-1] += 1
-        self.event(f"loop_{phase}", details={"loopId": loop_id, "count": stack[-1]})
+            state["count"] += 1
         if phase == "end":
-            stack.pop()
+            self.loops.pop(key)
+            if state["recorded"]:
+                self.reserved_ends -= 1
+        self.loop_event(phase, state)
+
+    def iterate(self, iterable, loop_id, line, asynchronous=False):
+        frame = sys._getframe(1)
+        iterator = builtins.aiter(iterable) if asynchronous else iter(iterable)
+
+        def iterations():
+            self.loop("start", loop_id, line, frame)
+            try:
+                while True:
+                    try:
+                        value = next(iterator)
+                    except StopIteration:
+                        return
+                    self.loop("iteration", loop_id, line, frame)
+                    yield value
+            finally:
+                self.loop("end", loop_id, line, frame)
+
+        async def async_iterations():
+            self.loop("start", loop_id, line, frame)
+            try:
+                while True:
+                    try:
+                        value = await builtins.anext(iterator)
+                    except StopAsyncIteration:
+                        return
+                    self.loop("iteration", loop_id, line, frame)
+                    yield value
+            finally:
+                self.loop("end", loop_id, line, frame)
+
+        return async_iterations() if asynchronous else iterations()
+
+    def loop_event(self, phase, state, reason=None):
+        if not state["recorded"]:
+            name = f"loop_{phase}"
+            self.omitted[name] = self.omitted.get(name, 0) + 1
+            return
+        self.line, self.filename = state["line"], state["filename"]
+        details = {
+            key: state[key] for key in ("loopId", "invocationId", "scope", "count")
+        }
+        if reason is not None:
+            details["reason"] = reason
+        self.event(f"loop_{phase}", details=details, force=phase == "end")
+
+    def check_numpy(self, canonical):
+        if self.allowed is None:
+            return
+        short = canonical.removeprefix("numpy.")
+        name = canonical.split(".")[-1]
+        candidates = {canonical, short, f"np.{short}", name}
+        if short.startswith("ndarray."):
+            candidates.update((f"np.{name}", f"numpy.{name}"))
+        if not candidates.intersection(self.allowed):
+            raise LockedAPIError(f"{canonical} is not unlocked in this chapter.")
 
     def prepare(self, function, line, spelling):
-        is_numpy = type(function).__module__.startswith("numpy")
-        if isinstance(function, (types.FunctionType, types.BuiltinFunctionType, type)):
-            is_numpy = is_numpy or (function.__module__ or "").startswith("numpy")
-        if isinstance(function, types.BuiltinFunctionType):
-            is_numpy = is_numpy or isinstance(function.__self__, np.ndarray)
-        if not is_numpy:
+        self.resume_tracing(sys._getframe(1))
+        filename = sys._getframe(1).f_code.co_filename
+        if (
+            function is builtins.map
+            or function is builtins.filter
+            or function is functools.reduce
+        ):
+
+            def consume(*args, **kwargs):
+                if args:
+                    args = (
+                        self.observe_numpy(args[0], line, spelling, filename, True),
+                        *args[1:],
+                    )
+                return function(*args, **kwargs)
+
+            return consume
+        if function is itertools.accumulate:
+
+            def accumulate(*args, **kwargs):
+                if len(args) > 1:
+                    args = (
+                        args[0],
+                        self.observe_numpy(args[1], line, spelling, filename, True),
+                        *args[2:],
+                    )
+                if "func" in kwargs:
+                    kwargs["func"] = self.observe_numpy(
+                        kwargs["func"], line, spelling, filename, True
+                    )
+                return function(*args, **kwargs)
+
+            return accumulate
+        if (
+            function is builtins.sorted
+            or function is builtins.min
+            or function is builtins.max
+        ) or (
+            isinstance(function, types.BuiltinFunctionType)
+            and isinstance(function.__self__, list)
+            and function.__name__ == "sort"
+        ):
+
+            def order(*args, **kwargs):
+                if "key" in kwargs:
+                    kwargs["key"] = self.observe_numpy(
+                        kwargs["key"], line, spelling, filename, True
+                    )
+                return function(*args, **kwargs)
+
+            return order
+        return self.observe_numpy(function, line, spelling, filename)
+
+    def observe_numpy(self, function, line, spelling, filename, callback=False):
+        canonical = numpy_name(function)
+        if canonical is None:
             return function
 
         def invoke(*args, **kwargs):
-            self.line = line
-            if self.allowed is not None:
-                name = spelling
-                if not (
-                    {name, name.removeprefix("numpy."), name.split(".")[-1]}
-                    & self.allowed
-                ):
-                    raise LockedAPIError(f"{name} is not unlocked in this chapter.")
-            inputs = args
+            self.line, self.filename = line, filename
+            self.check_numpy(canonical)
+            inputs = (*args, *kwargs.values())
             if isinstance(function, types.BuiltinFunctionType) and isinstance(
                 function.__self__, np.ndarray
             ):
-                inputs = (function.__self__, *args)
+                inputs = (function.__self__, *inputs)
             before = (
                 [self.snapshot(item) for item in inputs[:SNAPSHOT_LIMIT]]
-                if self.enabled
+                if self.enabled and self.has_room()
                 else []
             )
-            result = function(*args, **kwargs)
+            try:
+                self.numpy_calls.append(canonical)
+                try:
+                    result = function(*args, **kwargs)
+                finally:
+                    self.numpy_calls.pop()
+            except BaseException as error:
+                self.line, self.filename = line, filename
+                self.event(
+                    "numpy",
+                    inputs,
+                    details={
+                        "function": spelling,
+                        "canonical": canonical,
+                        "arguments": before,
+                        "keywords": kwargs,
+                        "exception": type(error).__name__,
+                        **({"callback": True} if callback else {}),
+                    },
+                )
+                raise
+            self.line, self.filename = line, filename
             self.event(
                 "numpy",
                 inputs,
                 result,
-                {"function": spelling, "arguments": before, "keywords": kwargs},
+                {
+                    "function": spelling,
+                    "canonical": canonical,
+                    "arguments": before,
+                    "keywords": kwargs,
+                    **({"callback": True} if callback else {}),
+                },
             )
             return result
 
         return invoke
 
+    def argument(self, value):
+        if isinstance(value, type(np.mean)):
+            function = value.__wrapped__
+        else:
+            function = value
+        if (
+            isinstance(function, types.FunctionType)
+            and numpy_name(function) is not None
+        ):
+            self.callback_codes.add(function.__code__)
+        return value
+
+    def numpy_callback(self, frame, event, result):
+        key = id(frame)
+        if event == "call":
+            module = frame.f_globals.get("__name__", "")
+            if not module.startswith("numpy.") or frame.f_code.co_name.startswith("_"):
+                return False
+            canonical = f"numpy.{frame.f_code.co_name}"
+            registered = frame.f_code in self.callback_codes
+            if self.numpy_calls and (
+                self.numpy_calls[-1] == canonical or not registered
+            ):
+                return False
+            caller = frame.f_back
+            while caller is not None and not player_frame(caller):
+                parent_module = caller.f_globals.get("__name__", "")
+                if not registered and (
+                    parent_module.startswith(("numpy", "datascience"))
+                    or parent_module == __name__
+                ):
+                    return False
+                caller = caller.f_back
+            if caller is None:
+                return False
+            self.location(caller)
+            self.check_numpy(canonical)
+            if not self.enabled:
+                return False
+            inputs = tuple(frame.f_locals.values())
+            self.callbacks[key] = {
+                "inputs": inputs,
+                "arguments": [self.snapshot(item) for item in inputs[:SNAPSHOT_LIMIT]]
+                if self.has_room()
+                else [],
+                "line": caller.f_lineno,
+                "filename": caller.f_code.co_filename,
+                "canonical": canonical,
+            }
+            frame.f_trace_lines = False
+        elif key in self.callbacks and event == "exception":
+            self.callbacks[key]["exception"] = result[0].__name__
+        elif key in self.callbacks and event == "return":
+            state = self.callbacks.pop(key)
+            self.line, self.filename = state["line"], state["filename"]
+            details = {
+                "function": state["canonical"],
+                "canonical": state["canonical"],
+                "arguments": state["arguments"],
+                "callback": True,
+            }
+            if (
+                dis.opname[frame.f_code.co_code[frame.f_lasti]]
+                not in ("RETURN_VALUE", "RETURN_CONST")
+                and "exception" in state
+            ):
+                details["exception"] = state["exception"]
+            self.event("numpy", state["inputs"], result, details)
+        return key in self.callbacks
+
     def finish(self):
+        for state in reversed(tuple(self.loops.values())):
+            if state["recorded"]:
+                self.reserved_ends -= 1
+            self.loop_event("end", state, reason="run_end")
+        self.loops.clear()
+        if self.pending_delivery is not None:
+            self.events.insert(self.pending_delivery["seq"], self.pending_delivery)
+            self.pending_delivery = None
+            for seq, event in enumerate(self.events):
+                event["seq"] = seq
+            self.omitted["deliver"] -= 1
+            if not self.omitted["deliver"]:
+                del self.omitted["deliver"]
         if self.omitted:
             self.event(
                 "trace_summary",
@@ -310,6 +688,11 @@ class Trace:
                 },
                 force=True,
             )
+        self.closed = True
+        self.frames.clear()
+        self.callbacks.clear()
+        self.numpy_calls.clear()
+        self.tracer = None
 
 
 class Instrument(ast.NodeTransformer):
@@ -327,6 +710,17 @@ class Instrument(ast.NodeTransformer):
     def visit_Call(self, node):
         spelling = ast.unparse(node.func)
         self.generic_visit(node)
+        node.args = [
+            argument
+            if isinstance(argument, ast.Starred)
+            else ast.copy_location(self.helper("argument", [argument]), argument)
+            for argument in node.args
+        ]
+        for keyword in node.keywords:
+            if keyword.arg is not None:
+                keyword.value = ast.copy_location(
+                    self.helper("argument", [keyword.value]), keyword.value
+                )
         node.func = ast.copy_location(
             self.helper(
                 "prepare",
@@ -366,6 +760,30 @@ class Instrument(ast.NodeTransformer):
 
     visit_For = instrument_loop
     visit_While = instrument_loop
+    visit_AsyncFor = instrument_loop
+
+    def instrument_comprehension(self, node):
+        self.generic_visit(node)
+        for index, generator in enumerate(node.generators):
+            loop_id = f"{self.filename}:{node.lineno}:{node.col_offset}:comp{index}"
+            generator.iter = ast.copy_location(
+                self.helper(
+                    "iterate",
+                    [
+                        generator.iter,
+                        ast.Constant(loop_id),
+                        ast.Constant(node.lineno),
+                        ast.Constant(bool(generator.is_async)),
+                    ],
+                ),
+                generator.iter,
+            )
+        return node
+
+    visit_ListComp = instrument_comprehension
+    visit_SetComp = instrument_comprehension
+    visit_DictComp = instrument_comprehension
+    visit_GeneratorExp = instrument_comprehension
 
 
 def compile_player(code, filename, trace, namespace, last_expression=False):
@@ -374,7 +792,9 @@ def compile_player(code, filename, trace, namespace, last_expression=False):
     while prefix in code or any(name.startswith(prefix) for name in namespace):
         prefix += "_"
     namespace[prefix + "prepare"] = trace.prepare
+    namespace[prefix + "argument"] = trace.argument
     namespace[prefix + "loop"] = trace.loop
+    namespace[prefix + "iterate"] = trace.iterate
     tree = Instrument(prefix, filename).visit(tree)
     result_name = prefix + "result"
     if last_expression and tree.body and isinstance(tree.body[-1], ast.Expr):
@@ -440,6 +860,8 @@ def friendly(error):
     if isinstance(error, SyntaxError):
         return "Python could not read this line. Check punctuation, indentation and brackets."
     if isinstance(error, NameError):
+        if "___" in message:
+            return "Fill in the blank: replace ___ with your expression."
         return (
             "This name has no label yet. Check its spelling or assign it a value first."
         )
@@ -478,14 +900,20 @@ def run(request: dict) -> dict:
     files = None
     saved_modules = {}
     token = None
+    rng_token = None
     prior_trace = sys.gettrace()
     random_state, numpy_state = random.getstate(), np.random.get_state()
+    print_options, error_options = np.get_printoptions(), np.geterr()
+    error_callback = np.geterrcall()
     namespace = {
         "__name__": "__main__",
         "__builtins__": dict(builtins.__dict__),
         "Table": Table,
         "are": are,
         "make_array": make_array,
+        "percentile": percentile,
+        "minimize": minimize,
+        "sample_proportions": sample_proportions,
         "np": np,
     }
 
@@ -495,7 +923,6 @@ def run(request: dict) -> dict:
         trace.event("deliver", (value,), value)
 
     namespace["deliver"] = deliver
-    previous_line = {}
 
     def check_time(frame, event, arg):
         filename = frame.f_code.co_filename
@@ -503,23 +930,30 @@ def run(request: dict) -> dict:
             raise RunTimeout("Execution exceeded the cooperative time budget")
         if filename in ("<player>", "<inputs>") or filename.startswith("<file:"):
             if event in ("line", "return", "exception"):
-                trace.line = previous_line.get(id(frame), frame.f_lineno)
-                trace.filename = filename
+                state = trace.frame_state(frame)
+                trace.location(frame, state["line"])
                 if filename != "<inputs>":
-                    scope = (
-                        "global"
-                        if frame.f_locals is namespace
-                        else f"{filename}:{frame.f_code.co_qualname}"
+                    scope = state["scope"]
+                    global_scope = (
+                        "global" if filename == "<player>" else f"{filename}:<module>"
                     )
-                    trace.scan(frame.f_locals, scope)
-                    if event == "return" and frame.f_locals is not namespace:
+                    trace.scan(frame.f_globals, global_scope)
+                    if frame.f_locals is not frame.f_globals:
+                        trace.scan(frame.f_locals, scope)
+                    if (
+                        event == "return"
+                        and not suspended(frame)
+                        and frame.f_locals is not frame.f_globals
+                    ):
                         trace.scan({}, scope)
                         trace.bindings.pop(scope, None)
                 if event == "line":
-                    previous_line[id(frame)] = frame.f_lineno
+                    state["line"] = frame.f_lineno
                     trace.line = frame.f_lineno
-                elif event == "return":
-                    previous_line.pop(id(frame), None)
+                elif event == "return" and not suspended(frame):
+                    trace.frames.pop(id(frame), None)
+            return check_time
+        if trace.numpy_callback(frame, event, arg):
             return check_time
         return None
 
@@ -528,6 +962,8 @@ def run(request: dict) -> dict:
             seed = request.get("seed", 0)
             random.seed(seed)
             np.random.seed(seed)
+            rng_token = sampling_rng.set(np.random.default_rng(seed))
+            trace.tracer = check_time
             sys.settrace(check_time)
             baseline = set(namespace)
             exec(compile(request.get("inputCode", ""), "<inputs>", "exec"), namespace)
@@ -556,6 +992,9 @@ def run(request: dict) -> dict:
                     "Table": Table,
                     "are": are,
                     "make_array": make_array,
+                    "percentile": percentile,
+                    "minimize": minimize,
+                    "sample_proportions": sample_proportions,
                     "np": np,
                     "deliver": deliver,
                 },
@@ -565,11 +1004,13 @@ def run(request: dict) -> dict:
                     saved_modules[name] = sys.modules.pop(name)
             sys.meta_path.insert(0, files)
             token = observer.set(trace)
+            trace.line, trace.filename = 0, "<player>"
             trace.scan(namespace)
             code, result_name = compile_player(
                 request["code"], "<player>", trace, namespace, True
             )
             exec(code, namespace)
+            trace.filename = "<player>"
             trace.scan(namespace)
             last_value = namespace.get(result_name)
             try:
@@ -602,6 +1043,8 @@ def run(request: dict) -> dict:
         sys.settrace(prior_trace)
         if token is not None:
             observer.reset(token)
+        if rng_token is not None:
+            sampling_rng.reset(rng_token)
         if files is not None:
             if files in sys.meta_path:
                 sys.meta_path.remove(files)
@@ -610,6 +1053,9 @@ def run(request: dict) -> dict:
             sys.modules.update(saved_modules)
         random.setstate(random_state)
         np.random.set_state(numpy_state)
+        np.set_printoptions(**print_options)
+        np.seterr(**error_options)
+        np.seterrcall(error_callback)
     trace.finish()
     result.update(
         stdout=output.getvalue(),

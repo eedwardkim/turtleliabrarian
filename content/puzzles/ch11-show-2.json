@@ -1,0 +1,246 @@
+{
+  "id": "ch11-show-2",
+  "chapter": 11,
+  "kind": "show",
+  "title": "The Nearest Lantern",
+  "patron": "Mx. Wren",
+  "request": "An unshelved book has a reading level and a borrow count. Find the single closest book in the sorted catalogue, using both numbers, and tell me that book's genre.",
+  "objective": "Classify a new point by its single nearest neighbour.",
+  "concepts": [
+    "nearest_neighbour",
+    "classification",
+    "distance"
+  ],
+  "requiredApi": [
+    "column",
+    "with_column",
+    "sort",
+    "np.sqrt",
+    "item",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "minimize",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "import numpy as np\ngaps = np.sqrt((catalogue.column('level') - stranger.item(0)) ** 2 + (catalogue.column('borrows') - stranger.item(1)) ** 2)\ndeliver(min(gaps))",
+  "hints": [
+    "Both numbers describe the book, so both belong in the measurement.",
+    "Build a distance column: square the level gap, square the borrow gap, add them, take the root.",
+    "Sort the catalogue by that column and deliver the genre in the first row."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\ngenres = ['picture', 'history', 'poetry']\ncount = random.randint(5, 9)\nlevels = random.sample(range(1, 20), count)\nborrows = random.sample(range(1, 20), count)\nkinds = [genres[i % len(genres)] for i in range(count)]\ncatalogue = Table().with_columns('level', make_array(*levels), 'borrows', make_array(*borrows), 'genre', make_array(*kinds))\nstranger = make_array(random.randint(1, 19), random.randint(1, 19))\ndel genres, count, levels, borrows, kinds",
+  "visibleSeed": 23,
+  "visibleInputs": {
+    "catalogue": {
+      "kind": "table",
+      "labels": [
+        "level",
+        "borrows",
+        "genre"
+      ],
+      "rows": [
+        [
+          2,
+          5,
+          "picture"
+        ],
+        [
+          7,
+          5,
+          "history"
+        ],
+        [
+          12,
+          5,
+          "poetry"
+        ]
+      ],
+      "totalRows": 3
+    },
+    "stranger": {
+      "kind": "array",
+      "values": [
+        3,
+        5
+      ]
+    }
+  },
+  "fixtures": [
+    {
+      "name": "the_borrow_count_decides",
+      "predicate": "catalogue.column('borrows').item(0) != catalogue.column('borrows').item(1)",
+      "inputs": {
+        "catalogue": {
+          "kind": "table",
+          "labels": [
+            "level",
+            "borrows",
+            "genre"
+          ],
+          "rows": [
+            [
+              4,
+              18,
+              "picture"
+            ],
+            [
+              5,
+              2,
+              "history"
+            ],
+            [
+              11,
+              3,
+              "poetry"
+            ]
+          ],
+          "totalRows": 3
+        },
+        "stranger": {
+          "kind": "array",
+          "values": [
+            4,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "name": "the_stranger_sits_on_a_catalogued_book",
+      "predicate": "min((catalogue.column('level') - stranger.item(0)) ** 2 + (catalogue.column('borrows') - stranger.item(1)) ** 2) == 0",
+      "inputs": {
+        "catalogue": {
+          "kind": "table",
+          "labels": [
+            "level",
+            "borrows",
+            "genre"
+          ],
+          "rows": [
+            [
+              6,
+              9,
+              "picture"
+            ],
+            [
+              10,
+              2,
+              "history"
+            ],
+            [
+              14,
+              16,
+              "poetry"
+            ]
+          ],
+          "totalRows": 3
+        },
+        "stranger": {
+          "kind": "array",
+          "values": [
+            10,
+            2
+          ]
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "import numpy as np\ngaps = np.sqrt((catalogue.column('level') - stranger.item(0)) ** 2 + (catalogue.column('borrows') - stranger.item(1)) ** 2)\nclosest = catalogue.with_column('gap', gaps).sort('gap')\ndeliver(closest.column('genre').item(0))",
+  "naive": [
+    {
+      "code": "import numpy as np\ngaps = np.abs(catalogue.column('level') - stranger.item(0))\nclosest = catalogue.with_column('gap', gaps).sort('gap')\ndeliver(closest.column('genre').item(0))",
+      "fails": "silent",
+      "hazard": "the_borrow_count_decides"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 0.0,
+    "relativeTolerance": 0.0
+  },
+  "unlocks": [
+    "nearest-neighbour"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 12,
+    "oil": 0
+  },
+  "setPiece": "lantern-aisle",
+  "hazards": [
+    "the_borrow_count_decides",
+    "the_stranger_sits_on_a_catalogued_book"
+  ],
+  "stochastic": false
+}

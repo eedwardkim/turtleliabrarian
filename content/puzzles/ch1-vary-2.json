@@ -7,7 +7,7 @@
   "requiredApi": ["np.mean", "np.count_nonzero", "deliver"],
   "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array", "np.arange", "item", "sum", "np.mean", "np.count_nonzero"],
   "starter": "import numpy as np\ncount = 0\ndeliver(count)",
-  "hints": ["First find the mean; then ask the same yes-or-no question of every tile.", "np.mean finds the center, and np.count_nonzero counts the True values in a comparison array.", "Name the mean, form an inclusive comparison with the original times, and count that comparison."],
+  "hints": ["Compute how many values in times are at least the average of the tray.", "Use np.mean(times) for the average, >= for an inclusive comparison, and np.count_nonzero to count True values.", "Write average = np.mean(times), then count = np.count_nonzero(times >= ___) and deliver(count)."],
   "inputCode": "import random\nfrom datascience import make_array\ntimes = make_array(*[random.randint(1, 30) for _ in range(random.randint(2, 8))])",
   "visibleSeed": 24, "visibleInputs": {"times": {"kind": "array", "values": [2, 4]}},
   "fixtures": [

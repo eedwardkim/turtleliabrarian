@@ -1,0 +1,221 @@
+{
+  "id": "ch8-show-1",
+  "chapter": 8,
+  "kind": "show",
+  "title": "The Slow Quarter",
+  "patron": "Mr. Heron",
+  "request": "I want the seventy-fifth percentile of the return waits on this cart, the way the library counts percentiles: the wait of the first book at or above that rank.",
+  "objective": "Read a percentile off a sample with the library's rank rule.",
+  "concepts": [
+    "percentiles",
+    "rank_rule",
+    "order_statistics"
+  ],
+  "requiredApi": [
+    "percentile",
+    "column",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum",
+    "np.std"
+  ],
+  "starter": "import numpy as np\ndeliver(np.mean(ledger.column('days')))",
+  "hints": [
+    "A percentile is a book in the line, not the average of the line.",
+    "percentile(75, values) walks up the sorted waits and stops at the first one at or above three quarters of the way.",
+    "Pull the days column out of the ledger and hand it straight to percentile with 75 as the percent."
+  ],
+  "inputCode": "import random\nfrom datascience import Table, make_array\nshelf_titles = ['Kettle Songs', 'Tide Notes', 'Paper Lanterns', 'Winter Ferns', 'Quiet Harbours', 'Salt & Slate', 'Moth Lamps', 'Copper Rain', 'Nine Bridges']\ncount = random.randint(4, 9)\ndays = [random.randint(1, 30) for _ in range(count)]\nnames = [shelf_titles[i % len(shelf_titles)] + ' v' + str(i + 1) for i in range(count)]\nledger = Table().with_columns('title', make_array(*names), 'days', make_array(*days))\ndel shelf_titles, count, days, names",
+  "visibleSeed": 18,
+  "visibleInputs": {
+    "ledger": {
+      "kind": "table",
+      "labels": [
+        "title",
+        "days"
+      ],
+      "rows": [
+        [
+          "Kettle Songs v1",
+          2
+        ],
+        [
+          "Tide Notes v2",
+          9
+        ],
+        [
+          "Paper Lanterns v3",
+          5
+        ],
+        [
+          "Winter Ferns v4",
+          9
+        ]
+      ],
+      "totalRows": 4
+    }
+  },
+  "fixtures": [
+    {
+      "name": "top_two_waits_differ",
+      "predicate": "np.sort(ledger.column('days')).item(2) != np.sort(ledger.column('days')).item(3)",
+      "inputs": {
+        "ledger": {
+          "kind": "table",
+          "labels": [
+            "title",
+            "days"
+          ],
+          "rows": [
+            [
+              "Moth Lamps v1",
+              3
+            ],
+            [
+              "Copper Rain v2",
+              14
+            ],
+            [
+              "Nine Bridges v3",
+              6
+            ],
+            [
+              "Lark Almanac v4",
+              10
+            ]
+          ],
+          "totalRows": 4
+        }
+      }
+    },
+    {
+      "name": "every_wait_the_same",
+      "predicate": "max(ledger.column('days')) == min(ledger.column('days'))",
+      "inputs": {
+        "ledger": {
+          "kind": "table",
+          "labels": [
+            "title",
+            "days"
+          ],
+          "rows": [
+            [
+              "Salt & Slate v1",
+              4
+            ],
+            [
+              "Salt & Slate v2",
+              4
+            ],
+            [
+              "Salt & Slate v3",
+              4
+            ],
+            [
+              "Salt & Slate v4",
+              4
+            ],
+            [
+              "Salt & Slate v5",
+              4
+            ]
+          ],
+          "totalRows": 5
+        }
+      }
+    }
+  ],
+  "queueSize": 7,
+  "reference": "deliver(percentile(75, ledger.column('days')))",
+  "naive": [
+    {
+      "code": "import numpy as np\ndeliver(np.percentile(ledger.column('days'), 75))",
+      "fails": "silent",
+      "hazard": "top_two_waits_differ"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 1e-09,
+    "relativeTolerance": 1e-09
+  },
+  "unlocks": [
+    "percentile"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 10,
+    "oil": 0
+  },
+  "setPiece": "bookends",
+  "hazards": [
+    "top_two_waits_differ"
+  ],
+  "stochastic": false
+}

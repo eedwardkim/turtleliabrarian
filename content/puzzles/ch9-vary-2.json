@@ -1,0 +1,149 @@
+{
+  "id": "ch9-vary-2",
+  "chapter": 9,
+  "kind": "vary",
+  "title": "How Many More Slips",
+  "patron": "the Trustees",
+  "request": "Our survey of this many patrons gave an interval we find too wide. Tell us how many patrons we must survey so the interval becomes this many times narrower, rounding up to a whole patron.",
+  "objective": "Apply the square-root law relating sample size to interval width.",
+  "concepts": [
+    "square_root_law",
+    "sample_size",
+    "interval_width",
+    "clt"
+  ],
+  "requiredApi": [
+    "int",
+    "deliver"
+  ],
+  "learnedApi": [
+    "deliver",
+    "print",
+    "round",
+    "abs",
+    "max",
+    "min",
+    "len",
+    "int",
+    "float",
+    "str",
+    "range",
+    "make_array",
+    "np.arange",
+    "item",
+    "sum",
+    "np.mean",
+    "np.count_nonzero",
+    "Table",
+    "read_table",
+    "with_column",
+    "with_columns",
+    "column",
+    "select",
+    "drop",
+    "relabeled",
+    "labels",
+    "num_rows",
+    "num_columns",
+    "row",
+    "rows",
+    "show",
+    "sort",
+    "take",
+    "exclude",
+    "where",
+    "are.equal_to",
+    "are.not_equal_to",
+    "are.above",
+    "are.above_or_equal_to",
+    "are.below",
+    "are.below_or_equal_to",
+    "are.between",
+    "are.between_or_equal_to",
+    "are.containing",
+    "are.contained_in",
+    "barh",
+    "hist",
+    "scatter",
+    "plot",
+    "apply",
+    "group",
+    "pivot",
+    "join",
+    "sample",
+    "sample_proportions",
+    "np.append",
+    "np.random.choice",
+    "percentile",
+    "np.percentile",
+    "np.sort",
+    "np.median",
+    "np.std",
+    "np.sqrt",
+    "np.abs",
+    "np.absolute",
+    "strip",
+    "lower",
+    "np.max",
+    "np.min",
+    "np.sum"
+  ],
+  "starter": "deliver(narrower ** 2)",
+  "hints": [
+    "Width shrinks with the square root of the sample, so the sample has to grow faster than the width shrinks.",
+    "Narrowing the interval by a factor of k costs k squared times the patrons.",
+    "Multiply surveyed by narrower squared, then round up to a whole number of patrons."
+  ],
+  "inputCode": "import random\nsurveyed = random.choice([25, 40, 64, 100, 150, 225])\nnarrower = random.choice([1, 1, 2, 2.5, 3, 4])",
+  "visibleSeed": 9,
+  "visibleInputs": {
+    "surveyed": 100,
+    "narrower": 1
+  },
+  "fixtures": [
+    {
+      "name": "interval_must_halve",
+      "predicate": "narrower == 2",
+      "inputs": {
+        "surveyed": 64,
+        "narrower": 2
+      }
+    },
+    {
+      "name": "fractional_factor_needs_rounding_up",
+      "predicate": "int(surveyed * narrower ** 2) != surveyed * narrower ** 2",
+      "inputs": {
+        "surveyed": 25,
+        "narrower": 2.5
+      }
+    }
+  ],
+  "queueSize": 6,
+  "reference": "import numpy as np\nneeded = surveyed * narrower ** 2\nwhole = int(needed)\nif whole < needed:\n    whole = whole + 1\ndeliver(whole)",
+  "naive": [
+    {
+      "code": "deliver(int(surveyed * narrower))",
+      "fails": "silent",
+      "hazard": "interval_must_halve"
+    }
+  ],
+  "checker": {
+    "ordered": true,
+    "absoluteTolerance": 0.0,
+    "relativeTolerance": 0.0
+  },
+  "unlocks": [
+    "square-root-law"
+  ],
+  "standingOrder": {
+    "eligible": true,
+    "ink": 12,
+    "oil": 0
+  },
+  "setPiece": "measuring-rod",
+  "hazards": [
+    "interval_must_halve",
+    "fractional_factor_needs_rounding_up"
+  ],
+  "stochastic": false
+}
