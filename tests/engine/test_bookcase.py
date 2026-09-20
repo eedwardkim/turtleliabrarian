@@ -8,7 +8,9 @@ import pytest
 from shelf_runtime import run
 
 PUZZLE = json.loads(
-    (Path(__file__).resolve().parents[2] / "content/puzzles/ch1-show-3.json").read_text()
+    (
+        Path(__file__).resolve().parents[2] / "content/puzzles/ch1-show-3.json"
+    ).read_text()
 )
 
 

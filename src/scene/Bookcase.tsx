@@ -37,11 +37,11 @@ function Book({ book }: { book: ShelfBook }) {
       <boxGeometry args={[0.57, 0.025, 0.018]} />
       <meshStandardMaterial color="#edd29b" metalness={0.15} roughness={0.7} />
     </mesh>)}
-    <Html center position={[0, height * 0.57, 0.42]} zIndexRange={[1, 0]}>
-      <span className="shelf-book-title">{book.title}</span>
-    </Html>
-    <Html center position={[0, 0.33, 0.42]} zIndexRange={[1, 0]}>
-      <span className="shelf-book-height">{book.height}</span>
+    <Html center position={[0, height / 2, 0.42]} zIndexRange={[1, 0]}>
+      <div className="shelf-book-label">
+        <span className="shelf-book-title">{book.title}</span>
+        <span className="shelf-book-height">{book.height}</span>
+      </div>
     </Html>
   </group>;
 }

@@ -7,17 +7,25 @@
 .shelf-world canvas { display: block; touch-action: none; }
 .bookcase-world {
   position: absolute;
+  container-type: size;
   inset: 70px 24px 330px;
   overflow: hidden;
   border-radius: 18px;
   box-shadow: 0 10px 40px #503c2422;
 }
 .world-backdrop > .bookcase-world { height: auto; }
+.shelf-book-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  pointer-events: none;
+}
 .shelf-book-title {
   display: block;
   color: #fff3d6;
   writing-mode: vertical-rl;
-  font: 600 16px/1 'Fraunces', serif;
+  font: 600 clamp(9px, 3.4cqh, 16px)/1 'Fraunces', serif;
   text-shadow: 0 1px 2px #32272099;
   pointer-events: none;
 }
@@ -27,7 +35,7 @@
   border-radius: 3px;
   color: #443126;
   background: #f7e6bc;
-  font: 600 13px/1 'IBM Plex Mono', monospace;
+  font: 600 clamp(9px, 2.8cqh, 13px)/1 'IBM Plex Mono', monospace;
   pointer-events: none;
 }
 .scene-label {
