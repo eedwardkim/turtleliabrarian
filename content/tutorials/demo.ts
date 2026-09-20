@@ -1,15 +1,16 @@
 import type { Puzzle } from '../../src/contracts';
 
-export type DemoAction = 'goto' | 'solve' | 'run' | 'serve' | 'next';
+export type DemoAction = 'goto' | 'next';
+export type DemoWait = { kind: 'code'; accepted: string[] } | { kind: 'run-pass' } | { kind: 'serve-pass' };
 
 export interface DemoStep {
   title: string;
   body: string;
   target: string;
-  /** Performed when the step opens; the tour waits for the library to settle before moving on. */
   action?: DemoAction;
   puzzleId?: string;
-  code?: string;
+  waitFor?: DemoWait;
+  line?: string;
   /** Show the slip's inputs and the answer they produce beneath the step. */
   showsAnswer?: boolean;
 }
@@ -33,14 +34,32 @@ export function describeInputs(puzzle: Puzzle): string {
     .join(', ');
 }
 
-function firstLine(code: string): string {
+export function firstLine(code: string): string {
   return code.split('\n')[0];
+}
+
+export function demoAnswer(puzzle: Puzzle): string {
+  const line = firstLine(puzzle.reference);
+  return line.slice(line.indexOf('=') + 1).trim();
+}
+
+export function acceptedAnswers(puzzle: Puzzle): string[] {
+  const answer = demoAnswer(puzzle);
+  const match = answer.match(/^(\w+)\s*([*+])\s*(\w+)$/);
+  if (!match) return [answer];
+  const swapped = `${match[3]} ${match[2]} ${match[1]}`;
+  return [answer, swapped];
+}
+
+export function codeSatisfies(code: string, accepted: string[]): boolean {
+  const compact = code.replace(/\s/g, '');
+  return !compact.includes('___') && accepted.some(answer => compact.includes(answer.replace(/\s/g, '')));
 }
 
 export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
   const steps: DemoStep[] = [{
     title: 'Welcome to the reading room',
-    body: 'Patrons bring requests, Shelby answers them in Python, and the library acts the answer out. Watch her handle two before you take the desk.',
+    body: 'Patrons bring requests, and you answer them with a line or two of Python. Let’s do the first two together: you type, I’ll point.',
     target: 'request',
   }];
   puzzles.forEach((puzzle, index) => {
@@ -52,34 +71,34 @@ export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
       },
       {
         title: 'Read the slip',
-        body: `${puzzle.objective} Look under “Already in Python”: this shelf gives Shelby ${describeInputs(puzzle)}. Those names already hold those numbers, so she never types the numbers herself.`,
+        body: `Your task: ${puzzle.objective} Under “Already in Python” you’ll see ${describeInputs(puzzle)}. Those names already hold those values, so you never type the numbers yourself.`,
         target: 'request',
       },
       {
-        title: 'Shelby writes the script',
-        body: `Two lines. “${firstLine(puzzle.reference)}” combines the slip’s names and gives the result a name of its own. “deliver(…)” hands that result to ${puzzle.patron}.`,
-        target: 'editor', action: 'solve', puzzleId: puzzle.id, code: puzzle.reference, showsAnswer: true,
+        title: 'Fill in the blank',
+        body: `In the script window, click on ___ and replace it with ${demoAnswer(puzzle)}, so the line reads “${firstLine(puzzle.reference)}”. The last line, deliver(…), hands the result to ${puzzle.patron}.`,
+        target: 'editor', waitFor: { kind: 'code', accepted: acceptedAnswers(puzzle) }, line: firstLine(puzzle.reference), puzzleId: puzzle.id,
       },
       {
         title: 'Run it',
-        body: 'Run tries the script on this shelf. Watch Shelby carry the books, then check the receipt in Output: the delivered value should be the number below.',
-        target: 'output', action: 'run', puzzleId: puzzle.id, showsAnswer: true,
+        body: 'Press Run (the play button in the script window, or Cmd/Ctrl + Enter). Then look at Output: “Delivered to the patron” should show the number below.',
+        target: 'output', waitFor: { kind: 'run-pass' }, line: firstLine(puzzle.reference), puzzleId: puzzle.id, showsAnswer: true,
       },
       {
         title: 'Serve the queue',
-        body: `Serve Queue runs the same script for ${puzzle.queueSize} patrons with different shelves. Every one must pass, and a failed patron keeps its shelf for inspection.`,
-        target: 'queue', action: 'serve', puzzleId: puzzle.id,
+        body: `Now press Serve Queue. ${puzzle.queueSize} patrons bring different values; your script runs for each one and must pass them all.`,
+        target: 'queue', waitFor: { kind: 'serve-pass' }, puzzleId: puzzle.id,
       },
       {
         title: 'Request complete',
-        body: 'Every patron is satisfied. Served patrons earn Ink, a finished request earns Gold Stars, and the next slip is already on the desk.',
+        body: 'Every patron is satisfied: you earned Ink and a Gold Star. The next slip is already on the desk.',
         target: 'resources',
       },
     );
   });
   steps.push({
     title: 'Your turn at the desk',
-    body: 'From here the requests are yours. Hints grow from a nudge to a skeleton, the Almanac keeps every learned tool, and this demo can be replayed from Help.',
+    body: 'From here the requests are yours. Stuck? “A small hint” on the slip says what to compute, then which Python tool, then the line with one blank. You can replay this walkthrough from Help.',
     target: 'request', action: 'next',
   });
   return steps;

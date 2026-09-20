@@ -4,6 +4,7 @@ import { CodeEditor } from './CodeEditor';
 import { OutputPanel, ValueDisplay } from './Output';
 import { Icon, IconButton } from './Icon';
 import { format, text } from './text';
+import { scalarText } from './helpers';
 import type { GameStateForUI } from './types';
 
 export function RequestPanel({ game }: { game: GameStateForUI }) {
@@ -15,11 +16,15 @@ export function RequestPanel({ game }: { game: GameStateForUI }) {
     <div className="request-number"><span>{format(text.request.number, { number: game.puzzle.id })}</span><Icon name="book" /></div>
     <div className="request-from">{text.request.from}</div><h2>{game.puzzle.patron}</h2>
     <p className="request-message">“{game.puzzle.request}”</p>
+    <div className="request-objective"><span className="eyebrow">{text.request.objective}</span><p>{game.puzzle.objective}</p></div>
     {inputs.length > 0 && <div className="request-inputs"><span className="eyebrow">{text.request.inputs}</span>
-      <dl>{inputs.map(([name, value]) => <div className="request-input" key={name}><dt><code>{name}</code></dt><dd><ValueDisplay value={value} /></dd></div>)}</dl>
+      <div className="request-inputs-row">{inputs.map(([name, value]) => value === null || typeof value !== 'object'
+        ? <code className="request-input-chip" key={name}>{name} = {typeof value === 'string' ? JSON.stringify(value) : scalarText(value)}</code>
+        : value.kind === 'array'
+          ? <details className="request-input-table" key={name}><summary><code>{name}</code> · {format(text.request.inputValues, { count: value.totalValues ?? value.values.length })}</summary><ValueDisplay value={value} /></details>
+          : <details className="request-input-table" key={name}><summary><code>{name}</code> · {format(text.request.inputTable, { rows: value.totalRows, columns: value.labels.length })}</summary><ValueDisplay value={value} /></details>)}</div>
       <p>{text.request.inputsNote}</p>
     </div>}
-    <div className="request-objective"><span className="eyebrow">{text.request.objective}</span><p>{game.puzzle.objective}</p></div>
     <button className="text-button ghost-toggle" onClick={() => setGhost(!ghost)} aria-expanded={ghost}><Icon name="ghost" />{ghost ? text.request.hideGhost : text.request.showGhost}</button>
     {ghost && <div className="ghost-preview"><p>{text.request.ghostNote}</p><ValueDisplay value={game.expected} ghost /></div>}
     <div className="request-hints">

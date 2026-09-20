@@ -7,7 +7,7 @@
   "requiredApi": ["deliver"],
   "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str", "make_array"],
   "starter": "# days is an array: the stamp can sweep the entire tray.\ndeliver(days)",
-  "hints": ["Every tile needs the same rate, even when the tray grows.", "Array multiplication applies the rate to every element.", "Create a new fees name from days and the rate, then deliver that new tray."],
+  "hints": ["Compute fees by multiplying every late-day value in days by the rate of two ink drops.", "Use * for element-wise array multiplication: days * 2 multiplies each entry.", "Write fees = days * ___, then deliver(fees)."],
   "inputCode": "import random\nfrom datascience import make_array\ndays = make_array(*[random.randint(1, 14) for _ in range(random.randint(2, 7))])",
   "visibleSeed": 21, "visibleInputs": {"days": {"kind": "array", "values": [2, 4, 6]}},
   "fixtures": [

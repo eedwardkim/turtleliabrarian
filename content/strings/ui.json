@@ -149,7 +149,9 @@
     "from": "A note from",
     "objective": "Your task",
     "inputs": "Already in Python on this shelf",
-    "inputsNote": "Use these names in your code exactly as written. Other patrons in the queue bring different values, so build the answer from the names, not the numbers.",
+    "inputsNote": "Use these names exactly as written. Queue patrons bring different values, so build the answer from the names.",
+    "inputValues": "{count} values",
+    "inputTable": "{rows} rows × {columns} columns",
     "ghost": "Expected result",
     "ghostNote": "A ghost of the answer, for this shelf only.",
     "showGhost": "Peek at the expected result",
@@ -170,7 +172,7 @@
     "emptyTitle": "Let’s see what your code does.",
     "empty": "Run your script. Shelby will act it out, and the exact Python result will appear here.",
     "stdout": "Printed output",
-    "value": "Last expression",
+    "value": "Last line's value",
     "delivered": "Delivered to the patron",
     "omitted": "… ({count} rows omitted)",
     "arrayOmitted": "… ({count} values omitted)",
@@ -319,6 +321,8 @@
     "skip": "I’ll find my own way",
     "done": "Back to work",
     "watching": "Shelby is working…",
+    "waiting": "Your move…",
+    "retry": "Not quite. Make the line match “{line}” exactly, then press Run again.",
     "count": "{current} / {total}",
     "steps": [
       {

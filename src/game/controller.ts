@@ -169,6 +169,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       const diff = check(result.delivered, expected, get().puzzle.checker);
       if (result.error) { diff.pass = false; diff.message = result.error.friendly || result.error.message; }
       set({ ...replayFields(result), expected, inputs: result.inputs, diff, status: diff.message });
+      if (!diff.pass && get().hintLevel === 0 && get().puzzle.chapter <= 1) get().hint();
       tutorial('output');
       tutorial('run');
       tutorial(result.error ? 'loud' : diff.pass ? 'run-pass' : 'silent');

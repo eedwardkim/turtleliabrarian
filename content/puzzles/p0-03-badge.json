@@ -6,8 +6,8 @@
   "concepts": ["strings", "conversion", "str_plus_int"],
   "requiredApi": ["str", "deliver"],
   "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str"],
-  "starter": "badge = prefix\ndeliver(badge)",
-  "hints": ["The two parts of a badge must speak the same type of language.", "str(value) makes a text representation of a value.", "Keep prefix as text and convert only the number part before joining them with +."],
+  "starter": "# Join prefix and number into one piece of text.\nbadge = ___\ndeliver(badge)",
+  "hints": ["The badge is prefix followed by number: 'Fern-' and 7 make 'Fern-7'.", "+ joins two pieces of text, but number is a number. str(number) turns it into text first.", "Write badge = prefix + str(number), then deliver(badge)."],
   "inputCode": "import random\nprefix = random.choice(['Fern-', 'Moss-', 'Cloud-'])\nnumber = random.randint(1, 99)",
   "visibleSeed": 13, "visibleInputs": {"prefix": "Fern-", "number": "7"},
   "fixtures": [

@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import World from './scene/World';
 import { useGame } from './game/store';
 import { getTutorial } from '../content/tutorials';
-import { DEMO_COVERED_TUTORIALS, DEMO_PUZZLE_IDS, demoSteps, describeInputs } from '../content/tutorials/demo';
+import { DEMO_COVERED_TUTORIALS, DEMO_PUZZLE_IDS, codeSatisfies, demoSteps, describeInputs } from '../content/tutorials/demo';
 import { puzzles } from './game/catalog';
 import { almanac as almanacCatalog, visibleAlmanac } from '../content/almanac';
 import { atlasWings, shop as shopCatalog } from './game/economy';
@@ -66,6 +66,8 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   const [queuePaused, setQueuePaused] = useState(false);
   const [systemReducedMotion, setSystemReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const initialized = useRef(false);
+  const demoWaitSeen = useRef<number | null>(null);
+  const openDemoStepRef = useRef<(step: number) => void>();
   useAudio({
     settings: state.save.settings,
     busy: state.busy,
@@ -196,15 +198,36 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   function openDemoStep(step: number) {
     setDemoStep(step);
     const entry = demo[step];
-    if (!entry?.action) return;
+    if (!entry) return;
     const current = state.puzzle.id;
     if (entry.action === 'goto' && entry.puzzleId) { if (current !== entry.puzzleId) state.gotoPuzzle(entry.puzzleId); return; }
     if (entry.action === 'next') { state.nextPuzzle(); openWindow('request'); return; }
     if (entry.puzzleId && current !== entry.puzzleId) return;
-    if (entry.action === 'solve' && entry.code !== undefined) { state.setActiveFile('main.py'); state.setCode(entry.code); openWindow('editor'); }
-    else if (entry.action === 'run') void run('main.py');
-    else if (entry.action === 'serve') void run('main.py', true);
+    if (entry.waitFor?.kind === 'code') { state.setActiveFile('main.py'); openWindow('editor'); }
+    else if (entry.waitFor?.kind === 'run-pass') openWindow('output');
+    else if (entry.waitFor?.kind === 'serve-pass' && revealed('queue')) openWindow('queue');
   }
+  function demoSatisfied(entry: typeof demo[number] | undefined): boolean {
+    if (!entry?.waitFor || !entry.puzzleId || game.puzzle.id !== entry.puzzleId) return false;
+    if (entry.waitFor.kind === 'code') return codeSatisfies(game.code, entry.waitFor.accepted);
+    if (entry.waitFor.kind === 'run-pass') return game.result !== null && game.diff?.pass === true && !game.busy;
+    return game.queue.length > 0 && game.queue.every(item => item.status === 'passed') && !game.busy;
+  }
+  useEffect(() => {
+    openDemoStepRef.current = openDemoStep;
+  });
+  useEffect(() => {
+    const entry = demoCurrent;
+    if (demoStep === null || !entry?.waitFor || !entry.puzzleId || game.puzzle.id !== entry.puzzleId || demoWaitSeen.current === demoStep) return;
+    const satisfied = entry.waitFor.kind === 'code'
+      ? codeSatisfies(game.code, entry.waitFor.accepted)
+      : entry.waitFor.kind === 'run-pass'
+        ? game.result !== null && game.diff?.pass === true && !game.busy
+        : game.queue.length > 0 && game.queue.every(item => item.status === 'passed') && !game.busy;
+    if (!satisfied) return;
+    demoWaitSeen.current = demoStep;
+    openDemoStepRef.current?.(demoStep + 1);
+  }, [demoStep, demoCurrent, game.code, game.result, game.diff, game.busy, game.queue, game.puzzle.id]);
   function setIndex(index: number) {
     if (queueEntry) setQueueTraceIndex(index);
     else game.setReplay(index);
@@ -312,15 +335,16 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
         {windowIds.map(id => <div className="layout-row" key={id}><span>{titleFor(id)}</span><button className="button" onClick={() => layoutFor(id).closed || layoutFor(id).minimized ? openWindow(id) : game.setLayout(id, { ...layoutFor(id), closed: true })}>{layoutFor(id).closed || layoutFor(id).minimized ? text.windows.show : text.windows.hide}</button></div>)}
         <button className="text-button layout-reset" onClick={() => windowIds.forEach(id => game.setLayout(id, { ...defaultLayout(id, deskViewport), closed: !['editor', 'output', 'request'].includes(id) }))}><Icon name="rewind" />{text.windows.reset}</button>
       </Dialog>}
-      {game.screen === 'game' && demoCurrent && demoStep !== null && !dialog && <Dialog title={demoCurrent.title} onClose={finishDemo} className="tutorial-dialog demo-dialog">
+      {game.screen === 'game' && demoCurrent && demoStep !== null && !dialog && <Dialog title={demoCurrent.title} onClose={finishDemo} className="tutorial-dialog demo-dialog" modal={false}>
         <span className="eyebrow">{text.tutorial.speaker}</span><p>{demoCurrent.body}</p>
         {demoCurrent.showsAnswer && (game.expected === null || typeof game.expected !== 'object') && <p className="demo-answer"><code>{describeInputs(game.puzzle)}</code> → <code>{scalarText(game.expected)}</code></p>}
+        {demoCurrent.waitFor?.kind === 'run-pass' && game.diff && !game.diff.pass && <p className="demo-nudge">{format(text.tutorial.retry, { line: demoCurrent.line ?? '' })}</p>}
         <div className="button-row">
-          <button className="button primary" disabled={game.busy} onClick={() => { if (demoStep === demo.length - 1) finishDemo(); else openDemoStep(demoStep + 1); }}>{game.busy ? text.tutorial.watching : demoStep === demo.length - 1 ? text.tutorial.done : text.tutorial.next}</button>
+          <button className="button primary" disabled={!!demoCurrent.waitFor && !demoSatisfied(demoCurrent) || game.busy} onClick={() => { if (demoStep === demo.length - 1) finishDemo(); else openDemoStep(demoStep + 1); }}>{demoCurrent.waitFor && !demoSatisfied(demoCurrent) ? text.tutorial.waiting : game.busy ? text.tutorial.watching : demoStep === demo.length - 1 ? text.tutorial.done : text.tutorial.next}</button>
           <button className="text-button" onClick={finishDemo}>{text.tutorial.skip}</button><span className="tutorial-count">{format(text.tutorial.count, { current: demoStep + 1, total: demo.length })}</span>
         </div>
       </Dialog>}
-      {game.screen === 'game' && currentTour && !dialog && <Dialog title={currentTour.title} onClose={finishTour} className="tutorial-dialog">
+      {game.screen === 'game' && currentTour && !dialog && <Dialog title={currentTour.title} onClose={finishTour} className="tutorial-dialog" modal={false}>
         <span className="eyebrow">{text.tutorial.speaker}</span><p>{currentTour.steps[tutorialStep]}</p><div className="button-row">
           <button className="button primary" onClick={() => { if (tutorialStep === currentTour.steps.length - 1) finishTour(); else setTutorialPosition({ id: currentTour.id, step: tutorialStep + 1 }); }}>{tutorialStep === currentTour.steps.length - 1 ? text.tutorial.done : text.tutorial.next}</button>
           <button className="text-button" onClick={finishTour}>{text.tutorial.skip}</button><span className="tutorial-count">{format(text.tutorial.count, { current: tutorialStep + 1, total: currentTour.steps.length })}</span>

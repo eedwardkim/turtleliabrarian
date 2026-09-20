@@ -6,8 +6,8 @@
   "concepts": ["comparisons", "booleans", "numeric_text"],
   "requiredApi": ["int", "deliver"],
   "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len", "int", "float", "str"],
-  "starter": "can_pay = False\ndeliver(can_pay)",
-  "hints": ["A dictionary puts '12' before '5'; a purse does not.", "int turns whole-number text into a quantity; <= includes the exact price.", "Convert fee_text before the comparison, and compare that quantity with allowance."],
+  "starter": "# True if the fee (written as text) is no more than the allowance.\ncan_pay = ___\ndeliver(can_pay)",
+  "hints": ["fee_text is text like '3'. Turn it into a number with int(fee_text), then compare it with allowance.", "<= means less than or equal, so exact change still counts as paying.", "Write can_pay = int(fee_text) <= allowance, then deliver(can_pay)."],
   "inputCode": "import random\nfee_text = str(random.randint(1, 30))\nallowance = random.randint(1, 30)",
   "visibleSeed": 14, "visibleInputs": {"fee_text": "3", "allowance": 5},
   "fixtures": [

@@ -238,6 +238,12 @@ def test_friendly_errors(code, error_type, line):
     assert run({"code": code, "instrument": False})["error"] == result["error"]
 
 
+def test_friendly_blank_name_error():
+    result = run({"code": "answer = ___"})
+    assert result["error"]["type"] == "NameError"
+    assert result["error"]["friendly"] == "Fill in the blank: replace ___ with your expression."
+
+
 @pytest.mark.parametrize("location", ["code", "inputCode", "file"])
 def test_cooperative_timeout_and_recovery(location):
     request = {"code": "1", "budgetMs": 30}

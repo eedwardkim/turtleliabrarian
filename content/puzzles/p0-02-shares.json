@@ -5,8 +5,8 @@
   "objective": "Distinguish true division from floor division.",
   "concepts": ["division", "floats", "floor_division", "call_expressions"],
   "requiredApi": ["deliver"], "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len"],
-  "starter": "# weight is in grams; readers is a count.\nshare = 0\ndeliver(share)",
-  "hints": ["A fair share can be less than a whole gram.", "Compare / with // in the scratch console; one discards a remainder.", "Write share = ... using weight and readers, then deliver share without rounding it."],
+  "starter": "# Divide the weight by the number of readers. Keep the fraction.\nshare = ___\ndeliver(share)",
+  "hints": ["Each reader gets weight divided by readers. Keep the fraction: 12 grams for 3 readers is 4.0.", "In Python, / divides and keeps the decimal part; // throws the remainder away. Use /.", "Write share = weight / readers, then deliver(share)."],
   "inputCode": "import random\nweight = random.randint(1, 80)\nreaders = random.randint(2, 9)",
   "visibleSeed": 12, "visibleInputs": {"weight": 12, "readers": 3},
   "fixtures": [

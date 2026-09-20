@@ -860,6 +860,8 @@ def friendly(error):
     if isinstance(error, SyntaxError):
         return "Python could not read this line. Check punctuation, indentation and brackets."
     if isinstance(error, NameError):
+        if "___" in message:
+            return "Fill in the blank: replace ___ with your expression."
         return (
             "This name has no label yet. Check its spelling or assign it a value first."
         )

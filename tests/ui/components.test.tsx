@@ -1,10 +1,14 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { OutputPanel, ValueDisplay } from '../../src/ui/Output';
+import { RequestPanel } from '../../src/ui/GamePanels';
 import { FloatingWindow } from '../../src/ui/Window';
 import { defaultLayout } from '../../src/ui/helpers';
-import type { RunResult } from '../../src/contracts';
+import type { RunResult, Value } from '../../src/contracts';
+import type { GameStateForUI } from '../../src/ui/types';
+import { freshSave } from '../../src/game/saves';
+import { authoredPuzzles } from '../../src/game/catalog';
 
 describe('output rendering', () => {
   it('renders all rows up to ten and announces omitted rows', () => {
@@ -22,6 +26,36 @@ describe('output rendering', () => {
     expect(html).toContain('At line 7');
     expect(html).toContain('False');
     expect(html).toContain('>0</pre>');
+  });
+  it('shows delivered output before printed output and omits a null last expression', () => {
+    const delivered: RunResult = { stdout: 'printed\n', value: null, delivered: 4, trace: [], inputs: {}, elapsedMs: 1, error: null };
+    const deliveredHtml = renderToStaticMarkup(createElement(OutputPanel, { result: delivered }));
+    expect(deliveredHtml).not.toContain("Last line's value");
+    expect(deliveredHtml.indexOf('Delivered to the patron')).toBeLessThan(deliveredHtml.indexOf('Printed output'));
+
+    const expression: RunResult = { stdout: '', value: 4, delivered: null, trace: [], inputs: {}, elapsedMs: 1, error: null };
+    expect(renderToStaticMarkup(createElement(OutputPanel, { result: expression }))).toContain('Last line&#x27;s value');
+  });
+  it('renders scalar request inputs as chips and tables as closed summaries', () => {
+    const base = {
+      screen: 'game' as const, loading: 1, loadingMessage: '', ready: true, save: freshSave(),
+      puzzle: authoredPuzzles[0], activeFile: 'main.py', result: null, expected: 4, queue: [], diff: null,
+      busy: false, status: '', hintLevel: 0, traceIndex: 0, replayPaused: true,
+      initialize: vi.fn(), newGame: vi.fn(), setScreen: vi.fn(), setCode: vi.fn(), setActiveFile: vi.fn(),
+      addFile: vi.fn(), run: vi.fn(), serveQueue: vi.fn(), stop: vi.fn(), gotoPuzzle: vi.fn(), nextPuzzle: vi.fn(),
+      hint: vi.fn(), setSettings: vi.fn(), setLayout: vi.fn(), setReplay: vi.fn(), setReplayPaused: vi.fn(),
+      setSpeed: vi.fn(), loadSlot: vi.fn(), saveSlot: vi.fn(), exportSave: vi.fn(), importSave: vi.fn(), reset: vi.fn(),
+      fileStandingOrder: vi.fn(), stepClock: vi.fn(), markTutorial: vi.fn(), purchase: vi.fn(), runScratch: vi.fn(),
+    } satisfies GameStateForUI;
+    const render = (visibleInputs: Record<string, Value>) => renderToStaticMarkup(createElement(RequestPanel, {
+      game: { ...base, puzzle: { ...base.puzzle, visibleInputs } },
+    }));
+    expect(render({ days: 2, rate: 2 })).toContain('days = 2');
+    expect(render({ days: 2, rate: 2 })).toContain('rate = 2');
+    expect(render({ prefix: 'Fern-' })).toContain('prefix = &quot;Fern-&quot;');
+    const table = render({ shelf: { kind: 'table', labels: ['title', 'pages'], rows: [['Book', 10]], totalRows: 1 } });
+    expect(table).toContain('shelf</code> · 1 rows × 2 columns');
+    expect(table).toContain('<details class="request-input-table">');
   });
 });
 

@@ -5,8 +5,8 @@
   "objective": "Use named numbers and multiplication, then deliver the result.",
   "concepts": ["expressions", "names", "multiplication", "deliver"],
   "requiredApi": ["deliver"], "learnedApi": ["deliver", "print"],
-  "starter": "# days and rate are already on the request slip.\nfee = 0\nprint(fee)\ndeliver(fee)",
-  "hints": ["The fee grows once for every late day.", "Python uses * to multiply two numbers; deliver sends your result to the patron.", "Replace the zero in fee = 0 with an expression using both input names."],
+  "starter": "# Multiply the late days by the daily rate.\nfee = ___\ndeliver(fee)",
+  "hints": ["The fee is the late days times the daily rate. The names on the slip are days and rate.", "In Python, * multiplies: days * rate.", "Write fee = days * rate, then deliver(fee)."],
   "inputCode": "import random\ndays = random.randint(1, 12)\nrate = random.randint(1, 5)",
   "visibleSeed": 11, "visibleInputs": {"days": 2, "rate": 2},
   "fixtures": [

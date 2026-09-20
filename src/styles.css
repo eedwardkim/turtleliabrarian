@@ -188,12 +188,11 @@ details pre{padding:10px;background:#342d2409}
 .request-objective p{font-size:11px;line-height:1.7;color:var(--muted);margin-top:8px}
 .request-inputs{border-top:1px solid var(--line);padding:15px 0 4px}
 .request-inputs>p{font-size:11px;line-height:1.7;color:var(--muted);margin:4px 0 0}
-.request-inputs dl{margin-top:10px}
-.request-input{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;padding:8px 10px;border:1px solid #d5c9ae;border-radius:5px;background:#fffdf7}
-.request-input dt{flex:0 0 auto;font:600 13px 'IBM Plex Mono',monospace;color:#424d35;padding-top:3px}
-.request-input dt::after{content:' ='}
-.request-input dd{flex:1;min-width:0;overflow:auto}
-.request-input .scalar-value{font-size:14px}
+.request-inputs-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.request-input-chip{font:13px 'IBM Plex Mono',monospace;padding:4px 8px;border:1px solid #d5c9ae;border-radius:4px;background:#fffdf7}
+.request-input-table{min-width:0;flex:1 1 100%}
+.request-input-table summary{cursor:pointer;font-size:12px}
+.request-input-table .value-table-wrap{overflow:auto;max-width:100%}
 .request-slip .ghost-toggle{color:#3e5c8a;text-align:left;line-height:1.4}
 .ghost-preview{padding:12px;border:1px dashed #8fb3d9;background:#e4eef76b;border-radius:5px;margin-top:12px}
 .ghost-preview>p{font-size:10px;color:#4a6a8b;line-height:1.5;margin-bottom:10px}
@@ -309,7 +308,7 @@ details pre{padding:10px;background:#342d2409}
 .shop-card h3,.order-card h3{font-size:20px;margin-bottom:8px}
 .shop-card p,.order-card p{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:13px}
 .shop-card-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px}
-.tutorial-dialog{position:fixed;inset:auto auto 45px 50%;transform:translateX(-50%);margin:0;width:350px;max-height:60vh}
+.tutorial-dialog{position:fixed;z-index:400;inset:auto auto 45px 50%;transform:translateX(-50%);margin:0;width:350px;max-height:60vh}
 .tutorial-dialog::backdrop{background:transparent;backdrop-filter:none}
 .tutorial-dialog .dialog-header{padding:18px 21px 13px}
 .tutorial-dialog .dialog-header h2{font-size:22px}

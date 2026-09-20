@@ -89,6 +89,20 @@ describe('runtime-backed game orchestration (controlled runtime responses)', () 
     expect(store.getState().traceIndex).toBe(0);
     expect(store.getState().progress).toBe(0);
   });
+  it('opens the first hint after a first failure only in the opening chapters', async () => {
+    const { store, runtime } = harness();
+    await store.getState().initialize();
+    runtime.run.mockResolvedValueOnce({ ...output, delivered: 3 });
+    await store.getState().run();
+    expect(store.getState().hintLevel).toBe(1);
+
+    store.getState().setSettings({ openStacks: true });
+    store.getState().gotoPuzzle('ch2-show-1');
+    await store.getState().waitForIdle();
+    runtime.run.mockResolvedValue({ ...output, delivered: 3 });
+    await store.getState().run();
+    expect(store.getState().hintLevel).toBe(0);
+  });
   it('synchronizes active files and passes import files to the runtime', async () => {
     const { store, runtime } = harness();
     await store.getState().initialize();
