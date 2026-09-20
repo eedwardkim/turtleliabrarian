@@ -1,7 +1,24 @@
 import type { Puzzle } from '../contracts';
+import calibration from '../../content/calibration/stochastic-tolerances.json';
 import { parsePuzzle } from './validation';
 
 const modules = import.meta.glob<unknown>('../../content/puzzles/*.json', { eager: true, import: 'default' });
+
+/**
+ * Stochastic requests whose Monte Carlo spread means an independently seeded
+ * correct answer can be rejected. They stay authored and validated, but are kept
+ * off the shelves in the shipped game until their grading is calibrated; the
+ * test catalog still sees the full release so the content gates keep counting.
+ */
+export const shelvedRequestIds: ReadonlySet<string> = new Set(
+  calibration.results.filter((result) => !result.independentAcceptanceAttainable).map((result) => result.id),
+);
+
+export const shelvingEnabled = import.meta.env.MODE !== 'test' && import.meta.env.VITE_SHELVE_UNCALIBRATED !== 'false';
+
+export function withoutShelved(all: Puzzle[]): Puzzle[] {
+  return all.filter((puzzle) => !shelvedRequestIds.has(puzzle.id));
+}
 
 const kindOrder: Record<Puzzle['kind'], number> = { show: 0, vary: 1, break: 2, capstone: 3 };
 
@@ -34,7 +51,9 @@ function discover(): Puzzle[] {
   return found.sort(byShelfOrder);
 }
 
-export const puzzles: Puzzle[] = discover();
+export const authoredPuzzles: Puzzle[] = discover();
+
+export const puzzles: Puzzle[] = shelvingEnabled ? withoutShelved(authoredPuzzles) : authoredPuzzles;
 
 export function getPuzzle(id: string): Puzzle {
   const puzzle = puzzles.find((entry) => entry.id === id);

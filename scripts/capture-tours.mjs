@@ -109,7 +109,7 @@ function chapterTour(chapter, id) {
     requirement: puzzles => chapterRequirement(chapter, puzzles),
     async run(context) {
       const { recorder, puzzles } = context;
-      await recorder.hold(`${chapterTitle(chapter)} — chapter ${chapter} of Shelf Life.`, 3);
+      await recorder.hold(`${chapterTitle(chapter)} — chapter ${chapter} of Reading Shells.`, 3);
       await openWing(recorder, chapter, puzzles);
       await playChapter(recorder, chapter, puzzles);
       await recorder.hold(`Chapter ${chapter} is shelved.`, 3);
@@ -130,7 +130,7 @@ const prologue = {
     screenshots: { puzzle: 2, tutorial: 1 },
   }),
   async run({ recorder, puzzles }) {
-    await recorder.hold('Shelf Life — a library carried by Atlas, a sky turtle.', 4);
+    await recorder.hold('Reading Shells — a library carried by Atlas, a sky turtle.', 4);
     await startNewGame(recorder);
     await dismissTutorials(recorder);
     for (const id of ['p0-01-stamp', 'p0-02-shares']) {
