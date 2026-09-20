@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { AlmanacEntry as AuthoredAlmanacEntry } from '../../content/almanac';
 import type { CheckDiff, Puzzle, QueueEntry, RunResult, SaveData, Settings, Value, WindowLayout } from '../contracts';
 
 export type Screen = 'title' | 'intro' | 'game' | 'credits';
@@ -55,7 +56,7 @@ export interface GameStateForUI {
   replayStandingOrder?: (puzzleId: string) => Promise<void>;
 }
 
-export interface AlmanacEntry {
+export interface AlmanacEntry extends Pick<AuthoredAlmanacEntry, 'parameters' | 'comparison' | 'note'> {
   id: string;
   title: string;
   signature?: string;

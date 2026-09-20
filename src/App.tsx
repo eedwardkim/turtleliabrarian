@@ -4,7 +4,8 @@ import World from './scene/World';
 import { useGame } from './game/store';
 import { getTutorial } from '../content/tutorials';
 import { blankAnswer } from '../content/tutorials/demo';
-import { almanac as almanacCatalog, visibleAlmanac } from '../content/almanac';
+import { visibleAlmanac } from '../content/almanac';
+import { explainedCommands, pendingCommands } from './game/commands';
 import { atlasWings, shop as shopCatalog } from './game/economy';
 import { useAudio } from './audio/useAudio';
 import { eventDuration } from './game/replay';
@@ -12,6 +13,7 @@ import { sandboxUnlocked } from './game/sandbox';
 import type { WindowLayout, WorldProps } from './contracts';
 import { CodeEditor } from './ui/CodeEditor';
 import { Dialog } from './ui/Dialog';
+import { CommandUnlock } from './ui/CommandUnlock';
 import { Tutorial } from './ui/Tutorial';
 import { QueuePanel, ReplayPanel, RequestPanel, ScratchPanel } from './ui/GamePanels';
 import { Icon, IconButton } from './ui/Icon';
@@ -37,11 +39,11 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     runScratch: state.scratch,
     toggleStandingOrder: (id: string) => state.setOrderPaused(id, !state.save.standingOrders.find(order => order.puzzleId === id)?.paused),
   };
-  const authoredAlmanac: AlmanacEntry[] = visibleAlmanac(state.save.settings.openStacks
-    ? almanacCatalog.map(entry => entry.id)
-    : [...new Set([...state.puzzle.learnedApi, ...state.puzzle.unlocks])], state.save.completed).flatMap(entry => [
-      { id: entry.id, title: entry.id, description: entry.explanation, signature: entry.signature, example: entry.example, output: entry.output, category: 'tools' as const },
-      ...entry.pitfalls.map((description, index) => ({ id: `${entry.id}-${index}`, title: entry.id, description, category: 'pitfalls' as const })),
+  const explained = explainedCommands(state.save);
+  const commandIntro = state.screen === 'game' ? pendingCommands(state.puzzle, state.save)[0] : undefined;
+  const authoredAlmanac: AlmanacEntry[] = visibleAlmanac(explained, state.save.completed).flatMap(entry => [
+      { ...entry, title: entry.id, api: entry.id, description: entry.explanation, category: 'tools' as const },
+      ...entry.pitfalls.map((description, index) => ({ id: `${entry.id}-${index}`, api: entry.id, title: entry.id, description, category: 'pitfalls' as const })),
     ]);
   const availableShop: ShopItem[] = shopCatalog.map(item => ({
     id: item.id, title: item.title, description: item.description, ink: item.cost, repeatable: item.repeatable,
@@ -90,7 +92,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   const totalEvents = result?.trace.length ?? 0;
   const event = result?.trace[Math.max(0, Math.min(replayIndex, totalEvents - 1))] ?? null;
   const visibleInputs = queueEntry?.inputs ?? result?.inputs ?? game.inputs;
-  const currentTour = !game.puzzle.lesson && game.activeTutorial ? getTutorial(game.activeTutorial) : undefined;
+  const currentTour = !commandIntro && !game.puzzle.lesson && game.activeTutorial ? getTutorial(game.activeTutorial) : undefined;
   const tourTarget = currentTour?.target;
   const tutorialStep = tutorialPosition.id === currentTour?.id ? tutorialPosition.step : 0;
   const revealed = (feature: Parameters<typeof canReveal>[2]) => canReveal(game.puzzle, game.save.completed, feature) || (!game.puzzle.lesson && feature === 'queue' && !!game.diff?.pass);
@@ -127,8 +129,8 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     return () => media.removeEventListener('change', changed);
   }, []);
   useEffect(() => {
-    setActivityPaused(!!dialog || !!currentTour || viewport.width < 1024);
-  }, [dialog, currentTour, viewport.width, setActivityPaused]);
+    setActivityPaused(!!dialog || !!currentTour || !!commandIntro || viewport.width < 1024);
+  }, [dialog, currentTour, commandIntro, viewport.width, setActivityPaused]);
   useEffect(() => {
     if (!tourTarget || game.screen !== 'game') return;
     const id = tourTarget === 'run' || tourTarget === 'serve' ? 'editor'
@@ -140,7 +142,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
       z: Math.max(1, ...Object.values(live.save.layouts).map(entry => entry.z)) + 1 });
   }, [tourTarget, game.screen, scale]);
   useEffect(() => {
-    if (!queueEntry || game.screen !== 'game' || paused || dialog || currentTour || !totalEvents || game.busy) return;
+    if (!queueEntry || game.screen !== 'game' || paused || dialog || currentTour || commandIntro || !totalEvents || game.busy) return;
     const timer = window.setTimeout(() => {
       if (replayIndex >= totalEvents - 1) {
         if (queueEntry) setQueuePaused(true);
@@ -148,10 +150,10 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
       } else setQueueTraceIndex(replayIndex + 1);
     }, 650 / Math.max(0.5, settings.replaySpeed));
     return () => window.clearTimeout(timer);
-  }, [game.screen, game.busy, paused, dialog, currentTour, totalEvents, replayIndex, queueEntry, settings.replaySpeed, setReplayPaused]);
+  }, [game.screen, game.busy, paused, dialog, currentTour, commandIntro, totalEvents, replayIndex, queueEntry, settings.replaySpeed, setReplayPaused]);
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
-      if (isTextInput(event.target)) return;
+      if (commandIntro || isTextInput(event.target)) return;
       if (event.key === '`' && devEnabled && !dialog) {
         event.preventDefault(); setShowDevtools(value => !value);
       } else if (event.key === 'Escape' && !dialog && !currentTour && game.screen === 'game') {
@@ -160,7 +162,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     };
     window.addEventListener('keydown', keydown);
     return () => window.removeEventListener('keydown', keydown);
-  }, [dialog, game.screen, currentTour]);
+  }, [dialog, game.screen, currentTour, commandIntro]);
 
   const handleIntroBeat = useCallback((beat: number) => {
     setIntroBeat(beat); onIntroBeat?.(beat);
@@ -268,7 +270,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
           <nav className="tool-bar" aria-label={text.brand.title}>
             {game.puzzle.chapter >= 2 && <IconButton icon="bell" label={text.tools.alerts} onClick={() => setDialog('alerts')} />}
             {revealed('scripts') && <IconButton data-tour="files" icon="plus" label={text.tools.newScript} onClick={() => setDialog('newScript')} />}
-            {revealed('almanac') && <IconButton data-tour="almanac" icon="book" label={text.tools.almanac} onClick={() => setDialog('almanac')} />}
+            {!game.puzzle.lesson && explained.length > 0 && <IconButton data-tour="almanac" icon="book" label={text.tools.almanac} onClick={() => setDialog('almanac')} />}
             {revealed('scratch') && <IconButton data-tour="scratch-tool" icon="terminal" label={text.tools.scratch} onClick={() => openWindow('scratch')} />}
             {revealed('replay') && totalEvents > 0 && <IconButton data-tour="replay-tool" icon="rewind" label={text.windows.replay} onClick={() => openWindow('replay')} />}
             {canSandbox && <IconButton icon="book" label={text.sandbox.enter} onClick={() => openWindow('sandbox')} />}
@@ -329,6 +331,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
           <button className="text-button" onClick={() => setSolvedFor(null)}>{text.solved.stay}</button>
         </div>
       </Dialog>}
+      {commandIntro && !dialog && !solved && viewport.width >= 1024 && <CommandUnlock key={commandIntro.id} entry={commandIntro} onContinue={() => game.acknowledgeCommand(commandIntro.id)} />}
       {game.screen === 'game' && currentTour && !dialog && !solved && <Tutorial key={currentTour.id} target={currentTour.target} title={currentTour.title} onClose={finishTour}>
         <p>{currentTour.steps[tutorialStep]}</p><div className="button-row">
           <button className="button primary" onClick={() => { if (tutorialStep === currentTour.steps.length - 1) finishTour(); else setTutorialPosition({ id: currentTour.id, step: tutorialStep + 1 }); }}>{tutorialStep === currentTour.steps.length - 1 ? text.tutorial.done : text.tutorial.next}</button>

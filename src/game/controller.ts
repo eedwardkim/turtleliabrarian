@@ -5,6 +5,7 @@ import type {
 import { getTutorial, tutorialsFor } from '../../content/tutorials';
 import { puzzles, getPuzzle } from './catalog';
 import { automaticTutorial } from './guidance';
+import { commandTutorialId, pendingCommands } from './commands';
 import { check } from './checker';
 import {
   ARCHIVE_CHAPTER, canEnterPuzzle, completePuzzle, enterWing, equipHat, firstTryBonus, inkFor, maxReplaySpeed, offlineSeconds,
@@ -84,6 +85,7 @@ export interface GameState {
   fileStandingOrder(): void;
   stepClock(seconds: number): void;
   markTutorial(id: string): void;
+  acknowledgeCommand(id: string): void;
   purchase(id: string): void;
   equipHat(id: string): void;
   autoSolve(): Promise<void>;
@@ -548,6 +550,14 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         const save = get().save;
         if (!save.seenTutorials.includes(id)) persist({ ...save, seenTutorials: [...save.seenTutorials, id] });
         set({ activeTutorial: get().activeTutorial === id ? null : get().activeTutorial, tutorialQueue: [] });
+      },
+      acknowledgeCommand(id) {
+        const { puzzle, save } = get();
+        const entry = pendingCommands(puzzle, save)[0];
+        if (!entry || entry.id !== id) return;
+        const commands = [entry.id, ...(entry.comparison ? [entry.comparison.id] : [])];
+        persist({ ...save, seenTutorials: [...new Set([...save.seenTutorials, 'almanac', ...commands.map(commandTutorialId)])] });
+        set({ activeTutorial: null, tutorialQueue: [] });
       },
       purchase(id) {
         try {

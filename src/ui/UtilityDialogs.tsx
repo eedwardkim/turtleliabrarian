@@ -5,6 +5,7 @@ import { Icon } from './Icon';
 import { validFilename, compactNumber } from './helpers';
 import { format, text } from './text';
 import type { AlmanacEntry, AtlasWing, GameStateForUI, ShopItem } from './types';
+import { explainedCommands } from '../game/commands';
 
 export function SettingsDialog({ game, onClose, onTour }: { game: GameStateForUI; onClose: () => void; onTour: () => void }) {
   const [confirm, setConfirm] = useState(false);
@@ -95,7 +96,8 @@ export function NewScriptDialog({ game, onClose, onCreate }: { game: GameStateFo
 export function AlmanacDialog({ game, entries, onClose, onTour }: { game: GameStateForUI; entries: AlmanacEntry[]; onClose: () => void; onTour: () => void }) {
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<AlmanacEntry['category']>('tools');
-  const unlocked = entries.filter(entry => (entry.chapter ?? 0) <= game.puzzle.chapter && (!entry.api || game.save.settings.openStacks || game.puzzle.learnedApi.includes(entry.api)));
+  const explained = explainedCommands(game.save);
+  const unlocked = entries.filter(entry => explained.includes(entry.api ?? entry.id));
   const tabs = (['tools', 'glossary', 'topics', 'pitfalls'] as const).filter(category => unlocked.some(entry => entry.category === category));
   const activeTab = tabs.includes(tab) ? tab : tabs[0];
   const filtered = unlocked.filter(entry => entry.category === activeTab && `${entry.title} ${entry.description} ${entry.signature ?? ''}`.toLowerCase().includes(search.toLowerCase()));
@@ -105,9 +107,12 @@ export function AlmanacDialog({ game, entries, onClose, onTour }: { game: GameSt
       <nav className="almanac-tabs" aria-label={text.tools.almanac}>{tabs.map(category => <button key={category} aria-pressed={activeTab === category} onClick={() => setTab(category)}>{text.almanac[category]}</button>)}</nav>
       {filtered.length ? filtered.map(entry => <article className="almanac-entry" key={entry.id}>
         <h3>{entry.title}</h3>{entry.signature && <code>{entry.signature}</code>}<p>{entry.description}</p>
+        {entry.parameters && <dl className="command-parameters">{entry.parameters.map(parameter => <div key={parameter.name}><dt><code>{parameter.name}</code></dt><dd>{parameter.explanation}</dd></div>)}</dl>}
         {entry.example && <><h4>{text.almanac.example}</h4><pre>{entry.example}</pre></>}{entry.output && <><h4>{text.almanac.result}</h4><pre>{entry.output}</pre></>}
+        {entry.comparison && <section><p>{entry.comparison.explanation}</p><pre>{entry.comparison.example}{'\n→ '}{entry.comparison.output}</pre></section>}
+        {entry.note && <p>{entry.note}</p>}
       </article>) : <p className="notice">{text.almanac.empty}</p>}
-    </> : <><span className="eyebrow">{text.almanac.learned}</span><ul className="learned-tools">{game.puzzle.learnedApi.map(api => <li key={api}><code>{api}</code></li>)}</ul><article className="almanac-entry"><h3>{text.almanac.objective}</h3><p>{game.puzzle.objective}</p><div className="topic-chips">{game.puzzle.concepts.map(concept => <span key={concept}>{concept}</span>)}</div></article></>}
+    </> : <p className="notice">{text.almanac.empty}</p>}
     <button className="text-button almanac-tour" onClick={onTour}><Icon name="rewind" />{text.almanac.replay}</button>
   </Dialog>;
 }
