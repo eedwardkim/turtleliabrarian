@@ -109,7 +109,7 @@ export function AlmanacDialog({ game, entries, onClose, onTour }: { game: GameSt
         <h3>{entry.title}</h3>{entry.signature && <code>{entry.signature}</code>}<p>{entry.description}</p>
         {entry.parameters && <dl className="command-parameters">{entry.parameters.map(parameter => <div key={parameter.name}><dt><code>{parameter.name}</code></dt><dd>{parameter.explanation}</dd></div>)}</dl>}
         {entry.example && <><h4>{text.almanac.example}</h4><pre>{entry.example}</pre></>}{entry.output && <><h4>{text.almanac.result}</h4><pre>{entry.output}</pre></>}
-        {entry.comparison && <section><p>{entry.comparison.explanation}</p><pre>{entry.comparison.example}{'\n→ '}{entry.comparison.output}</pre></section>}
+        {entry.comparison && <section><h4>{entry.comparison.id} vs {entry.id}</h4><p>{entry.comparison.explanation}</p><pre>{entry.comparison.example}{'\n→ '}{entry.comparison.output}</pre></section>}
         {entry.note && <p>{entry.note}</p>}
       </article>) : <p className="notice">{text.almanac.empty}</p>}
     </> : <p className="notice">{text.almanac.empty}</p>}

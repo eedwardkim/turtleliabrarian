@@ -15,6 +15,7 @@ export function CommandUnlock({ entry, onContinue }: { entry: AlmanacEntry; onCo
     </div>)}</dl>}
     <div className="command-example"><pre>{entry.example}</pre><span aria-hidden="true">→</span><pre>{entry.output}</pre></div>
     {entry.comparison && <section className="command-comparison">
+      <h4>{entry.comparison.id} vs {entry.id}</h4>
       <p>{entry.comparison.explanation}</p>
       <div className="command-example"><pre>{entry.comparison.example}</pre><span aria-hidden="true">→</span><pre>{entry.comparison.output}</pre></div>
     </section>}

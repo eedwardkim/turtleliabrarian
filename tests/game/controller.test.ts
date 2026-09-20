@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RunResult } from '../../src/contracts';
 import { createGame } from '../../src/game/controller';
-import { puzzles } from '../../src/game/catalog';
+import { getPuzzle, puzzles } from '../../src/game/catalog';
+import { parsePuzzle } from '../../src/game/validation';
 import { createSaveService, exportJSON, freshSave, importJSON, type Snapshot } from '../../src/game/saves';
 
 const output: RunResult = {
@@ -35,6 +36,105 @@ function harness() {
 }
 
 afterEach(() => { stores.splice(0).forEach((store) => store.getState().disposeGame()); });
+
+describe('range Run verification (controlled runtime responses)', () => {
+  const puzzle = getPuzzle('ch1-show-2');
+  const visible: RunResult = {
+    ...output, stdout: 'visible shelf\n', value: null,
+    delivered: { kind: 'array', values: [2, 6] }, inputs: puzzle.visibleInputs!,
+  };
+  const other: RunResult = {
+    ...output, stdout: 'another shelf\n', value: null,
+    delivered: { kind: 'array', values: [6] }, inputs: { first: 6, last: 6, step: 1 },
+  };
+
+  async function rangeHarness() {
+    const setup = harness();
+    setup.runtime.run.mockResolvedValue(visible);
+    await setup.store.getState().initialize();
+    setup.store.getState().setSettings({ openStacks: true });
+    setup.store.getState().gotoPuzzle(puzzle.id);
+    await setup.store.getState().waitForIdle();
+    setup.runtime.run.mockClear();
+    setup.runtime.run.mockResolvedValue(other).mockResolvedValueOnce(visible);
+    return setup;
+  }
+
+  it('opts in only the first range request and validates the flag', () => {
+    expect(puzzles.filter(puzzle => puzzle.verifyOnRun).map(puzzle => puzzle.id)).toEqual(['ch1-show-2']);
+    expect(() => parsePuzzle({ ...puzzle, verifyOnRun: 'true' })).toThrow('Invalid Run verification flag');
+  });
+
+  it.each([
+    'deliver(make_array(2, 6))',
+    'import numpy as np\ndeliver(np.arange(2, 9, 4))',
+  ])('rejects a visible-only answer on Run without celebrating it: %s', async code => {
+    const { store, runtime } = await rangeHarness();
+    store.getState().setCode(code);
+    const resources = { ...store.getState().save.resources };
+    runtime.run.mockResolvedValueOnce(other).mockResolvedValueOnce(visible);
+    await store.getState().run();
+    expect(runtime.run).toHaveBeenCalledTimes(3);
+    expect(runtime.run.mock.calls[2][0]).toEqual(expect.objectContaining({ code, inputs: other.inputs }));
+    expect(store.getState().diff?.pass).toBe(false);
+    expect(store.getState().diff?.message).toContain('not different inputs');
+    expect(store.getState().diff?.message).toContain('first, last and step');
+    expect(store.getState().result).toEqual(visible);
+    expect(store.getState().inputs).toEqual(visible.inputs);
+    expect(store.getState().save.completed).not.toContain(puzzle.id);
+    expect(store.getState().save.resources).toEqual(resources);
+    expect(store.getState().queue).toEqual([]);
+  });
+
+  it('checks every varied input before accepting a general solution and keeps the visible replay', async () => {
+    const { store, runtime } = await rangeHarness();
+    store.getState().setCode(puzzle.reference);
+    await store.getState().run();
+    expect(runtime.run).toHaveBeenCalledTimes(1 + 2 * puzzle.queueSize);
+    expect(store.getState().diff?.pass).toBe(true);
+    expect(store.getState().result).toEqual(visible);
+    expect(store.getState().expected).toEqual(visible.delivered);
+    expect(store.getState().inputs).toEqual(visible.inputs);
+    expect(store.getState().queue).toEqual([]);
+    expect(store.getState().save.completed).not.toContain(puzzle.id);
+  });
+
+  it('does not verify more shelves when the visible answer already fails', async () => {
+    const { store, runtime } = await rangeHarness();
+    runtime.run.mockReset().mockResolvedValue({ ...visible, delivered: { kind: 'array', values: [2] } });
+    await store.getState().run();
+    expect(runtime.run).toHaveBeenCalledTimes(1);
+    expect(store.getState().diff?.pass).toBe(false);
+    expect(store.getState().diff?.missingRows).toEqual([[6]]);
+  });
+
+  it('rejects an error on another shelf even if it delivered matching values first', async () => {
+    const { store, runtime } = await rangeHarness();
+    runtime.run.mockResolvedValueOnce(other).mockResolvedValueOnce({
+      ...other, error: { type: 'ValueError', message: 'failed', friendly: 'failed', line: 3 },
+    });
+    await store.getState().run();
+    expect(store.getState().diff?.pass).toBe(false);
+    expect(store.getState().result).toEqual(visible);
+  });
+
+  it('ignores validation results arriving after Stop', async () => {
+    const { store, runtime } = await rangeHarness();
+    let resolve!: (result: RunResult) => void;
+    runtime.run.mockResolvedValueOnce(other).mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    const running = store.getState().run();
+    await vi.waitFor(() => expect(resolve).toBeTypeOf('function'));
+    expect(store.getState().diff).toBeNull();
+    store.getState().stop();
+    resolve(other);
+    await running;
+    expect(runtime.run).toHaveBeenCalledTimes(3);
+    expect(store.getState().diff).toBeNull();
+    expect(store.getState().result).toBeNull();
+    expect(store.getState().busy).toBe(false);
+    expect(store.getState().status).toContain('Stopped');
+  });
+});
 
 describe('runtime-backed game orchestration (controlled runtime responses)', () => {
   it('runs ungraded Sandbox code without awarding progress or overwriting campaign scripts', async () => {

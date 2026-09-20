@@ -86,6 +86,7 @@ export interface Puzzle {
   stochastic: boolean;
   /** Chapter-0 lessons complete on a passing Run and hide extra UI. */
   lesson?: boolean;
+  verifyOnRun?: boolean;
 }
 export interface CheckDiff {
   pass: boolean;

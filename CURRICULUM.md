@@ -46,7 +46,7 @@ derived from that course or the `datascience` package; see `CREDITS.md`.
 | Request | Kind | Title | Patron | New API | Concepts | Queue hazards | Naive counterexamples |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `ch1-show-1` | show | One Stamp, Every Slip | Mr. Heron | `deliver` | arrays, make_array, elementwise_math | longer_tray | longer_tray (silent) |
-| `ch1-show-2` | show | The Last Brass Plate | Hazel | `np.arange`, `deliver` | ranges, exclusive_stop | lands_on_last | lands_on_last (silent) |
+| `ch1-show-2` | show | The Last Brass Plate | Hazel | `np.arange`, `deliver` | ranges, exclusive_stop | lands_on_last | lands_on_last (silent), single_plate (silent), lands_on_last (silent) |
 | `ch1-vary-1` | vary | A Tray of Changing Length | Pip | `item`, `len`, `deliver` | indexing, zero_based, index_out_of_range | short_tray | short_tray (loud) |
 | `ch1-vary-2` | vary | An Average Afternoon | Dr. Newt | `np.mean`, `np.count_nonzero`, `deliver` | mean, sum, boolean_arrays, count_nonzero, inclusive_comparison | all_at_mean | all_at_mean (silent) |
 | `ch1-break-1` | break | The Spare Stamp | Bramble | `np.arange`, `len`, `deliver` | array_length, broadcasting, length_mismatch | length_mismatch | length_mismatch (loud) |

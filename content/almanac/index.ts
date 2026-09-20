@@ -25,7 +25,7 @@ export const almanac: AlmanacEntry[] = [
   { id: 'int', signature: 'int(value)', explanation: 'Read whole-number text as an integer, or truncate a numeric value toward zero.', example: "int('14') + 2", output: '16', pitfalls: ["int('3.5') fails; decimal text needs float first.", 'Comparing numeric text compares characters.'], pitfallsAfter: 'p0-04-budget' },
   { id: 'float', signature: 'float(value)', explanation: 'Read a decimal quantity from text.', example: "float('2.75') + 1", output: '3.75', pitfalls: ['Binary floating-point arithmetic can leave tiny rounding differences.'] },
   { id: 'comparisons', signature: 'a < b; a <= b; a == b; a >= b; a > b', explanation: 'Ask a yes-or-no question and get True or False.', example: '5 <= 5', output: 'True', pitfalls: ['Equality is included by <= and >=, but not < and >.'] },
-  { id: 'make_array', signature: 'make_array(*elements)', explanation: 'Collect values into a NumPy array, a tray whose elements share a type.', example: 'make_array(3, 6, 9)', output: 'array([3, 6, 9])', pitfalls: ['Mixing text and numbers can convert every element to text.'], pitfallsAfter: 'ch1-break-2' },
+  { id: 'make_array', signature: 'make_array(*elements)', explanation: 'Build an array from the exact values you list, in that order.', example: 'make_array(3, 6, 9)', output: 'array([3, 6, 9])', pitfalls: ['Mixing text and numbers can convert every element to text.'], pitfallsAfter: 'ch1-break-2' },
   { id: 'array-math', signature: 'array * number; array + array', explanation: 'Apply arithmetic to every tile at once and return a new array.', example: 'make_array(2, 5) * 3', output: 'array([6, 15])', pitfalls: ['Two arrays must have compatible lengths.'], pitfallsAfter: 'ch1-break-1' },
   {
     id: 'np.arange', signature: 'np.arange(start, stop, step)',
@@ -37,7 +37,7 @@ export const almanac: AlmanacEntry[] = [
     ],
     example: 'import numpy as np\nnp.arange(2, 10, 4)', output: 'array([2, 6])',
     comparison: {
-      id: 'make_array', explanation: 'make_array keeps the exact values you list. np.arange generates values by following a pattern.',
+      id: 'make_array', explanation: 'make_array: you list the values. np.arange: you give start, stop and step; it generates the values.',
       example: 'make_array(2, 10, 4)', output: 'array([2, 10, 4])',
     },
     note: 'For this request’s positive whole-number step, use last + 1 as stop to allow the last plate.',
