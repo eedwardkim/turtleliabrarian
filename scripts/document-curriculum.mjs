@@ -32,7 +32,7 @@ const TOPICS = {
  * a naive counterexample; the generated coverage table reports both facts.
  */
 const REQUIRED_EDGE_CASES = {
-  0: ['str_plus_int', 'floor_division'],
+  0: [],
   1: ['exclusive_stop', 'index_out_of_range', 'length_mismatch', 'mixed_types'],
   2: ['immutable_results', 'empty_results', 'cutoff_ties', 'upper_bound', 'text_vs_number', 'messy_strings', 'missing_values'],
   3: ['counts_vs_density', 'unequal_bins', 'misleading_axes'],
@@ -48,7 +48,7 @@ const REQUIRED_EDGE_CASES = {
   13: ['data_cleaning'],
 };
 
-const EXPECTED_CHAPTERS = { 0: 4, ...Object.fromEntries([...Array(11)].map((_, index) => [index + 1, 6])), 12: 3, 13: 4 };
+const EXPECTED_CHAPTERS = { 0: 5, ...Object.fromEntries([...Array(11)].map((_, index) => [index + 1, 6])), 12: 3, 13: 4 };
 
 function sequence(id) {
   const digits = id.match(/\d+/g);

@@ -50,24 +50,6 @@
         "body": "This one has flippers. High above the ordinary world, Atlas carries a library, its readers, and a truly unreasonable number of overdue books.",
         "quote": "He has never lost a book. Occasionally a continent.",
         "camera": "orbit"
-      },
-      {
-        "title": "One key. A great many possibilities.",
-        "body": "Mrs. Quill has been head librarian for longer than anyone can remember. Today, she places a small brass key in your care.",
-        "quote": "I am retiring, Shelby. This is different from ceasing to pay attention.",
-        "camera": "returns"
-      },
-      {
-        "title": "A rather enthusiastic welcome.",
-        "body": "The returns cart tips. A small avalanche of books arrives at your feet. Somewhere behind it, your first patron clears their throat.",
-        "quote": "One book at a time is admirable. A whole shelf at once is considerably faster.",
-        "camera": "stacks"
-      },
-      {
-        "title": "There is more than one way to turn a page.",
-        "body": "A few lines of Python can sort a shelf, follow a clue, or answer a question. Try things. Make mistakes. The library will show you what happens.",
-        "quote": "You have the key. Now, shall we find out what it opens?",
-        "camera": "default"
       }
     ]
   },
@@ -314,6 +296,13 @@
     "quiet": "A pleasantly quiet day.",
     "quietBody": "No loose pages to chase. Your latest library activity will appear here.",
     "status": "From the desk"
+  },
+  "solved": {
+    "eyebrow": "Request complete",
+    "title": "Solved!",
+    "used": "You just used: {objective}",
+    "next": "Next request",
+    "stay": "Stay here"
   },
   "tutorial": {
     "speaker": "A word from Mrs. Quill",

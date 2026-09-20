@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT / "engine"))
 validator = importlib.import_module("validate-content")
 
 VERTICAL_SLICE = (
-    "p0-01-stamp", "p0-02-shares", "p0-03-badge", "p0-04-budget",
+    "p0-01-stamp", "p0-02-shares", "p0-03-badge", "p0-04-budget", "p0-05-badge",
     "ch1-show-1", "ch1-show-2", "ch1-vary-1", "ch1-vary-2",
     "ch1-break-1", "ch1-break-2", "ch2-show-1", "ch2-show-2",
 )

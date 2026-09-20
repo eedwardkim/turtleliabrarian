@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_SIZE = 77
+RELEASE_SIZE = 78
 KIND_ORDER = {"show": 0, "vary": 1, "break": 2, "capstone": 3}
 ID_PATTERN = re.compile(r"^(p0-\d{2}-[a-z]+|ch([1-9]|1[0-2])-(show|vary|break)-[12]|capstone-[1-4])$")
 
@@ -34,8 +34,8 @@ def shelf_order(puzzle):
 
 
 def campaign(puzzles):
-    expected = {0: 4, **dict.fromkeys(range(1, 12), 6), 12: 3, 13: 4}
-    require(Counter(puzzle["chapter"] for puzzle in puzzles) == expected, "campaign chapter distribution must be 4, 11×6, 3, 4")
+    expected = {0: 5, **dict.fromkeys(range(1, 12), 6), 12: 3, 13: 4}
+    require(Counter(puzzle["chapter"] for puzzle in puzzles) == expected, "campaign chapter distribution must be 5, 11×6, 3, 4")
     learned = set()
     for puzzle in sorted(puzzles, key=shelf_order):
         missing = learned - set(puzzle["learnedApi"])
@@ -56,7 +56,8 @@ def metadata(puzzle):
     require(5 <= puzzle["queueSize"] <= 10, "queue outside 5–10")
     require(0 < len(puzzle["fixtures"]) < puzzle["queueSize"], "queue needs curated and random shelves")
     require(len(puzzle["hints"]) == 3, "exactly three hints required")
-    require(all(puzzle["reference"].strip() not in hint for hint in puzzle["hints"]), "hint contains full answer")
+    if not puzzle.get("lesson"):
+        require(all(puzzle["reference"].strip() not in hint for hint in puzzle["hints"]), "hint contains full answer")
     require(puzzle["requiredApi"] and set(puzzle["requiredApi"]) <= set(puzzle["learnedApi"]), "required API not learned")
     names = [fixture["name"] for fixture in puzzle["fixtures"]]
     require(len(names) == len(set(names)), "duplicate fixture")

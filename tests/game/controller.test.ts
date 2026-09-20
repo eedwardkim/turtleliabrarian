@@ -138,17 +138,20 @@ describe('runtime-backed game orchestration (controlled runtime responses)', () 
   it('serves the whole queue, gates rewards on all passes, and replays a failed shelf', async () => {
     const { store, runtime } = harness();
     await store.getState().initialize();
+    store.getState().setSettings({ openStacks: true });
+    store.getState().gotoPuzzle('ch1-show-1');
+    await store.getState().waitForIdle();
     runtime.run.mockResolvedValueOnce(output).mockResolvedValueOnce({ ...output, delivered: 99 });
     await store.getState().serveQueue();
     expect(store.getState().queue).toHaveLength(6);
     expect(store.getState().queue[0].status).toBe('failed');
     expect(store.getState().save.completed).toEqual([]);
-    expect(store.getState().save.resources.ink).toBe(5);
+    expect(store.getState().save.resources.ink).toBe(10);
     await store.getState().replayQueue(0);
     expect(store.getState().result?.delivered).toBe(99);
     expect(store.getState().diff?.pass).toBe(false);
     await store.getState().serveQueue();
-    expect(store.getState().save.completed).toEqual([puzzles[0].id]);
+    expect(store.getState().save.completed).toEqual(['ch1-show-1']);
     expect(store.getState().save.resources.stars).toBe(2);
     await store.getState().serveQueue();
     expect(store.getState().save.resources.stars).toBe(2);
@@ -173,6 +176,9 @@ describe('runtime-backed game orchestration (controlled runtime responses)', () 
   it('keeps a filed order and helper snapshots paired until explicitly refiled', async () => {
     const { store } = harness();
     await store.getState().initialize();
+    store.getState().setSettings({ openStacks: true });
+    store.getState().gotoPuzzle('ch1-show-1');
+    await store.getState().waitForIdle();
     store.getState().addFile('helper.py');
     store.getState().setCode('rate = 2');
     store.getState().setActiveFile('main.py');
@@ -184,15 +190,18 @@ describe('runtime-backed game orchestration (controlled runtime responses)', () 
     store.getState().setActiveFile('main.py');
     store.getState().setCode('from helper import rate\ndeliver((rate - 1) * days)');
     await store.getState().serveQueue();
-    expect(store.getState().save.orderFiles[puzzles[0].id]['helper.py']).toBe('rate = 2');
+    expect(store.getState().save.orderFiles['ch1-show-1']['helper.py']).toBe('rate = 2');
     expect(store.getState().save.standingOrders[0].code).toContain('rate * days');
     store.getState().fileStandingOrder();
-    expect(store.getState().save.orderFiles[puzzles[0].id]['helper.py']).toBe('rate = 3');
+    expect(store.getState().save.orderFiles['ch1-show-1']['helper.py']).toBe('rate = 3');
     expect(store.getState().save.standingOrders[0].code).toContain('(rate - 1) * days');
   });
   it('samples real order requests, caps offline rewards, and retains fractional intervals', async () => {
     const { store, runtime } = harness();
     await store.getState().initialize();
+    store.getState().setSettings({ openStacks: true });
+    store.getState().gotoPuzzle('ch1-show-1');
+    await store.getState().waitForIdle();
     await store.getState().serveQueue();
     store.getState().fileStandingOrder();
     const before = store.getState().save.resources.served;
@@ -210,6 +219,9 @@ describe('runtime-backed game orchestration (controlled runtime responses)', () 
   it('pauses failed orders without rewarding them', async () => {
     const { store, runtime } = harness();
     await store.getState().initialize();
+    store.getState().setSettings({ openStacks: true });
+    store.getState().gotoPuzzle('ch1-show-1');
+    await store.getState().waitForIdle();
     await store.getState().serveQueue();
     store.getState().fileStandingOrder();
     const before = store.getState().save.resources.served;
@@ -223,6 +235,9 @@ describe('runtime-backed game orchestration (controlled runtime responses)', () 
   it('gives a foreground run priority over an in-flight background order', async () => {
     const { store, runtime } = harness();
     await store.getState().initialize();
+    store.getState().setSettings({ openStacks: true });
+    store.getState().gotoPuzzle('ch1-show-1');
+    await store.getState().waitForIdle();
     await store.getState().serveQueue();
     store.getState().fileStandingOrder();
     const before = store.getState().save.resources.served;
@@ -257,6 +272,9 @@ describe('runtime-backed game orchestration (controlled runtime responses)', () 
   });
   it('dismisses first-time tutorials and lets the Almanac replay them', async () => {
     const { store } = harness();
+    store.getState().setSettings({ openStacks: true });
+    store.getState().gotoPuzzle('ch1-show-1');
+    await store.getState().waitForIdle();
     store.getState().triggerTutorial('new-game');
     const id = store.getState().activeTutorial!;
     store.getState().dismissTutorial();

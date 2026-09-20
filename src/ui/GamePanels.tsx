@@ -12,6 +12,21 @@ export function RequestPanel({ game }: { game: GameStateForUI }) {
   const completed = game.save.completed.includes(game.puzzle.id);
   const filed = game.save.standingOrders.some(order => order.puzzleId === game.puzzle.id);
   const inputs = Object.entries(game.puzzle.visibleInputs ?? {});
+  if (game.puzzle.lesson) return <article className="request-slip">
+    <div className="request-number"><span>{format(text.request.number, { number: game.puzzle.id })}</span><Icon name="book" /></div>
+    <div className="request-from">{text.request.from}</div><h2>{game.puzzle.patron}</h2>
+    <p className="request-message">“{game.puzzle.request}”</p>
+    {inputs.length > 0 && <div className="request-inputs"><span className="eyebrow">{text.request.inputs}</span>
+      <div className="request-inputs-row">{inputs.map(([name, value]) => value === null || typeof value !== 'object'
+        ? <code className="request-input-chip" key={name}>{name} = {typeof value === 'string' ? JSON.stringify(value) : scalarText(value)}</code>
+        : value.kind === 'array'
+          ? <details className="request-input-table" key={name}><summary><code>{name}</code> · {format(text.request.inputValues, { count: value.totalValues ?? value.values.length })}</summary><ValueDisplay value={value} /></details>
+          : <details className="request-input-table" key={name}><summary><code>{name}</code> · {format(text.request.inputTable, { rows: value.totalRows, columns: value.labels.length })}</summary><ValueDisplay value={value} /></details>)}</div>
+    </div>}
+    {completed && <div className="completed-slip"><Icon name="check" /><h3>{text.request.complete}</h3><p>{text.request.completeNote}</p>
+      <button className="button primary wide" onClick={game.nextPuzzle}>{text.request.next}<Icon name="arrow" /></button>
+    </div>}
+  </article>;
   return <article className="request-slip">
     <div className="request-number"><span>{format(text.request.number, { number: game.puzzle.id })}</span><Icon name="book" /></div>
     <div className="request-from">{text.request.from}</div><h2>{game.puzzle.patron}</h2>
@@ -71,15 +86,8 @@ export function ReplayPanel({ result, index, paused, speed, onIndex, onPaused, o
   </div>;
 }
 
-export function ScratchPanel({ game, runScratch, preset, ghost, onRun, stage }: {
-  game: GameStateForUI;
-  runScratch: (code: string, options?: { stage?: boolean }) => Promise<RunResult | null>;
-  preset?: { key: string; code: string };
-  ghost?: string;
-  onRun?: (code: string, result: RunResult | null) => void;
-  stage?: boolean;
-}) {
-  const [code, setCode] = useState(preset?.code ?? '');
+export function ScratchPanel({ game, runScratch }: { game: GameStateForUI; runScratch: (code: string) => Promise<RunResult | null> }) {
+  const [code, setCode] = useState('');
   const [result, setResult] = useState<RunResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -87,17 +95,13 @@ export function ScratchPanel({ game, runScratch, preset, ghost, onRun, stage }: 
     if (busy || game.busy) return;
     setBusy(true);
     setError('');
-    try {
-      const outcome = await runScratch(code, { stage });
-      setResult(outcome);
-      onRun?.(code, outcome);
-    }
+    try { setResult(await runScratch(code)); }
     catch (failure) { setError(failure instanceof Error ? failure.message : text.error.body); }
     finally { setBusy(false); }
   }
   return <div className="scratch-body">
     <p className="scratch-intro">{text.scratch.intro}</p>
-    <CodeEditor value={code} onChange={setCode} onRun={() => { void run(); }} api={game.puzzle.learnedApi} files={Object.keys(game.save.files)} fontSize={game.save.settings.editorFontSize} label={text.scratch.label} readOnly={busy} ghost={ghost} />
+    <CodeEditor value={code} onChange={setCode} onRun={() => { void run(); }} api={game.puzzle.learnedApi} files={Object.keys(game.save.files)} fontSize={game.save.settings.editorFontSize} label={text.scratch.label} readOnly={busy} />
     <div className="scratch-actions"><button className="button primary" onClick={() => { void run(); }} disabled={busy || game.busy}><Icon name="play" />{text.scratch.run}</button><button className="button" onClick={() => { setCode(''); setResult(null); setError(''); }}>{text.scratch.clear}</button></div>
     <div className="scratch-output" tabIndex={0} role="region" aria-label={`${text.windows.scratch}: ${text.windows.output}`}>
       {error && <p className="error-card" role="alert">{error}</p>}<OutputPanel result={result} />

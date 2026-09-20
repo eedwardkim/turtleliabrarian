@@ -90,7 +90,7 @@ export interface GameState {
   replayQueue(index: number): Promise<void>;
   replayStandingOrder(puzzleId: string): Promise<void>;
   setOrderPaused(puzzleId: string, paused: boolean): void;
-  scratch(code: string, options?: { stage?: boolean }): Promise<RunResult | null>;
+  scratch(code: string): Promise<RunResult | null>;
   setSandbox(notebook: Partial<SandboxNotebook>): void;
   runSandbox(code?: string): Promise<RunResult | null>;
   tickReplay(milliseconds: number): void;
@@ -132,6 +132,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
     };
     const tutorial = (trigger: string): void => {
       const state = get();
+      if (state.puzzle.lesson) return;
       const pending = tutorialsFor(trigger, state.save.seenTutorials)
         .map((entry) => entry.id).filter((id) => !state.tutorialQueue.includes(id) && state.activeTutorial !== id);
       const queue = [...state.tutorialQueue, ...pending];
@@ -164,6 +165,15 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       if (references.size >= 100) references.delete(references.keys().next().value ?? '');
       references.set(key, result);
       return result;
+    };
+    const finish = (puzzle: Puzzle, code: string, files: Record<string, string>, status: string): void => {
+      const save = get().save;
+      const completed = completePuzzle(save, puzzle, firstTryBonus(save, progressFor(save, puzzle).attempts, get().hintLevel));
+      persist({ ...save, ...completed, progress: {
+        ...save.progress, [puzzle.id]: { ...progressFor(save, puzzle), solvedCode: code, solvedFiles: { ...files } },
+      } });
+      set({ status });
+      tutorial('complete');
     };
     const display = (result: RunResult, expected: Value): CheckDiff => {
       const diff = check(result.delivered, expected, get().puzzle.checker);
@@ -351,7 +361,12 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           if (ticket !== epoch) return;
           const result = await runtime.run(requestFor(puzzle, code, puzzle.visibleSeed, { ...save.files }, expected.inputs, save.settings.openStacks));
           if (ticket !== epoch) return;
-          display(result, expected.delivered);
+          const diff = display(result, expected.delivered);
+          if (puzzle.lesson && diff.pass && !get().save.completed.includes(puzzle.id)) {
+            const progress = progressFor(get().save, puzzle);
+            persist({ ...get().save, progress: { ...get().save.progress, [puzzle.id]: { ...progress, attempts: progress.attempts + 1 } } });
+            finish(puzzle, code, get().save.files, 'Delivered. Shelby stamped it: request complete.');
+          }
         } catch (error) { if (ticket === epoch) set({ status: errorMessage(error) }); }
         finally { if (ticket === epoch) { set({ busy: false }); void runOrders(); } }
       },
@@ -382,13 +397,7 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
             for (const hazard of puzzle.hazards) if (entry.name === hazard) tutorial(hazard);
           }
           if (get().queue.every((entry) => entry.status === 'passed')) {
-            const current = get().save;
-            const completed = completePuzzle(current, puzzle, firstTryBonus(current, progress.attempts, get().hintLevel));
-            persist({ ...current, ...completed, progress: {
-              ...current.progress, [puzzle.id]: { ...progressFor(current, puzzle), solvedCode: code, solvedFiles: { ...save.files } },
-            } });
-            set({ status: 'Every patron is satisfied. The request is complete.' });
-            tutorial('complete');
+            finish(puzzle, code, save.files, 'Every patron is satisfied. The request is complete.');
           } else {
             set({ status: 'Some patrons need another try. Select a failed shelf to inspect it.' });
           }
@@ -602,23 +611,17 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
           if (ticket === epoch) { set({ busy: false }); void runOrders(); }
         }
       },
-      async scratch(code, options: { stage?: boolean } = {}) {
+      async scratch(code) {
         if (!get().ready) return null;
         const ticket = begin('Trying a note on the blotting paper…');
         const state = get();
         try {
           const expected = await reference(state.puzzle, state.puzzle.visibleSeed, state.puzzle.visibleInputs);
           if (ticket !== epoch) return null;
-          const result = await runtime.run(requestFor(state.puzzle, code, state.puzzle.visibleSeed, state.save.files, expected.inputs,
-            options.stage || state.save.settings.openStacks));
+          const result = await runtime.run(requestFor(state.puzzle, code, state.puzzle.visibleSeed, state.save.files, expected.inputs, state.save.settings.openStacks));
           if (ticket !== epoch) return null;
-          if (options.stage) {
-            set({ ...replayFields(result), inputs: result.inputs, diff: null, expected: null,
-              status: result.error?.friendly ?? 'Scratch work finished. Your script is unchanged.' });
-          } else {
-            set({ status: result.error?.friendly ?? 'Scratch work finished. Your script is unchanged.' });
-            tutorial('scratch');
-          }
+          set({ status: result.error?.friendly ?? 'Scratch work finished. Your script is unchanged.' });
+          tutorial('scratch');
           return result;
         } catch (error) { if (ticket === epoch) set({ status: errorMessage(error) }); return null; }
         finally { if (ticket === epoch) { set({ busy: false }); void runOrders(); } }

@@ -53,7 +53,7 @@ describe('capture tour registry', () => {
     expect(body).toContain('[data-window="sandbox"]');
     expect(body).not.toContain('Return to title');
     const speedrun = tourById('V16').requirement(puzzles);
-    expect(speedrun.puzzles).toHaveLength(77 - shelvedRequestIds.size);
+    expect(speedrun.puzzles).toHaveLength(78 - shelvedRequestIds.size);
     expect(speedrun.puzzles.some(id => shelvedRequestIds.has(id))).toBe(false);
     expect(speedrun.kinds).toEqual(['show', 'vary', 'break', 'capstone']);
     expect(speedrun.maxDurationSeconds).toBe(480);
@@ -84,7 +84,7 @@ describe('capture primitives', () => {
   it('reads the shipped requests in the order the game shelves them', async () => {
     expect(puzzles.map(puzzle => puzzle.id)).toEqual(withoutShelved(authoredPuzzles).map(puzzle => puzzle.id));
     expect((await loadPuzzles('content/puzzles', { includeShelved: true })).map(puzzle => puzzle.id)).toEqual(authoredPuzzles.map(puzzle => puzzle.id));
-    expect((await readdir('content/puzzles')).filter(name => name.endsWith('.json'))).toHaveLength(77);
+    expect((await readdir('content/puzzles')).filter(name => name.endsWith('.json'))).toHaveLength(78);
   });
 
   it('holds captions for whole seconds and collapses them in smoke mode', () => {
