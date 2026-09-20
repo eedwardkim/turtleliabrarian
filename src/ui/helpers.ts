@@ -51,7 +51,7 @@ export function defaultLayout(id: string, viewport: Viewport): WindowLayout {
   const positions: Record<WindowId, [number, number, number, number]> = {
     editor: [24, 100, width, editorHeight],
     output: [24, 114 + editorHeight, width, viewport.height - editorHeight - 164],
-    request: [viewport.width - 322, 112, 298, Math.min(470, viewport.height - 170)],
+    request: [viewport.width - 322, 112, 298, Math.min(600, viewport.height - 170)],
     queue: [viewport.width - 350, 110, 326, 430],
     replay: [width + 48, viewport.height - 166, Math.min(420, viewport.width - width - 410), 140],
     scratch: [width + 52, 106, 420, 350],

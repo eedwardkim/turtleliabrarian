@@ -186,6 +186,14 @@ details pre{padding:10px;background:#342d2409}
 .request-message{font-family:Fraunces,serif;font-size:17px;line-height:1.65;margin:15px 0 20px}
 .request-objective{border-top:1px solid var(--line);padding:15px 0}
 .request-objective p{font-size:11px;line-height:1.7;color:var(--muted);margin-top:8px}
+.request-inputs{border-top:1px solid var(--line);padding:15px 0 4px}
+.request-inputs>p{font-size:11px;line-height:1.7;color:var(--muted);margin:4px 0 0}
+.request-inputs dl{margin-top:10px}
+.request-input{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;padding:8px 10px;border:1px solid #d5c9ae;border-radius:5px;background:#fffdf7}
+.request-input dt{flex:0 0 auto;font:600 13px 'IBM Plex Mono',monospace;color:#424d35;padding-top:3px}
+.request-input dt::after{content:' ='}
+.request-input dd{flex:1;min-width:0;overflow:auto}
+.request-input .scalar-value{font-size:14px}
 .request-slip .ghost-toggle{color:#3e5c8a;text-align:left;line-height:1.4}
 .ghost-preview{padding:12px;border:1px dashed #8fb3d9;background:#e4eef76b;border-radius:5px;margin-top:12px}
 .ghost-preview>p{font-size:10px;color:#4a6a8b;line-height:1.5;margin-bottom:10px}
@@ -272,6 +280,7 @@ details pre{padding:10px;background:#342d2409}
 .tutorial-card .text-button{font-size:10px}
 .tutorial-card .tutorial-count{margin-left:auto;font:10px 'IBM Plex Mono',monospace;color:var(--muted)}
 .tutorial-card .button-row{gap:8px}
+.demo-answer{margin:10px 0 2px;padding:9px 12px;border:1px solid #d5c9ae;border-radius:5px;background:#fffdf7;font:600 14px 'IBM Plex Mono',monospace;color:#424d35}
 .tutorial-target{outline:3px solid #d7b65b;outline-offset:5px;box-shadow:0 0 0 10px #efda9426,var(--shadow)}
 .credits-screen{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;background:#f4eee2b8;backdrop-filter:blur(8px)}
 .credits-page{max-width:540px;text-align:center;padding:38px;max-height:86vh;overflow:auto}

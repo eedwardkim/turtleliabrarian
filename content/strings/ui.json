@@ -148,6 +148,8 @@
     "number": "REQUEST {number}",
     "from": "A note from",
     "objective": "Your task",
+    "inputs": "Already in Python on this shelf",
+    "inputsNote": "Use these names in your code exactly as written. Other patrons in the queue bring different values, so build the answer from the names, not the numbers.",
     "ghost": "Expected result",
     "ghostNote": "A ghost of the answer, for this shelf only.",
     "showGhost": "Peek at the expected result",

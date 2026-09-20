@@ -10,10 +10,15 @@ export function RequestPanel({ game }: { game: GameStateForUI }) {
   const [ghost, setGhost] = useState(false);
   const completed = game.save.completed.includes(game.puzzle.id);
   const filed = game.save.standingOrders.some(order => order.puzzleId === game.puzzle.id);
+  const inputs = Object.entries(game.puzzle.visibleInputs ?? {});
   return <article className="request-slip">
     <div className="request-number"><span>{format(text.request.number, { number: game.puzzle.id })}</span><Icon name="book" /></div>
     <div className="request-from">{text.request.from}</div><h2>{game.puzzle.patron}</h2>
     <p className="request-message">“{game.puzzle.request}”</p>
+    {inputs.length > 0 && <div className="request-inputs"><span className="eyebrow">{text.request.inputs}</span>
+      <dl>{inputs.map(([name, value]) => <div className="request-input" key={name}><dt><code>{name}</code></dt><dd><ValueDisplay value={value} /></dd></div>)}</dl>
+      <p>{text.request.inputsNote}</p>
+    </div>}
     <div className="request-objective"><span className="eyebrow">{text.request.objective}</span><p>{game.puzzle.objective}</p></div>
     <button className="text-button ghost-toggle" onClick={() => setGhost(!ghost)} aria-expanded={ghost}><Icon name="ghost" />{ghost ? text.request.hideGhost : text.request.showGhost}</button>
     {ghost && <div className="ghost-preview"><p>{text.request.ghostNote}</p><ValueDisplay value={game.expected} ghost /></div>}

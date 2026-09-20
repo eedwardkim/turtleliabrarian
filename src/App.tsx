@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import World from './scene/World';
 import { useGame } from './game/store';
 import { getTutorial } from '../content/tutorials';
-import { DEMO_COVERED_TUTORIALS, DEMO_PUZZLE_IDS, demoSteps } from '../content/tutorials/demo';
+import { DEMO_COVERED_TUTORIALS, DEMO_PUZZLE_IDS, demoSteps, describeInputs } from '../content/tutorials/demo';
 import { puzzles } from './game/catalog';
 import { almanac as almanacCatalog, visibleAlmanac } from '../content/almanac';
 import { atlasWings, shop as shopCatalog } from './game/economy';
@@ -22,7 +22,7 @@ import { AlmanacDialog, AtlasDialog, NewScriptDialog, OrdersDialog, SavesDialog,
 import { FloatingWindow } from './ui/Window';
 import { DevPanel } from './ui/DevPanel';
 import { devEnabled } from './game/devtools';
-import { canReveal, clampLayout, compactNumber, defaultLayout, isTextInput } from './ui/helpers';
+import { canReveal, clampLayout, compactNumber, defaultLayout, isTextInput, scalarText } from './ui/helpers';
 import { format, text } from './ui/text';
 import type { AlmanacEntry, AtlasWing, DialogName, ShopItem, UIIntegrations } from './ui/types';
 
@@ -155,19 +155,19 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     setIntroBeat(beat); onIntroBeat?.(beat);
   }, [onIntroBeat]);
   function layoutFor(id: string): WindowLayout {
-    const saved = game.save.layouts[id];
+    const saved = useGame.getState().save.layouts[id];
     if (saved) return clampLayout(saved, deskViewport);
     const layout = defaultLayout(id, deskViewport);
     if (id.startsWith('script:')) return { ...layout, x: layout.x + 30, y: layout.y + 30, closed: game.activeFile !== id.slice(7) };
     return { ...layout, closed: optionalWindows.includes(id) };
   }
   function focus(id: string) {
-    const highest = Math.max(1, ...Object.values(game.save.layouts).map(layout => layout.z));
+    const highest = Math.max(1, ...Object.values(useGame.getState().save.layouts).map(layout => layout.z));
     const layout = layoutFor(id);
     if (layout.z < highest || layout.z === 1) game.setLayout(id, { ...layout, z: highest + 1 });
   }
   function openWindow(id: string) {
-    const highest = Math.max(1, ...Object.values(game.save.layouts).map(layout => layout.z));
+    const highest = Math.max(1, ...Object.values(useGame.getState().save.layouts).map(layout => layout.z));
     game.setLayout(id, { ...layoutFor(id), minimized: false, closed: false, z: highest + 1 });
   }
   function startTour() {
@@ -313,7 +313,9 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
         <button className="text-button layout-reset" onClick={() => windowIds.forEach(id => game.setLayout(id, { ...defaultLayout(id, deskViewport), closed: !['editor', 'output', 'request'].includes(id) }))}><Icon name="rewind" />{text.windows.reset}</button>
       </Dialog>}
       {game.screen === 'game' && demoCurrent && demoStep !== null && !dialog && <Dialog title={demoCurrent.title} onClose={finishDemo} className="tutorial-dialog demo-dialog">
-        <span className="eyebrow">{text.tutorial.speaker}</span><p>{demoCurrent.body}</p><div className="button-row">
+        <span className="eyebrow">{text.tutorial.speaker}</span><p>{demoCurrent.body}</p>
+        {demoCurrent.showsAnswer && (game.expected === null || typeof game.expected !== 'object') && <p className="demo-answer"><code>{describeInputs(game.puzzle)}</code> → <code>{scalarText(game.expected)}</code></p>}
+        <div className="button-row">
           <button className="button primary" disabled={game.busy} onClick={() => { if (demoStep === demo.length - 1) finishDemo(); else openDemoStep(demoStep + 1); }}>{game.busy ? text.tutorial.watching : demoStep === demo.length - 1 ? text.tutorial.done : text.tutorial.next}</button>
           <button className="text-button" onClick={finishDemo}>{text.tutorial.skip}</button><span className="tutorial-count">{format(text.tutorial.count, { current: demoStep + 1, total: demo.length })}</span>
         </div>

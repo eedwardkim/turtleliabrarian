@@ -10,6 +10,8 @@ export interface DemoStep {
   action?: DemoAction;
   puzzleId?: string;
   code?: string;
+  /** Show the slip's inputs and the answer they produce beneath the step. */
+  showsAnswer?: boolean;
 }
 
 /** The requests the guided demo plays through, in order. */
@@ -17,6 +19,23 @@ export const DEMO_PUZZLE_IDS: readonly string[] = ['p0-01-stamp', 'p0-02-shares'
 
 /** Popup tutorials whose lesson the demo already teaches; they are marked seen when it ends. */
 export const DEMO_COVERED_TUTORIALS: readonly string[] = ['request', 'run', 'output', 'queue', 'resources'];
+
+function scalar(value: unknown): string {
+  if (typeof value === 'string') return JSON.stringify(value);
+  if (typeof value === 'number' || typeof value === 'boolean' || value === null) return String(value);
+  return '…';
+}
+
+/** `days = 2, rate = 2` for the shelf the player sees. */
+export function describeInputs(puzzle: Puzzle): string {
+  return Object.entries(puzzle.visibleInputs ?? {})
+    .map(([name, value]) => `${name} = ${scalar(value)}`)
+    .join(', ');
+}
+
+function firstLine(code: string): string {
+  return code.split('\n')[0];
+}
 
 export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
   const steps: DemoStep[] = [{
@@ -32,19 +51,19 @@ export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
         target: 'request', action: 'goto', puzzleId: puzzle.id,
       },
       {
-        title: 'The plan',
-        body: `${puzzle.objective} The named inputs on the slip are already waiting in Python; only the value passed to deliver answers the patron.`,
-        target: 'editor',
+        title: 'Read the slip',
+        body: `${puzzle.objective} Look under “Already in Python”: this shelf gives Shelby ${describeInputs(puzzle)}. Those names already hold those numbers, so she never types the numbers herself.`,
+        target: 'request',
       },
       {
         title: 'Shelby writes the script',
-        body: `Her answer is short: ${puzzle.reference.split('\n').join(' · ')}`,
-        target: 'editor', action: 'solve', puzzleId: puzzle.id, code: puzzle.reference,
+        body: `Two lines. “${firstLine(puzzle.reference)}” combines the slip’s names and gives the result a name of its own. “deliver(…)” hands that result to ${puzzle.patron}.`,
+        target: 'editor', action: 'solve', puzzleId: puzzle.id, code: puzzle.reference, showsAnswer: true,
       },
       {
         title: 'Run it',
-        body: 'Run checks this shelf. Watch Shelby carry the books, then read the receipt: printed text, the last expression and the delivered value.',
-        target: 'output', action: 'run', puzzleId: puzzle.id,
+        body: 'Run tries the script on this shelf. Watch Shelby carry the books, then check the receipt in Output: the delivered value should be the number below.',
+        target: 'output', action: 'run', puzzleId: puzzle.id, showsAnswer: true,
       },
       {
         title: 'Serve the queue',
