@@ -93,7 +93,7 @@ export class ShelfAudio {
     this.musicGain.connect(this.master);
     this.sfxGain.connect(this.master);
     this.master.connect(context.destination);
-    this.applyMix();
+    this.applyMix(true);
     await context.resume().catch(() => undefined);
     this.syncMusic();
   }
@@ -155,12 +155,20 @@ export class ShelfAudio {
     this.lastCue.clear();
   }
 
-  private applyMix(): void {
+  private applyMix(initialize = false): void {
     if (!this.context || !this.master || !this.musicGain || !this.sfxGain) return;
     const master = this.mix.muted ? 0 : clamp(this.mix.master);
-    this.master.gain.setTargetAtTime(master, this.context.currentTime, 0.05);
-    this.musicGain.gain.setTargetAtTime(this.mix.ambience ? clamp(this.mix.music) : 0, this.context.currentTime, 0.4);
-    this.sfxGain.gain.setTargetAtTime(clamp(this.mix.sfx), this.context.currentTime, 0.05);
+    const now = this.context.currentTime;
+    const buses: [GainNode, number, number][] = [
+      [this.master, master, 0.05],
+      [this.musicGain, this.mix.ambience ? clamp(this.mix.music) : 0, 0.4],
+      [this.sfxGain, clamp(this.mix.sfx), 0.05],
+    ];
+    for (const [node, target, duration] of buses) {
+      node.gain.cancelScheduledValues(now);
+      node.gain.setValueAtTime(initialize ? target : node.gain.value, now);
+      if (!initialize) node.gain.linearRampToValueAtTime(target, now + duration);
+    }
   }
 
   private wantsMusic(): boolean {

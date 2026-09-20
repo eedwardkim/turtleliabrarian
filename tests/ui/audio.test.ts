@@ -3,7 +3,10 @@ import { ShelfAudio, type AudioMix } from '../../src/audio/engine';
 
 function installAudioContext() {
   const createGain = vi.fn(() => ({
-    gain: { value: 1, setTargetAtTime: vi.fn(), setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+    gain: {
+      value: 1, cancelScheduledValues: vi.fn(), setValueAtTime: vi.fn(),
+      linearRampToValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(),
+    },
     connect: vi.fn(),
     disconnect: vi.fn(),
   }));
@@ -33,9 +36,10 @@ describe('audio mix routing', () => {
     const audio = new ShelfAudio(mix);
     await audio.start();
     const [master, music, sfx] = createGain.mock.results.map(result => result.value);
-    expect(sfx.gain.setTargetAtTime).toHaveBeenLastCalledWith(0.25, 0, 0.05);
-    expect(master.gain.setTargetAtTime).toHaveBeenLastCalledWith(0.8, 0, 0.05);
-    expect(music.gain.setTargetAtTime).toHaveBeenLastCalledWith(0, 0, 0.4);
+    expect(sfx.gain.setValueAtTime).toHaveBeenLastCalledWith(0.25, 0);
+    expect(master.gain.setValueAtTime).toHaveBeenLastCalledWith(0.8, 0);
+    expect(music.gain.setValueAtTime).toHaveBeenLastCalledWith(0, 0);
+    expect(sfx.gain.linearRampToValueAtTime).not.toHaveBeenCalled();
     expect(sfx.connect).toHaveBeenCalledWith(master);
     expect(music.connect).toHaveBeenCalledWith(master);
     expect(master.connect).toHaveBeenCalledWith(destination);
@@ -49,10 +53,25 @@ describe('audio mix routing', () => {
     const [master, , sfx] = createGain.mock.results.map(result => result.value);
     for (const [volume, expected] of [[0.25, 0.25], [0, 0], [-1, 0], [2, 1], [NaN, 0]]) {
       audio.setMix({ ...mix, sfx: volume });
-      expect(sfx.gain.setTargetAtTime).toHaveBeenLastCalledWith(expected, 0, 0.05);
-      expect(master.gain.setTargetAtTime).toHaveBeenLastCalledWith(0.8, 0, 0.05);
+      expect(sfx.gain.cancelScheduledValues).toHaveBeenLastCalledWith(0);
+      expect(sfx.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(expected, 0.05);
+      expect(master.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0.8, 0.05);
     }
     expect(createGain).toHaveBeenCalledTimes(3);
+    audio.dispose();
+  });
+
+  it('gives silent buses a finite automation endpoint before the next cue', async () => {
+    const { createGain } = installAudioContext();
+    const audio = new ShelfAudio({ ...mix, sfx: 1 });
+    await audio.start();
+    audio.setMix({ ...mix, ambience: true, muted: true });
+    const [master, music, sfx] = createGain.mock.results.map(result => result.value);
+    expect(master.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 0.05);
+    expect(music.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0.5, 0.4);
+    expect(sfx.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0.25, 0.05);
+    expect(sfx.gain.cancelScheduledValues.mock.invocationCallOrder.at(-1))
+      .toBeLessThan(sfx.gain.setValueAtTime.mock.invocationCallOrder.at(-1)!);
     audio.dispose();
   });
 
