@@ -56,7 +56,7 @@ export function inspectCaptures(tours_, puzzles, root) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const argv = process.argv.slice(2);
-  const root = flag(argv, '--root', 'artifacts');
+  const root = flag(argv, '--root', process.env.CAPTURE_OUTPUT_ROOT ?? 'artifacts');
   const selected = flag(argv, '--tour', '')
     .split(',').map(value => value.trim().toUpperCase()).filter(Boolean);
   const chosen = selected.length ? tours.filter(tour => selected.includes(tour.id)) : tours;

@@ -51,8 +51,9 @@ deterministic frame capture are documented in `DEVTOOLS.md`.
 
 ```
 make verify            # full automated gate, nonzero on any failure
-make verify-m1         # vertical-slice subset
-make verify-m2         # engine/runtime subset
+make verify-m1         # automated checks; unrecorded tours reported as pending
+make verify-m2         # automated checks; unrecorded tours reported as pending
+make calibrate         # remeasure 1000-seed stochastic tolerances
 npm run typecheck
 npm run lint
 npm test               # Vitest
@@ -65,13 +66,26 @@ node scripts/document-curriculum.mjs --check
 format), the CPython engine/oracle suites, the content-validator tests, Vitest,
 the 500-seed puzzle validation, CPython/Pyodide parity, the full engine suite
 under Pyodide, the 200k-row performance gate, model validation, the production
-build and the 77-request campaign gate, then prints a summary table.
+build and the 77-request campaign gate. It also checks calibration and curriculum
+freshness, player-facing spelling, unfinished text, and V00–V16 capture coverage,
+then prints a summary table with an exit status for every check.
 
 What `make verify` does **not** cover: browser and visual acceptance, axe and
-keyboard passes, deployment, clean-clone verification, cspell, an
-unfinished-text scan, and the 1000-seed calibration required by Q10. Those are
-tracked honestly in `COMPLIANCE.md`; a green `make verify` is not release
-acceptance.
+keyboard passes, deployment, clean-clone verification, or remeasuring the
+1000-seed calibration required by Q10. Use `make calibrate` to regenerate the
+hash-pinned calibration; `make verify` rejects a stale result. Independent-stream
+robustness limitations are recorded separately from the shipped patron-seed
+protocol in `COMPLIANCE.md`.
+
+Capture media is generated separately and is not checked into Git. With the app
+running, `node scripts/capture.mjs --all --fps 24` writes full captures beneath
+`artifacts/`; `--smoke` exercises the assertions but cannot satisfy the media gate.
+`make verify` fails if any full tour is missing or incomplete. For a fresh clone,
+set `CAPTURE_OUTPUT_ROOT` to the existing capture root containing `V00/` through
+`V16/`, then run `make setup && make verify && make build`. This shares only
+recorded evidence; dependencies, runtime assets and the build are created in the
+new clone. A green automated gate still requires the independent browser,
+visual and deployment evidence listed in `COMPLIANCE.md`.
 
 ## Assets and documentation generators
 

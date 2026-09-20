@@ -13,11 +13,10 @@ status vocabulary is deliberately narrow:
 | **Pending** | Not evidenced yet. The remaining work is named. |
 | **Not implemented** | The requirement has no implementation in this repository. |
 
-This document is written from the integration branch that merges the release head
-with the calibration, text-gate, capture and documentation work. It deliberately does **not** claim browser,
-visual, deployment, hardware-performance or clean-clone acceptance: none of that
-was executed in the session that wrote this file. Play length (8–12 hours,
-`P04`) and MacBook Air frame rates (`O15`) have never been directly measured.
+This document combines the integrated code with the lead session's recorded
+browser evidence at the revisions stated below. It does not claim release
+acceptance while the outstanding gates remain open. Play length (8–12 hours,
+`P04`) and physical MacBook Air frame rates (`O15`) have not been directly measured.
 
 ## Operating and provenance
 
@@ -215,7 +214,7 @@ was executed in the session that wrote this file. Play length (8–12 hours,
 | X07 | Browser | The full browser campaign served 77 requests and 533 queue patrons before the focused fixes; not re-run at `5fa4d25`. |
 | X08 | Browser | Loud/silent failures, Stop, infinite-loop timeout, syntax errors, standing orders, time-warp, offline, save export/import/reload and settings were exercised interactively; no committed spec covers them. |
 | X09 | Browser | 1366×768 and Firefox smoke passed at `3031e4a` (Firefox chapter 6, 7/7 patrons). |
-| X10 | Partial | Zero serious/critical axe findings in the tested states at both resolutions (`3031e4a`, empty and populated Scratch) with keyboard access; two moderate landmark findings remain, and not every screen of the expanded game has been scanned. |
+| X10 | Browser/Partial | Scratch passed at `3031e4a`. At `08d0515`, exact 1366×768 Sandbox short, CSV-populated and overflowing states have zero axe violations; both Sandbox and shared Output support keyboard scrolling to the final printed line. Fresh-save gating, explicit unlock, legacy notebook migration, credits entry and keyboard Stop/recovery also passed. These checks cover the stated screens and states, not every possible layout. |
 | X11 | Automated | Exactly three hints per request and Almanac entries for every taught API are enforced by tests, and `npm run check:text` runs cspell over every extracted player string in `make verify`. |
 | X12 | Automated | Asset validation (51 assets, zero errors), nodes, clips, palette, triangles and the scene budget test. |
 | X13 | Partial | Production build passes in `make verify`; the 200k-row engine performance gate passes. Cold title ≤10 s was logged at M1 (3.256 s) and has not been re-measured for the expanded world; the post-build smoke is browser-owned. |
@@ -237,12 +236,12 @@ was executed in the session that wrote this file. Play length (8–12 hours,
 | M03 | Complete | 51 original assets, 204 previews, zero validator errors. |
 | M04–M05 | Complete | All 77 requests with fixtures, naive counterexamples and 500/100-seed validation; coverage generated in `CURRICULUM.md` with no gaps. |
 | M06 | Complete | Economy, standing orders, archive oil, hats, hatchlings and the post-capstone Sandbox (G06). |
-| M07 | Partial | Accessibility, writing, performance and cross-browser work passed in the tested states; audio is implemented and unit-tested but its **subjective mix and audibility have not been accepted**, and the fractional SFX-bus fix `5fa4d25` still awaits a focused browser retest. |
+| M07 | Partial | Writing gates pass and accessibility/cross-browser checks cover the stated states. Audio at `385557b` passed digital master/music/SFX quartering, zero/mute silence, real Python Run/pass and hidden-tab suspend/resume. External-speaker audibility and subjective mix were not tested. M4 VM replay median was 16.6 ms and p95 below 20 ms; physical MacBook Air performance remains unmeasured. |
 | M08 | Pending | Clean-clone verification, authorized deployment, the remaining media set and the final report are outstanding. |
 
 ## Summary of outstanding release work
 
-1. Committed browser coverage, or a recorded pass at the current revision, including the audio retest after `5fa4d25` (X06–X10, M07).
+1. Finish capture execution and visual review after the integrated capture tooling; prior full-campaign, `385557b` audio and `08d0515` Sandbox browser evidence remains revision-scoped (X06–X10, M07).
 2. The media set V00–V16, screenshots and contact sheets (V11–V14, L02). The tours and the `make check-captures` gate exist; **no capture has been executed**, so `make verify` fails on that row until the media pass runs.
 3. Clean-clone `make setup && make verify && make build` (X15, O02).
 4. An authorized deployment target, the deployment and its smoke test (T08, X16).

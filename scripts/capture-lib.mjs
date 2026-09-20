@@ -79,7 +79,8 @@ export class Recorder {
   /** Freezes wall clock time; `frame()` is the only thing that moves the simulation. */
   async installClock() {
     await this.page.clock.install({ time: EPOCH });
-    await this.page.clock.pauseAt(new Date(EPOCH.getTime() + 1000));
+    await this.page.clock.pauseAt(new Date(EPOCH.getTime() + 60_000));
+    await this.page.clock.setSystemTime(EPOCH);
   }
 
   async installCaption() {
