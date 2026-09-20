@@ -78,6 +78,8 @@ export function ScratchPanel({ game, runScratch }: { game: GameStateForUI; runSc
     <p className="scratch-intro">{text.scratch.intro}</p>
     <CodeEditor value={code} onChange={setCode} onRun={() => { void run(); }} api={game.puzzle.learnedApi} files={Object.keys(game.save.files)} fontSize={game.save.settings.editorFontSize} label={text.scratch.label} readOnly={busy} />
     <div className="scratch-actions"><button className="button primary" onClick={() => { void run(); }} disabled={busy || game.busy}><Icon name="play" />{text.scratch.run}</button><button className="button" onClick={() => { setCode(''); setResult(null); setError(''); }}>{text.scratch.clear}</button></div>
-    <div className="scratch-output">{error && <p className="error-card" role="alert">{error}</p>}<OutputPanel result={result} /></div>
+    <div className="scratch-output" tabIndex={0} role="region" aria-label={`${text.windows.scratch}: ${text.windows.output}`}>
+      {error && <p className="error-card" role="alert">{error}</p>}<OutputPanel result={result} />
+    </div>
   </div>;
 }
