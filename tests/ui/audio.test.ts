@@ -3,7 +3,7 @@ import { ShelfAudio, type AudioMix } from '../../src/audio/engine';
 
 function installAudioContext() {
   const createGain = vi.fn(() => ({
-    gain: { setTargetAtTime: vi.fn() },
+    gain: { value: 1, setTargetAtTime: vi.fn(), setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
     connect: vi.fn(),
     disconnect: vi.fn(),
   }));
@@ -12,6 +12,10 @@ function installAudioContext() {
     currentTime = 0;
     destination = destination;
     createGain = createGain;
+    createOscillator = () => ({
+      frequency: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+      connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(),
+    });
     resume = async () => {};
     close = async () => {};
   }
@@ -49,6 +53,20 @@ describe('audio mix routing', () => {
       expect(master.gain.setTargetAtTime).toHaveBeenLastCalledWith(0.8, 0, 0.05);
     }
     expect(createGain).toHaveBeenCalledTimes(3);
+    audio.dispose();
+  });
+
+  it('initializes new voices quietly before scheduling their envelopes', async () => {
+    const { createGain } = installAudioContext();
+    const audio = new ShelfAudio(mix);
+    await audio.start();
+    audio.cue('pass');
+    const voices = createGain.mock.results.slice(3).map(result => result.value);
+    expect(voices).toHaveLength(3);
+    for (const voice of voices) {
+      expect(voice.gain.value).toBe(0.0001);
+      expect(voice.gain.exponentialRampToValueAtTime).toHaveBeenCalled();
+    }
     audio.dispose();
   });
 });

@@ -124,6 +124,7 @@ export class ShelfAudio {
     for (const partial of CUES[name]) {
       const oscillator = context.createOscillator();
       const gain = context.createGain();
+      gain.gain.value = 0.0001;
       const start = now + partial.delay;
       const end = start + partial.length;
       oscillator.type = partial.type;
