@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import World from './scene/World';
 import { useGame } from './game/store';
 import { getTutorial } from '../content/tutorials';
-import { DEMO_PUZZLE_IDS, demoSteps } from '../content/tutorials/demo';
+import { DEMO_COVERED_TUTORIALS, DEMO_PUZZLE_IDS, demoSteps } from '../content/tutorials/demo';
 import { puzzles } from './game/catalog';
 import { almanac as almanacCatalog, visibleAlmanac } from '../content/almanac';
 import { atlasWings, shop as shopCatalog } from './game/economy';
@@ -181,8 +181,8 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   }
   function finishDemo() {
     setDemoStep(null);
-    [game.activeTutorial, ...game.tutorialQueue].forEach(id => { if (id) game.markTutorial(id); });
-    game.dismissTutorial();
+    const live = useGame.getState();
+    [...DEMO_COVERED_TUTORIALS, live.activeTutorial, ...live.tutorialQueue].forEach(id => { if (id) live.markTutorial(id); });
   }
   async function run(file: string, queue = false) {
     if (game.busy) return;
