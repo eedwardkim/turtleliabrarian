@@ -39,7 +39,7 @@ describe('output rendering', () => {
   it('renders scalar request inputs as chips and tables as closed summaries', () => {
     const base = {
       screen: 'game' as const, loading: 1, loadingMessage: '', ready: true, save: freshSave(),
-      puzzle: authoredPuzzles[0], activeFile: 'main.py', code: '', result: null, expected: 4, queue: [], diff: null,
+      puzzle: authoredPuzzles.find(puzzle => !puzzle.lesson)!, activeFile: 'main.py', code: '', result: null, expected: 4, queue: [], diff: null,
       busy: false, status: '', hintLevel: 0, traceIndex: 0, replayPaused: true,
       initialize: vi.fn(), newGame: vi.fn(), setScreen: vi.fn(), setCode: vi.fn(), setActiveFile: vi.fn(),
       addFile: vi.fn(), run: vi.fn(), serveQueue: vi.fn(), stop: vi.fn(), gotoPuzzle: vi.fn(), nextPuzzle: vi.fn(),

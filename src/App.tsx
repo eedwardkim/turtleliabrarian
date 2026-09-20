@@ -177,6 +177,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   }
   function startTour() {
     setDialog(null);
+    if (useGame.getState().puzzle.lesson) { ['request', 'editor'].forEach(openWindow); return; }
     ['request', 'editor', 'output'].forEach(openWindow);
     openDemoStep(0);
   }
@@ -193,7 +194,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     if (game.busy) return;
     setActionError(''); setQueueIndex(null);
     game.setActiveFile(file);
-    openWindow('output');
+    if (!game.puzzle.lesson) openWindow('output');
     if (queue) openWindow('queue');
     try { await (queue ? game.serveQueue() : game.run()); }
     catch (failure) { setActionError(failure instanceof Error ? failure.message : text.error.body); setDialog('alerts'); }
@@ -310,7 +311,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
         </header>
         <div className="location-label"><span className="eyebrow">{game.puzzle.chapter ? format(text.request.chapter, { chapter: game.puzzle.chapter }) : text.request.prologue}</span><h2>{game.puzzle.title}</h2></div>
         {editor(primaryFile)}{files.filter(file => file !== primaryFile).map(editor)}
-        {floating('output', <>
+        {!game.puzzle.lesson && floating('output', <>
           {queueEntry && <div className="queue-observing"><span>{format(text.queue.observing, { name: queueEntry.name })}</span><button className="text-button" onClick={() => setQueueIndex(null)}>{text.queue.return}</button></div>}
           <OutputPanel result={result} diff={diff} />
         </>)}

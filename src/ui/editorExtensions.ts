@@ -63,6 +63,7 @@ class GhostWidget extends WidgetType {
   override toDOM(view: EditorView) {
     const span = document.createElement('span');
     span.className = 'cm-ghost';
+    span.title = 'Click to fill in';
     span.textContent = this.content;
     span.addEventListener('mousedown', (event) => { event.preventDefault(); acceptGhost(view); });
     return span;

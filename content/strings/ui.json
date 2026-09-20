@@ -152,6 +152,12 @@
     "applyMove": "Put it in my script",
     "moveDone": "Your script matches the answer. Press Run.",
     "moveDoneQueue": "Then Serve queue.",
+    "lessonSteps": [
+      "Click the blinking grey text in the editor. That makes it real code.",
+      "Press Run (the green button).",
+      "Watch Shelby carry the answer to the desk."
+    ],
+    "lessonRetry": "Not quite. The line should be exactly `{line}`. Fix it and press Run.",
     "standing": "File a standing order",
     "filed": "Standing order filed",
     "learn": "On this page"

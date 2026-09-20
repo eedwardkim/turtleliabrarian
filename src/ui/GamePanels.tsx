@@ -24,17 +24,13 @@ export function RequestPanel({ game }: { game: GameStateForUI }) {
       : <p>{text.request.moveDone}{game.puzzle.lesson ? '' : ` ${text.request.moveDoneQueue}`}</p>)}
   </div>;
   if (game.puzzle.lesson) return <article className="request-slip">
-    <div className="request-number"><span>{format(text.request.number, { number: game.puzzle.id })}</span><Icon name="book" /></div>
-    <div className="request-from">{text.request.from}</div><h2>{game.puzzle.patron}</h2>
     <p className="request-message">“{game.puzzle.request}”</p>
-    {moveBlock}
-    {inputs.length > 0 && <div className="request-inputs"><span className="eyebrow">{text.request.inputs}</span>
-      <div className="request-inputs-row">{inputs.map(([name, value]) => value === null || typeof value !== 'object'
-        ? <code className="request-input-chip" key={name}>{name} = {typeof value === 'string' ? JSON.stringify(value) : scalarText(value)}</code>
-        : value.kind === 'array'
-          ? <details className="request-input-table" key={name}><summary><code>{name}</code> · {format(text.request.inputValues, { count: value.totalValues ?? value.values.length })}</summary><ValueDisplay value={value} /></details>
-          : <details className="request-input-table" key={name}><summary><code>{name}</code> · {format(text.request.inputTable, { rows: value.totalRows, columns: value.labels.length })}</summary><ValueDisplay value={value} /></details>)}</div>
-    </div>}
+    {inputs.length > 0 && <p className="lesson-inputs">{inputs.map(([name, value]) => `${name} = ${value === null || typeof value !== 'object' ? (typeof value === 'string' ? JSON.stringify(value) : scalarText(value)) : '…'}`).join(' · ')}</p>}
+    <ol className="lesson-steps">{text.request.lessonSteps.map((step, index) => <li key={index}>{step}</li>)}</ol>
+    {game.diff && !game.diff.pass && <p className="lesson-status">{format(text.request.lessonRetry, {
+      line: nextMove(game.code, game.puzzle.reference)?.line
+        ?? game.puzzle.reference.split('\n').filter((line) => line.trim() && !line.trim().startsWith('#')).pop() ?? '',
+    })}</p>}
     {completed && <div className="completed-slip"><Icon name="check" /><h3>{text.request.complete}</h3><p>{text.request.completeLessonNote}</p>
       <button className="button primary wide" onClick={game.nextPuzzle}>{text.request.next}<Icon name="arrow" /></button>
     </div>}
