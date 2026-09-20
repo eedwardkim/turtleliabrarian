@@ -80,7 +80,7 @@ export function FloatingWindow({ id, title, layout, viewport, onLayout, onFocus,
       </div>
     </header>
     {!current.minimized && <>
-      <div className="window-body">{children}</div>
+      <div className="window-body" tabIndex={0}>{children}</div>
       <button type="button" className="window-resize" aria-label={`${title}: ${text.windows.resize}`} title={text.windows.resize}
         onPointerDown={event => start(event, true)} onPointerMove={move} onPointerUp={end} onPointerCancel={end} onKeyDown={event => keyboard(event, true)}>
         <Icon name="resize" />
