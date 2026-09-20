@@ -27,6 +27,7 @@ describe('guided demo', () => {
     expect(steps[0].target).toBe('editor');
     expect(steps[0].done).toBe('The blank is filled.');
     expect(steps[1].waitFor).toEqual({ kind: 'run-pass' });
+    expect(steps[1].line).toBe('deliver(3)');
     expect(steps[1].done).toBe('Shelby delivered 3. That was your Python running.');
     expect(steps[2].waitFor).toBeUndefined();
     expect(steps[2].done).toBeUndefined();

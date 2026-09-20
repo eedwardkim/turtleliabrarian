@@ -345,7 +345,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
         {windowIds.map(id => <div className="layout-row" key={id}><span>{titleFor(id)}</span><button className="button" onClick={() => layoutFor(id).closed || layoutFor(id).minimized ? openWindow(id) : game.setLayout(id, { ...layoutFor(id), closed: true })}>{layoutFor(id).closed || layoutFor(id).minimized ? text.windows.show : text.windows.hide}</button></div>)}
         <button className="text-button layout-reset" onClick={() => windowIds.forEach(id => game.setLayout(id, { ...defaultLayout(id, deskViewport), closed: !['editor', 'output', 'request'].includes(id) }))}><Icon name="rewind" />{text.windows.reset}</button>
       </Dialog>}
-      {game.screen === 'game' && solved && <Dialog title={text.solved.title} onClose={() => setSolvedFor(null)} className="solved-dialog">
+      {game.screen === 'game' && solved && <Dialog title={text.solved.title} onClose={() => setSolvedFor(null)} className="solved-dialog" modal={false}>
         <span className="eyebrow">{text.solved.eyebrow}</span>
         <h3 className="solved-puzzle">{game.puzzle.title}</h3>
         <p>{format(text.solved.used, { objective: game.puzzle.objective })}</p>

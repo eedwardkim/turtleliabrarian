@@ -84,7 +84,7 @@ export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
     {
       title: 'Run it',
       body: 'Press Run. Watch Shelby carry the answer to the desk.',
-      target: 'run', waitFor: { kind: 'run-pass' }, puzzleId,
+      target: 'run', waitFor: { kind: 'run-pass' }, puzzleId, line: puzzle ? firstLine(puzzle.reference) : undefined,
       done: 'Shelby delivered 3. That was your Python running.',
     },
     {
