@@ -44,8 +44,9 @@ class LaterChapterContent(unittest.TestCase):
     def test_release_inventory(self):
         for chapter in CHAPTERS:
             kinds = sorted(item["kind"] for item in self.puzzles if item["chapter"] == chapter)
-            self.assertEqual(kinds, list(KINDS), f"chapter {chapter} needs 2 show, 2 vary, 2 break")
-        self.assertEqual(len([item for item in self.puzzles if item["kind"] == "capstone"]), 1)
+            expected = ["break", "show", "vary"] if chapter == 12 else list(KINDS)
+            self.assertEqual(kinds, expected, f"chapter {chapter} has the wrong lesson distribution")
+        self.assertEqual(len([item for item in self.puzzles if item["kind"] == "capstone"]), 4)
         self.assertEqual(len(self.puzzles), 37)
         self.assertEqual(len({item["id"] for item in self.puzzles}), 37)
 

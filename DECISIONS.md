@@ -219,3 +219,21 @@ error.
 
 The three obsolete M1-scoped assertions are left failing rather than relaxed; the
 proposed minimal corrections are recorded in PROGRESS.md for parent approval.
+
+### Correct campaign expectations and audio mixing
+
+The original brief explicitly instructs us to correct wrong tests and record why.
+The integrated catalog tests still expected the twelve-request vertical slice,
+and two release suites expected six chapter-12 requests and one capstone. Q01
+requires 77 requests distributed as 4 + 11*6 + 3 + 4. Those assertions now enforce
+Q01. The later-shelf total remains 37; its chapter-12/capstone split changes.
+Metadata, unique IDs, curriculum ordering, hints and counterexamples remain checked.
+Tutorial coverage includes the controller's full UI, hazard and concept triggers.
+The M1 economy test now explicitly walks its original twelve IDs and preserves
+the exact 13-star/two-egg balances; the separate full-campaign test still proves
+all 77 requests are affordable without idling or first-try bonuses.
+
+Browser verification found that the Sound effects slider only suppressed cues at
+zero; fractional values never reached the SFX gain bus. Apply the clamped SFX
+setting to that bus, before the independently controlled master gain. Regression
+tests cover restored fractional settings, routing, live changes and invalid levels.

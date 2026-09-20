@@ -5,13 +5,13 @@ import { almanac, visibleAlmanac } from '../../content/almanac';
 import { tutorials, tutorialsFor } from '../../content/tutorials';
 import { parsePuzzle } from '../../src/game/validation';
 
-describe('authored M1 content', () => {
+describe('authored campaign content', () => {
   it('contains the exact progression and individual validated metadata', () => {
-    expect(puzzles).toHaveLength(12);
+    expect(puzzles).toHaveLength(77);
     expect(puzzles.filter((puzzle) => puzzle.chapter === 0)).toHaveLength(4);
     for (const kind of ['show', 'vary', 'break']) expect(puzzles.filter((puzzle) => puzzle.chapter === 1 && puzzle.kind === kind)).toHaveLength(2);
     expect(puzzles.filter((puzzle) => puzzle.chapter === 2 && puzzle.kind === 'show')).toHaveLength(2);
-    expect(new Set(puzzles.map((puzzle) => puzzle.id)).size).toBe(12);
+    expect(new Set(puzzles.map((puzzle) => puzzle.id)).size).toBe(77);
     const learned = new Set<string>();
     for (const puzzle of puzzles) {
       expect(parsePuzzle(puzzle)).toBe(puzzle);
@@ -48,8 +48,12 @@ describe('authored M1 content', () => {
     expect(visibleAlmanac(['make_array'], [])[0].pitfalls).toEqual([]);
     expect(visibleAlmanac(['make_array'], ['ch1-break-2'])[0].pitfalls.length).toBeGreaterThan(0);
   });
-  it('gives every M1 tutorial a reachable trigger and first-time filtering', () => {
-    const campaignTriggers = ['new-game', 'preview', 'run', 'run-pass', 'loud', 'silent', 'complete', 'hint', 'scratch', 'add-file', 'chapter', 'save', 'settings', 'hatch', ...puzzles.flatMap((puzzle) => puzzle.hazards)];
+  it('gives every tutorial a reachable trigger and first-time filtering', () => {
+    const campaignTriggers = [
+      'new-game', 'output', 'preview', 'run', 'run-pass', 'loud', 'silent', 'complete', 'hint', 'scratch',
+      'add-file', 'chapter', 'save', 'settings', 'shop', 'hatch', 'archive', 'capstone', 'chart', 'offline',
+      ...puzzles.flatMap((puzzle) => [...puzzle.hazards, ...puzzle.concepts]),
+    ];
     const seen: string[] = [];
     for (const trigger of campaignTriggers) {
       const fired = tutorialsFor(trigger, seen);

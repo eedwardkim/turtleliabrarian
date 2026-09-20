@@ -38,10 +38,10 @@ describe('release tutorial coverage', () => {
     const kinds = ['show', 'vary', 'break'] as const;
     for (let chapter = 1; chapter <= 12; chapter++) {
       const shelves = puzzles.filter((puzzle) => puzzle.chapter === chapter && puzzle.kind !== 'capstone');
-      for (const kind of kinds) expect(shelves.filter((puzzle) => puzzle.kind === kind)).toHaveLength(2);
+      for (const kind of kinds) expect(shelves.filter((puzzle) => puzzle.kind === kind)).toHaveLength(chapter === 12 ? 1 : 2);
     }
     expect(puzzles.filter((puzzle) => puzzle.chapter === 0)).toHaveLength(4);
-    expect(puzzles.filter((puzzle) => puzzle.kind === 'capstone')).toHaveLength(1);
+    expect(puzzles.filter((puzzle) => puzzle.kind === 'capstone')).toHaveLength(4);
     const rank = (index: number): [number, number] => [
       puzzles[index].kind === 'capstone' ? Number.MAX_SAFE_INTEGER : puzzles[index].chapter,
       ['show', 'vary', 'break', 'capstone'].indexOf(puzzles[index].kind),
