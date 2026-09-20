@@ -288,8 +288,8 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
           <OutputPanel result={result} diff={diff} />
         </>)}
         {floating('request', <RequestPanel key={game.puzzle.id} game={game} />)}
-        {revealed('queue') && floating('queue', <QueuePanel game={game} onReplay={index => { setQueueIndex(index); setQueueTraceIndex(0); setQueuePaused(false); openWindow('replay'); openWindow('output'); }} />)}
-        {revealed('replay') && floating('replay', <ReplayPanel result={result} index={replayIndex} paused={paused} speed={settings.replaySpeed} onIndex={setIndex} onPaused={setPaused} onSpeed={game.setSpeed} />)}
+        {revealed('queue') && game.queue.length > 0 && floating('queue', <QueuePanel game={game} onReplay={index => { setQueueIndex(index); setQueueTraceIndex(0); setQueuePaused(false); openWindow('replay'); openWindow('output'); }} />)}
+        {revealed('replay') && totalEvents > 0 && floating('replay', <ReplayPanel result={result} index={replayIndex} paused={paused} speed={settings.replaySpeed} onIndex={setIndex} onPaused={setPaused} onSpeed={game.setSpeed} />)}
         {revealed('scratch') && floating('scratch', <ScratchPanel game={game} runScratch={game.runScratch} />)}
         {canSandbox && floating('sandbox', <SandboxPanel game={game} notebook={game.save.sandbox} onChange={game.setSandbox} onRun={game.runSandbox} />)}
         <div className="window-dock">{windowIds.filter(id => layoutFor(id).minimized && !layoutFor(id).closed).map(id => <button className="dock-button" key={id} onClick={() => openWindow(id)}>{titleFor(id)}<Icon name="restore" /></button>)}</div>

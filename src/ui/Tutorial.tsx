@@ -56,8 +56,8 @@ export function Tutorial({ target, title, onClose, children }: {
       if (anchor.current instanceof HTMLButtonElement && event.target instanceof Node && anchor.current.contains(event.target)) onClose();
     }
     window.addEventListener('keydown', key, true);
-    document.addEventListener('click', click);
-    return () => { window.removeEventListener('keydown', key, true); document.removeEventListener('click', click); };
+    document.addEventListener('click', click, true);
+    return () => { window.removeEventListener('keydown', key, true); document.removeEventListener('click', click, true); };
   }, [onClose]);
   const { target: box, viewport } = geometry;
   const placement = box ? placeTutorial(box, geometry.card, viewport) : null;
