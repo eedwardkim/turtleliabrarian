@@ -130,6 +130,8 @@ details pre{padding:10px;background:#342d2409}
 .window-actions .icon-button{width:28px;height:28px}
 .window-actions .icon{width:15px;height:15px}
 .window-actions-end{border-left:1px solid #a58c5533;padding-left:3px}
+.window-actions .labeled-button{width:auto;gap:5px;padding:0 9px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.window-actions .serve-button{border:1px solid currentColor;margin-right:3px}
 .window-actions .run-button{background:#6e8552;color:#fffcef;margin-right:3px}
 .window-actions .run-button:hover{background:#82965f}
 .window-body{flex:1;min-height:0;overflow:auto;position:relative}

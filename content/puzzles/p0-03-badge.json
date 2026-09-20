@@ -9,7 +9,7 @@
   "starter": "# Join prefix and number into one piece of text.\nbadge = ___\ndeliver(badge)",
   "hints": ["The badge is prefix followed by number: 'Fern-' and 7 make 'Fern-7'.", "+ joins two pieces of text, but number is a number. str(number) turns it into text first.", "Write badge = prefix + str(number), then deliver(badge)."],
   "inputCode": "import random\nprefix = random.choice(['Fern-', 'Moss-', 'Cloud-'])\nnumber = random.randint(1, 99)",
-  "visibleSeed": 13, "visibleInputs": {"prefix": "Fern-", "number": "7"},
+  "visibleSeed": 13, "visibleInputs": {"prefix": "Fern-", "number": 7},
   "fixtures": [
     {"name": "str_plus_int", "inputs": {"prefix": "Moss-", "number": 12}, "predicate": "isinstance(prefix, str) and isinstance(number, int)"},
     {"name": "zero_badge", "inputs": {"prefix": "Cloud-", "number": 0}, "predicate": "number == 0"}

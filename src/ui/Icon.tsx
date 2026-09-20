@@ -44,8 +44,8 @@ export function Icon({ name, className = '' }: { name: IconName; className?: str
   return <svg className={`icon ${className}`} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>;
 }
 
-export function IconButton({ icon, label, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: IconName; label: string }) {
-  return <button type="button" className={`icon-button ${className}`} aria-label={label} title={label} {...props}><Icon name={icon} /></button>;
+export function IconButton({ icon, label, className = '', showLabel = false, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: IconName; label: string; showLabel?: boolean }) {
+  return <button type="button" className={`icon-button ${showLabel ? 'labeled-button' : ''} ${className}`} aria-label={label} title={label} {...props}><Icon name={icon} />{showLabel && <span>{label}</span>}</button>;
 }
 
 export function TurtleMark({ walking = false }: { walking?: boolean }) {

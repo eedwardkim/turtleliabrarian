@@ -27,7 +27,7 @@ function scalar(value: unknown): string {
   return '…';
 }
 
-/** `days = 2, rate = 2` for the shelf the player sees. */
+/** `days = 3, rate = 2` for the shelf the player sees. */
 export function describeInputs(puzzle: Puzzle): string {
   return Object.entries(puzzle.visibleInputs ?? {})
     .map(([name, value]) => `${name} = ${scalar(value)}`)
@@ -76,7 +76,7 @@ export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
       },
       {
         title: 'Fill in the blank',
-        body: `In the script window, click on ___ and replace it with ${demoAnswer(puzzle)}, so the line reads “${firstLine(puzzle.reference)}”. The last line, deliver(…), hands the result to ${puzzle.patron}.`,
+        body: `In the script window, double-click ___ to select it, then type ${demoAnswer(puzzle)} in its place so the line reads “${firstLine(puzzle.reference)}”. The last line, deliver(…), hands the result to ${puzzle.patron}.`,
         target: 'editor', waitFor: { kind: 'code', accepted: acceptedAnswers(puzzle) }, line: firstLine(puzzle.reference), puzzleId: puzzle.id,
       },
       {
@@ -86,12 +86,12 @@ export function demoSteps(puzzles: readonly Puzzle[]): DemoStep[] {
       },
       {
         title: 'Serve the queue',
-        body: `Now press Serve Queue. ${puzzle.queueSize} patrons bring different values; your script runs for each one and must pass them all.`,
+        body: `Now press Serve queue (the stacked-books button beside Run in the script window). ${puzzle.queueSize} patrons bring different values; your script runs for each one and must pass them all.`,
         target: 'queue', waitFor: { kind: 'serve-pass' }, puzzleId: puzzle.id,
       },
       {
         title: 'Request complete',
-        body: 'Every patron is satisfied: you earned Ink and a Gold Star. The next slip is already on the desk.',
+        body: 'Every patron is satisfied: you earned Ink and a Gold Star. Press Understood and the next slip lands on the desk.',
         target: 'resources',
       },
     );

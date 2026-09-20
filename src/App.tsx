@@ -259,8 +259,8 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
         api={game.puzzle.learnedApi} files={files} fontSize={settings.editorFontSize} line={file === game.activeFile ? result?.error?.line || event?.line || 0 : 0} readOnly={game.busy} label={`${text.editor.label}: ${file}`} />
       <div className="editor-footer"><span><span className={`status-dot ${game.busy ? 'busy' : ''}`} />{game.busy ? text.editor.running : text.editor.language}</span><span>{text.editor.escape}</span></div>
     </div>, <>
-      <IconButton icon="play" label={text.editor.run} className="run-button" disabled={game.busy} onClick={() => { void run(file); }} />
-      {revealed('queue') && <IconButton icon="queue" label={text.editor.serve} disabled={game.busy} onClick={() => { void run(file, true); }} />}
+      <IconButton icon="play" label={text.editor.run} className="run-button" showLabel disabled={game.busy} onClick={() => { void run(file); }} />
+      {revealed('queue') && <IconButton icon="queue" label={text.editor.serve} className="serve-button" showLabel disabled={game.busy} onClick={() => { void run(file, true); }} />}
       {game.busy && <IconButton icon="stop" label={text.editor.stop} onClick={game.stop} />}
       {!!totalEvents && <IconButton icon={paused ? 'play' : 'pause'} label={paused ? text.editor.play : text.editor.pause} onClick={() => setPaused(!paused)} />}
     </>, true);

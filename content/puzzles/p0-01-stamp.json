@@ -8,7 +8,7 @@
   "starter": "# Multiply the late days by the daily rate.\nfee = ___\ndeliver(fee)",
   "hints": ["The fee is the late days times the daily rate. The names on the slip are days and rate.", "In Python, * multiplies: days * rate.", "Write fee = days * rate, then deliver(fee)."],
   "inputCode": "import random\ndays = random.randint(1, 12)\nrate = random.randint(1, 5)",
-  "visibleSeed": 11, "visibleInputs": {"days": 2, "rate": 2},
+  "visibleSeed": 11, "visibleInputs": {"days": 3, "rate": 2},
   "fixtures": [
     {"name": "addition_is_not_multiplication", "inputs": {"days": 3, "rate": 2}, "predicate": "days + rate != days * rate"},
     {"name": "single_late_day", "inputs": {"days": 1, "rate": 5}, "predicate": "days == 1 and rate > 1"}

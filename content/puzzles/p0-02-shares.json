@@ -6,9 +6,9 @@
   "concepts": ["division", "floats", "floor_division", "call_expressions"],
   "requiredApi": ["deliver"], "learnedApi": ["deliver", "print", "round", "abs", "max", "min", "len"],
   "starter": "# Divide the weight by the number of readers. Keep the fraction.\nshare = ___\ndeliver(share)",
-  "hints": ["Each reader gets weight divided by readers. Keep the fraction: 12 grams for 3 readers is 4.0.", "In Python, / divides and keeps the decimal part; // throws the remainder away. Use /.", "Write share = weight / readers, then deliver(share)."],
+  "hints": ["Each reader gets weight divided by readers. Keep the fraction: 9 grams for 2 readers is 4.5.", "In Python, / divides and keeps the decimal part; // throws the remainder away. Use /.", "Write share = weight / readers, then deliver(share)."],
   "inputCode": "import random\nweight = random.randint(1, 80)\nreaders = random.randint(2, 9)",
-  "visibleSeed": 12, "visibleInputs": {"weight": 12, "readers": 3},
+  "visibleSeed": 12, "visibleInputs": {"weight": 9, "readers": 2},
   "fixtures": [
     {"name": "fractional_share", "inputs": {"weight": 10, "readers": 4}, "predicate": "weight % readers != 0"},
     {"name": "less_than_one_gram", "inputs": {"weight": 2, "readers": 5}, "predicate": "0 < weight < readers"}
