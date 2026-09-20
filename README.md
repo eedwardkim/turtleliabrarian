@@ -4,7 +4,8 @@ An original Python data-science game about a turtle librarian. Shelby runs a
 library on the back of the sky turtle Atlas: patrons hand her requests, she
 writes real Python against real tables, and the library physically acts out
 every operation her code performs. The 77 authored requests follow the public
-topic order of Data 8 from expressions to Bayes; see `CURRICULUM.md`.
+topic order of Data 8 from expressions to Bayes; 66 are currently shipped. See
+`CURRICULUM.md`.
 
 The game is not released. `REQUIREMENTS.md` is the release ledger and
 `COMPLIANCE.md` records, per requirement, what is evidenced and what is not.
@@ -66,7 +67,7 @@ node scripts/document-curriculum.mjs --check
 format), the CPython engine/oracle suites, the content-validator tests, Vitest,
 the 500-seed puzzle validation, CPython/Pyodide parity, the full engine suite
 under Pyodide, the 200k-row performance gate, model validation, the production
-build and the 77-request campaign gate. It also checks calibration and curriculum
+build and the 77-authored-request campaign gate. It also checks calibration and curriculum
 freshness, player-facing spelling, unfinished text, and V00–V16 capture coverage,
 then prints a summary table with an exit status for every check.
 
@@ -97,22 +98,22 @@ node scripts/document-curriculum.mjs     # regenerate CURRICULUM.md
 node scripts/document-curriculum.mjs --check
 ```
 
-`CURRICULUM.md` is generated from the 77 files in `content/puzzles`: edit the
-requests, regenerate, and commit both. `--check` exits nonzero when the
-committed document no longer matches the authored content, and
+`CURRICULUM.md` is generated from the 77 authored files in `content/puzzles`:
+edit the requests, regenerate, and commit both. `--check` exits nonzero when
+the committed document no longer matches the authored content, and
 `tests/content/curriculum-doc.test.ts` enforces the same thing in Vitest.
 
 ## Deploy
 
-**Deployment is blocked.** No authorized Shelf Life deployment target exists —
-the Vercel project configured in this environment belongs to an unrelated
-repository — so nothing may be deployed publicly from this repository yet.
+The production build is deployed to Vercel at
+https://shelf-life-khaki.vercel.app (status READY). The post-deploy smoke and
+remaining release gates are still outstanding.
 
-When an authorized static target exists, the procedure is: `make build`, upload
-`dist/` (which already contains the self-hosted Pyodide runtime, NumPy wheels,
-fonts, models and audio), serve it over HTTPS with cross-origin isolation left
-at the defaults Pyodide needs, then run the post-deploy smoke: load the title
-screen, start a new game and complete the first request with real Python.
+The deployment procedure is: `make build`, upload `dist/` (which already
+contains the self-hosted Pyodide runtime, NumPy wheels, fonts, models and
+audio), serve it over HTTPS with cross-origin isolation left at the defaults
+Pyodide needs, then run the post-deploy smoke: load the title screen, start a
+new game and complete the first request with real Python.
 
 ## Privacy and self-hosting
 
@@ -126,7 +127,7 @@ and can be exported to and imported from JSON files.
 | File | Contents |
 | --- | --- |
 | `ARCHITECTURE.md` | Layers, worker lifecycle, engine/oracle split, trace bounds, Director, saves, portability limits |
-| `CURRICULUM.md` | Generated concepts-by-wing and hazards-by-request coverage for all 77 requests |
+| `CURRICULUM.md` | Generated concepts-by-wing and hazards-by-request coverage for all 77 authored requests |
 | `COMPLIANCE.md` | Every requirement ID mapped to evidence or to outstanding work |
 | `CREDITS.md`, `public/THIRD_PARTY_NOTICES.txt` | Original work, acknowledgements and third-party licenses |
 | `DEVTOOLS.md` | Developer palette, deep links, automation API, capture pipeline |
@@ -134,10 +135,11 @@ and can be exported to and imported from JSON files.
 
 ## Known release gaps
 
-Deployment is blocked without an authorized target. The final clean-clone gate,
-full V00–V16 captures and their visual review remain outstanding. Calibration
-passes the shipped patron-seed protocol but exposes an independent-stream
-acceptance limitation in 11 stochastic puzzles. External-speaker audibility,
+The production build is deployed at https://shelf-life-khaki.vercel.app (status
+READY). Full V00–V16 captures, their visual review and the clean-clone gate are
+in progress and remain outstanding. The 11 independent-stream-limited
+stochastic requests are authored and validated but shelved from the shipped
+catalog (66 shipped) pending calibrated grading. External-speaker audibility,
 subjective audio mix, physical MacBook Air frame times and the target 8–12 hour
-play length have not been directly measured. `COMPLIANCE.md` records the evidence
-and remaining work for each requirement.
+play length remain unmeasured. `COMPLIANCE.md` records the evidence and
+remaining work for each requirement.
