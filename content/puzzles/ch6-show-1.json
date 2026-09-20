@@ -17,7 +17,10 @@
   ],
   "queueSize": 7,
   "reference": "fees = make_array()\nfor days in shelf.column('days_late'):\n    if days <= grace:\n        fees = np.append(fees, 0)\n    else:\n        fees = np.append(fees, (days - grace) * 15)\n\ndeliver(shelf.with_columns('fee', fees))",
-  "naive": [],
+  "naive": [
+    {"code": "fees = make_array()\nfor days in shelf.column('days_late'):\n    if days == 0:\n        np.append(fees, 0)\n    elif days <= grace:\n        fees = np.append(fees, 0)\n    else:\n        fees = np.append(fees, (days - grace) * 15)\n\ndeliver(shelf.with_columns('fee', fees))", "fails": "loud", "hazard": "all_within_grace"},
+    {"code": "fees = make_array()\nfor days in shelf.column('days_late'):\n    if days <= 3:\n        fees = np.append(fees, 0)\n    else:\n        fees = np.append(fees, (days - 3) * 15)\n\ndeliver(shelf.with_columns('fee', fees))", "fails": "silent", "hazard": "no_grace_at_all"}
+  ],
   "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
   "unlocks": ["np.append"],
   "standingOrder": {"eligible": true, "ink": 6, "oil": 1},

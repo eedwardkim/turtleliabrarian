@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type {
-  CheckDiff, Puzzle, QueueEntry, RunRequest, RunResult, Settings, TraceEvent, Value, WindowLayout,
+  CheckDiff, Puzzle, QueueEntry, RunRequest, RunResult, SandboxNotebook, Settings, TraceEvent, Value, WindowLayout,
 } from '../contracts';
 import { getTutorial, tutorialsFor } from '../../content/tutorials';
 import { puzzles, getPuzzle } from './catalog';
@@ -11,6 +11,7 @@ import {
 } from './economy';
 import { buildQueue, requestFor } from './queue';
 import { advanceReplay, currentLine, eventDuration, replayProgress } from './replay';
+import { isSandboxDataset, sandboxRequest, sandboxUnlocked } from './sandbox';
 import {
   exportJSON, freshSave, importJSON, readLayout, readSettings, saves, validFilename,
   type GameSave, type PuzzleProgress, type SaveService,
@@ -90,6 +91,8 @@ export interface GameState {
   replayStandingOrder(puzzleId: string): Promise<void>;
   setOrderPaused(puzzleId: string, paused: boolean): void;
   scratch(code: string): Promise<RunResult | null>;
+  setSandbox(notebook: Partial<SandboxNotebook>): void;
+  runSandbox(code?: string): Promise<RunResult | null>;
   tickReplay(milliseconds: number): void;
   stepReplay(): void;
   skipReplay(): void;
@@ -571,6 +574,32 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
       },
       setOrderPaused(puzzleId, paused) {
         persist({ ...get().save, standingOrders: get().save.standingOrders.map((order) => order.puzzleId === puzzleId ? { ...order, paused } : order) });
+      },
+      setSandbox(partial) {
+        const save = get().save;
+        if (!sandboxUnlocked(save)) return;
+        const sandbox = { ...save.sandbox, ...partial };
+        if (sandbox.code.length > 100_000 || !isSandboxDataset(sandbox.dataset)) {
+          set({ status: 'Choose a library dataset and keep the notebook under 100,000 characters.' });
+          return;
+        }
+        persist({ ...save, sandbox });
+      },
+      async runSandbox(code) {
+        if (!get().ready || get().busy || !sandboxUnlocked(get().save)) return null;
+        const ticket = begin('Exploring Open Stacks…');
+        const { save } = get();
+        try {
+          const result = await runtime.run(sandboxRequest({ ...save.sandbox, code: code ?? save.sandbox.code }, save.files));
+          if (ticket !== epoch) return null;
+          set({ ...replayFields(result), inputs: result.inputs, diff: null, status: result.error?.friendly ?? 'Notebook finished. There are no grades in Open Stacks.' });
+          return result;
+        } catch (error) {
+          if (ticket === epoch) set({ status: errorMessage(error) });
+          return null;
+        } finally {
+          if (ticket === epoch) { set({ busy: false }); void runOrders(); }
+        }
       },
       async scratch(code) {
         if (!get().ready) return null;

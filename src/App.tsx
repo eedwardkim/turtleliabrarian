@@ -7,12 +7,14 @@ import { almanac as almanacCatalog, visibleAlmanac } from '../content/almanac';
 import { atlasWings, shop as shopCatalog } from './game/economy';
 import { useAudio } from './audio/useAudio';
 import { eventDuration } from './game/replay';
+import { sandboxUnlocked } from './game/sandbox';
 import type { WindowLayout, WorldProps } from './contracts';
 import { CodeEditor } from './ui/CodeEditor';
 import { Dialog } from './ui/Dialog';
 import { QueuePanel, ReplayPanel, RequestPanel, ScratchPanel } from './ui/GamePanels';
 import { Icon, IconButton } from './ui/Icon';
 import { OutputPanel } from './ui/Output';
+import { SandboxPanel } from './ui/SandboxPanel';
 import { CreditsScreen, DesktopGate, IntroScreen, TitleScreen } from './ui/Screens';
 import { AlmanacDialog, AtlasDialog, NewScriptDialog, OrdersDialog, SavesDialog, SettingsDialog, ShopDialog } from './ui/UtilityDialogs';
 import { FloatingWindow } from './ui/Window';
@@ -86,10 +88,12 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   const currentTour = game.activeTutorial ? getTutorial(game.activeTutorial) : undefined;
   const tutorialStep = tutorialPosition.id === currentTour?.id ? tutorialPosition.step : 0;
   const revealed = (feature: Parameters<typeof canReveal>[2]) => canReveal(game.puzzle, game.save.completed, feature) || (feature === 'queue' && !!game.diff?.pass);
+  const canSandbox = sandboxUnlocked(game.save);
   const optionalWindows = [
     ...(revealed('queue') ? ['queue'] : []),
     ...(revealed('replay') ? ['replay'] : []),
     ...(revealed('scratch') ? ['scratch'] : []),
+    ...(canSandbox ? ['sandbox'] : []),
   ];
   const files = Object.keys(game.save.files);
   const primaryFile = files.includes('main.py') ? 'main.py' : files[0] ?? game.activeFile;
@@ -192,6 +196,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     if (id === 'request') return text.windows.request;
     if (id === 'queue') return text.windows.queue;
     if (id === 'scratch') return text.windows.scratch;
+    if (id === 'sandbox') return text.sandbox.title;
     if (id === 'replay') return text.windows.replay;
     return text.windows.output;
   }
@@ -227,7 +232,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
       </div>}
       {game.screen === 'title' && <TitleScreen game={game} openDialog={setDialog} onNew={() => game.setScreen('intro')} error={initError} retry={retry} />}
       {game.screen === 'intro' && <IntroScreen onFinish={name => { game.newGame(name); game.setScreen('game'); setQueueIndex(null); }} onBeat={handleIntroBeat} reducedMotion={reducedMotion} />}
-      {game.screen === 'credits' && <CreditsScreen onBack={() => game.setScreen('title')} />}
+      {game.screen === 'credits' && <CreditsScreen onBack={() => game.setScreen('title')} onSandbox={canSandbox ? () => { game.setScreen('game'); openWindow('sandbox'); } : undefined} />}
       {game.screen === 'game' && <main className="ui-stage" style={stageStyle} aria-label={text.brand.title}>
         <header className="game-hud">
           <div className="resource-bar" aria-label={text.brand.footer}>
@@ -238,6 +243,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
             {revealed('scripts') && <IconButton icon="plus" label={text.tools.newScript} onClick={() => setDialog('newScript')} />}
             {revealed('almanac') && <IconButton icon="book" label={text.tools.almanac} onClick={() => setDialog('almanac')} />}
             {revealed('scratch') && <IconButton icon="terminal" label={text.tools.scratch} onClick={() => openWindow('scratch')} />}
+            {canSandbox && <IconButton icon="book" label={text.sandbox.enter} onClick={() => openWindow('sandbox')} />}
             {(shop.length ? shop : availableShop).some(item => (item.chapter ?? 0) <= game.puzzle.chapter) && <IconButton icon="shop" label={text.tools.shop} onClick={() => setDialog('shop')} />}
             {!!game.save.standingOrders.length && <IconButton icon="order" label={text.tools.orders} onClick={() => setDialog('orders')} />}
             <IconButton icon="book" label={text.tools.atlas} onClick={() => setDialog('atlas')} />
@@ -256,6 +262,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
         {revealed('queue') && floating('queue', <QueuePanel game={game} onReplay={index => { setQueueIndex(index); setQueueTraceIndex(0); setQueuePaused(false); openWindow('replay'); openWindow('output'); }} />)}
         {revealed('replay') && floating('replay', <ReplayPanel result={result} index={replayIndex} paused={paused} speed={settings.replaySpeed} onIndex={setIndex} onPaused={setPaused} onSpeed={game.setSpeed} />)}
         {revealed('scratch') && floating('scratch', <ScratchPanel game={game} runScratch={game.runScratch} />)}
+        {canSandbox && floating('sandbox', <SandboxPanel game={game} notebook={game.save.sandbox} onChange={game.setSandbox} onRun={game.runSandbox} />)}
         <div className="window-dock">{windowIds.filter(id => layoutFor(id).minimized && !layoutFor(id).closed).map(id => <button className="dock-button" key={id} onClick={() => openWindow(id)}>{titleFor(id)}<Icon name="restore" /></button>)}</div>
       </main>}
       <footer className="screen-footer"><span className="footer-brand"><Icon name="book" />{text.brand.footer}</span><span className="corner-hints">{game.screen === 'game' ? <><span>{text.menu.runShortcut}</span><span>{text.menu.escape}</span></> : text.brand.edition}</span></footer>

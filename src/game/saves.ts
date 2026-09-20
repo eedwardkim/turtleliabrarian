@@ -1,6 +1,7 @@
 import { openDB, type DBSchema } from 'idb';
-import type { QueueEntry, RunResult, SaveData, Settings, StandingOrder, TraceEvent, WindowLayout } from '../contracts';
+import type { QueueEntry, RunResult, SandboxNotebook, SaveData, Settings, StandingOrder, TraceEvent, WindowLayout } from '../contracts';
 import { getPuzzle, puzzles } from './catalog';
+import { defaultSandbox, isSandboxDataset } from './sandbox';
 import { finite, inputsAreValid, record, strings, valueIsValid } from './validation';
 
 export interface PuzzleProgress {
@@ -12,6 +13,7 @@ export interface PuzzleProgress {
 }
 
 export interface GameSave extends SaveData {
+  sandbox: SandboxNotebook;
   activeFile: string;
   progress: Record<string, PuzzleProgress>;
   orderFiles: Record<string, Record<string, string>>;
@@ -27,7 +29,7 @@ export function freshSave(name = 'Shelby', now = Date.now()): GameSave {
     version: 1, started: false, name: name.trim().slice(0, 40) || 'Shelby', puzzleId: puzzles[0].id, completed: [],
     files: { 'main.py': puzzles[0].starter }, activeFile: 'main.py', progress: {}, orderFiles: {},
     resources: { ink: 0, stars: 0, oil: 0, eggs: 0, served: 0 }, settings: { ...defaultSettings },
-    layouts: {}, seenTutorials: [], standingOrders: [], lastSavedAt: now, ownedItems: [], hat: '', hatchlings: 0,
+    layouts: {}, seenTutorials: [], standingOrders: [], lastSavedAt: now, ownedItems: [], hat: '', hatchlings: 0, sandbox: { ...defaultSandbox },
   };
 }
 
@@ -59,6 +61,13 @@ function integerIn(value: unknown, low: number, high: number, label: string): nu
 function boolean(value: unknown): boolean {
   if (typeof value !== 'boolean') throw new Error('Invalid switch in save.');
   return value;
+}
+
+function readSandbox(value: unknown): SandboxNotebook {
+  if (value === undefined) return { ...defaultSandbox };
+  if (!record(value) || typeof value.code !== 'string' || value.code.length > 100_000 ||
+    typeof value.dataset !== 'string' || !isSandboxDataset(value.dataset)) throw new Error('Invalid Sandbox notebook in save.');
+  return { code: value.code, dataset: value.dataset };
 }
 
 export function readSettings(value: unknown): Settings {
@@ -184,7 +193,7 @@ export function parseSave(input: unknown): GameSave {
   }
   return {
     version: 1, started: value.started === undefined ? true : boolean(value.started),
-    name: value.name, puzzleId: value.puzzleId, completed: value.completed, files, activeFile,
+    name: value.name, puzzleId: value.puzzleId, completed: value.completed, files, activeFile, sandbox: readSandbox(value.sandbox),
     progress: readProgress(value.progress),
     orderFiles: Object.fromEntries(Object.entries(orderFiles).map(([id, entries]) => { getPuzzle(id); return [id, readFiles(entries)]; })),
     resources: {

@@ -344,6 +344,21 @@
       }
     ]
   },
+  "sandbox": {
+    "title": "Open Stacks · Sandbox",
+    "enter": "Explore Open Stacks",
+    "intro": "A desk for your own questions. Every API and dataset is available here, without grades or rewards. Your notebook is saved separately from campaign scripts.",
+    "dataset": "Dataset",
+    "blank": "Blank desk",
+    "campaign": "Campaign shelves",
+    "csv": "Bundled CSV files",
+    "inspect": "Inspect dataset",
+    "inputs": "Dataset variables",
+    "csvNote": "CSV files arrive as a table named shelf. All bundled files can also be read with Table.read_table(filename).",
+    "code": "Sandbox Python notebook",
+    "run": "Run notebook",
+    "stop": "Stop notebook"
+  },
   "credits": {
     "title": "A library takes a village",
     "body": "Shelf Life is an original game about learning to ask better questions with data.",

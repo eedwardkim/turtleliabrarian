@@ -219,6 +219,14 @@ details pre{padding:10px;background:#342d2409}
 .scratch-body .code-editor{flex:0 0 110px}
 .scratch-actions{display:flex;gap:7px;padding:8px 12px;background:#f4eee2}
 .scratch-output{flex:1;overflow:auto}
+.sandbox-controls{display:flex;align-items:end;gap:8px;padding:8px 12px;background:#f4eee2}
+.sandbox-controls label{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px;font-size:12px}
+.sandbox-controls select{width:100%;min-width:0}
+.sandbox-body .code-editor{flex:1 1 150px;min-height:90px}
+.sandbox-body .scratch-output{flex:1 1 150px;min-height:60px}
+.sandbox-inputs{padding:10px 14px;font-size:12px}
+.sandbox-inputs summary{cursor:pointer}
+.sandbox-inputs section{margin-top:12px}
 .paper-dialog{background:var(--paper-light);border:1px solid #bfac86;border-radius:10px;box-shadow:0 30px 120px #26382e44;width:min(540px,90vw);max-height:85vh;padding:0;color:var(--ink)}
 .paper-dialog::backdrop{background:#233d3038;backdrop-filter:blur(5px)}
 .dialog-header{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:23px 25px 19px;border-bottom:1px solid var(--line)}

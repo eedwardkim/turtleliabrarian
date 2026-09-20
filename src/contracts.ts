@@ -138,6 +138,10 @@ export interface StandingOrder {
   paused: boolean;
   failure?: QueueEntry;
 }
+export interface SandboxNotebook {
+  dataset: string;
+  code: string;
+}
 export interface SaveData {
   version: 1;
   started?: boolean;
@@ -154,6 +158,7 @@ export interface SaveData {
   ownedItems: string[];
   hat: string;
   hatchlings: number;
+  sandbox?: SandboxNotebook;
 }
 export interface WorldProps {
   inputs: Record<string, Value>;

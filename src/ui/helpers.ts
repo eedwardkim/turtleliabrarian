@@ -2,11 +2,11 @@ import type { CheckDiff, Json, Puzzle, Scalar, TableValue, TraceEvent, Value, Wi
 import { text } from './text';
 
 export interface Viewport { width: number; height: number }
-export type WindowId = 'editor' | 'output' | 'request' | 'queue' | 'replay' | 'scratch';
+export type WindowId = 'editor' | 'output' | 'request' | 'queue' | 'replay' | 'scratch' | 'sandbox';
 const PYTHON_KEYWORDS = new Set(['False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield']);
 
 function isWindowId(id: string): id is WindowId {
-  return ['editor', 'output', 'request', 'queue', 'replay', 'scratch'].includes(id);
+  return ['editor', 'output', 'request', 'queue', 'replay', 'scratch', 'sandbox'].includes(id);
 }
 
 export function compactNumber(value: number): string {
@@ -55,6 +55,7 @@ export function defaultLayout(id: string, viewport: Viewport): WindowLayout {
     queue: [viewport.width - 350, 110, 326, 430],
     replay: [width + 48, viewport.height - 166, Math.min(420, viewport.width - width - 410), 140],
     scratch: [width + 52, 106, 420, 350],
+    sandbox: [width + 40, 100, 620, Math.min(600, viewport.height - 150)],
   };
   const [x, y, w, h] = positions[isWindowId(id) ? id : 'editor'];
   return clampLayout({ x, y, width: w, height: h, minimized: false, closed: false, z: 1 }, viewport);

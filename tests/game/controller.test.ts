@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RunResult } from '../../src/contracts';
 import { createGame } from '../../src/game/controller';
 import { puzzles } from '../../src/game/catalog';
-import { createSaveService, exportJSON, freshSave, type Snapshot } from '../../src/game/saves';
+import { createSaveService, exportJSON, freshSave, importJSON, type Snapshot } from '../../src/game/saves';
 
 const output: RunResult = {
   stdout: '4\n', value: 4, delivered: 4, error: null, elapsedMs: 1,
@@ -37,6 +37,38 @@ function harness() {
 afterEach(() => { stores.splice(0).forEach((store) => store.getState().disposeGame()); });
 
 describe('runtime-backed game orchestration (controlled runtime responses)', () => {
+  it('runs ungraded Sandbox code without awarding progress or overwriting campaign scripts', async () => {
+    const { store, runtime } = harness();
+    await store.getState().initialize();
+    expect(await store.getState().runSandbox()).toBeNull();
+    store.getState().setSettings({ openStacks: true });
+    const before = structuredClone(store.getState().save);
+    store.getState().setSandbox({ dataset: 'csv:shelf.csv', code: 'deliver(shelf)' });
+    runtime.run.mockClear();
+    expect(await store.getState().runSandbox()).toEqual(output);
+    expect(runtime.run).toHaveBeenCalledTimes(1);
+    expect(runtime.run).toHaveBeenCalledWith(expect.objectContaining({ code: 'deliver(shelf)', inputCode: 'shelf = Table.read_table("shelf.csv")' }));
+    expect(store.getState().diff).toBeNull();
+    expect(store.getState().save.resources).toEqual(before.resources);
+    expect(store.getState().save.files).toEqual(before.files);
+    expect(store.getState().save.completed).toEqual(before.completed);
+    expect(importJSON(store.getState().exportSave()).sandbox.code).toBe('deliver(shelf)');
+  });
+  it('discards a Sandbox result after Stop without losing the notebook', async () => {
+    const { store, runtime } = harness();
+    await store.getState().initialize();
+    store.getState().setSettings({ openStacks: true });
+    store.getState().setSandbox({ code: 'while True: pass' });
+    let finish: ((result: RunResult) => void) | undefined;
+    runtime.run.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const running = store.getState().runSandbox();
+    store.getState().stop();
+    finish!(output);
+    expect(await running).toBeNull();
+    expect(store.getState().busy).toBe(false);
+    expect(store.getState().result).toBeNull();
+    expect(store.getState().save.sandbox.code).toBe('while True: pass');
+  });
   it('initializes once, asks the engine for preview, and checks delivered output', async () => {
     const { store, runtime } = harness();
     await Promise.all([store.getState().initialize(), store.getState().initialize()]);
