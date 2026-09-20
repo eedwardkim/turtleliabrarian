@@ -155,10 +155,11 @@ export class ShelfAudio {
   }
 
   private applyMix(): void {
-    if (!this.context || !this.master || !this.musicGain) return;
+    if (!this.context || !this.master || !this.musicGain || !this.sfxGain) return;
     const master = this.mix.muted ? 0 : clamp(this.mix.master);
     this.master.gain.setTargetAtTime(master, this.context.currentTime, 0.05);
     this.musicGain.gain.setTargetAtTime(this.mix.ambience ? clamp(this.mix.music) : 0, this.context.currentTime, 0.4);
+    this.sfxGain.gain.setTargetAtTime(clamp(this.mix.sfx), this.context.currentTime, 0.05);
   }
 
   private wantsMusic(): boolean {
