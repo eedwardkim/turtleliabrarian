@@ -7,6 +7,7 @@ import {
 } from './capture-steps.mjs';
 
 const world = createRequire(import.meta.url)('../content/strings/world.json');
+const ui = createRequire(import.meta.url)('../content/strings/ui.json');
 
 const TOOL = {
   shop: 'Shop & unlocks', orders: 'Standing orders', atlas: 'Atlas of wings', almanac: 'Almanac',
@@ -47,7 +48,7 @@ async function openWing(recorder, chapter, puzzles) {
   await openTool(recorder, TOOL.atlas);
   await recorder.hold(`The Atlas shows ${chapterTitle(chapter)} still locked behind its star price.`, 3);
   await recorder.shot('window', `atlas-locked-${chapter}`, 'Atlas with the next wing locked');
-  recorder.record('windows', 'atlas');
+  await recorder.recordWindow('atlas', page.getByRole('dialog', { name: ui.atlas.title }));
   await closeDialog(recorder);
 
   await recorder.click('Next request');
@@ -142,11 +143,11 @@ const prologue = {
       await run(recorder);
       await recorder.hold('The exact answer appears in Output; Shelby delivers it in the world.', 5);
       assert.equal((await recorder.state()).pass, true);
-      recorder.record('windows', 'output');
+      await recorder.recordWindow('output');
       const queue = await serveQueue(recorder);
       assert(queue.length > 0 && queue.every(entry => entry.status === 'passed'));
       await recorder.hold('A whole queue tests the solution on different shelves.', 4);
-      recorder.record('windows', 'queue');
+      await recorder.recordWindow('queue');
       recorder.record('puzzles', { id: puzzle.id, kind: puzzle.kind, chapter: puzzle.chapter, patrons: queue.length });
       recorder.record('chapters', puzzle.chapter);
       await recorder.click('Close window: The waiting line');
@@ -187,7 +188,7 @@ const capstones = {
     await openTool(recorder, TOOL.atlas);
     await recorder.hold('The Atlas at the end of the campaign: every wing opened and every request answered.', 3);
     await recorder.shot('window', 'atlas-complete', 'Atlas with the campaign finished');
-    recorder.record('windows', 'atlas');
+    await recorder.recordWindow('atlas', page.getByRole('dialog', { name: ui.atlas.title }));
     await closeDialog(recorder);
 
     await recorder.click('Next request');
@@ -195,7 +196,7 @@ const capstones = {
     assert.equal((await recorder.state()).screen, 'credits', 'Finishing the last request must roll the credits by itself.');
     await recorder.hold('Credits: original writing, original art, original puzzles.', 5);
     await recorder.shot('window', 'credits', 'Credits after the last request');
-    recorder.record('windows', 'credits');
+    await recorder.recordWindow('credits', page.locator('.credits-screen'));
 
     await recorder.click('Explore Open Stacks');
     await recorder.settle(0.5);
@@ -228,7 +229,7 @@ const capstones = {
     assert.deepEqual(after.completed, beforeSandbox.completed, 'The Sandbox must not complete requests.');
     await recorder.hold('Own questions, own answers: the Sandbox grades nothing and pays nothing.', 4);
     await recorder.shot('window', 'sandbox', 'Sandbox notebook on a bundled dataset');
-    recorder.record('windows', 'sandbox');
+    await recorder.recordWindow('sandbox');
   },
 };
 
@@ -254,7 +255,7 @@ const systems = {
     await openTool(recorder, TOOL.almanac);
     await recorder.hold('The Almanac collects every tool the librarian has met.', 3);
     await recorder.shot('window', 'almanac', 'Almanac');
-    recorder.record('windows', 'almanac');
+    await recorder.recordWindow('almanac', page.getByRole('dialog', { name: ui.almanac.title }));
     await closeDialog(recorder);
 
     for (let level = 0; level < 3; level++) {
@@ -267,7 +268,7 @@ const systems = {
     assert.equal(await page.evaluate(() => window.__SHELF__.getState().hintLevel), 3);
     await recorder.hold('Three hints per request, opened only when they are wanted.', 3);
     await recorder.shot('window', 'hints', 'Hints opened');
-    recorder.record('windows', 'hints');
+    await recorder.recordWindow('hints', page.locator('.hint-card').first());
 
     await playRequest(recorder, puzzle, { standingOrder: true });
 
@@ -294,7 +295,7 @@ const systems = {
     assert(shopped.hatchlings > before.hatchlings, 'A hatchling must hatch from a real egg.');
     await recorder.hold(`Shop, hats and hatchlings: ${shopped.hat} is on, ${shopped.hatchlings} hatchling helping.`, 3);
     await recorder.shot('window', 'shop', 'Shop with purchases and a worn hat');
-    recorder.record('windows', 'shop');
+    await recorder.recordWindow('shop', page.getByRole('dialog', { name: ui.shop.title }));
     await closeDialog(recorder);
     await recorder.hold('The hat and the hatchling appear on the desk in the scene.', 3);
     await recorder.shot('window', 'scene-hat-hatchling', 'Hat and hatchling in the scene');
@@ -302,7 +303,7 @@ const systems = {
     await openTool(recorder, TOOL.atlas);
     await recorder.hold('The Atlas of wings tracks every wing, its price and its requests.', 3);
     await recorder.shot('window', 'atlas', 'Atlas of wings');
-    recorder.record('windows', 'atlas');
+    await recorder.recordWindow('atlas', page.getByRole('dialog', { name: ui.atlas.title }));
     await closeDialog(recorder);
 
     await page.evaluate(() => window.__SHELF__.stepClock(4 * 3600));
@@ -314,7 +315,7 @@ const systems = {
     await openTool(recorder, TOOL.orders);
     await recorder.hold('Time warp: the filed order keeps working, capped at eight hours away from the desk.', 4);
     await recorder.shot('window', 'orders', 'Standing orders after idle time');
-    recorder.record('windows', 'orders');
+    await recorder.recordWindow('orders', page.getByRole('dialog', { name: ui.orders.title }));
     await closeDialog(recorder);
 
     await openTool(recorder, TOOL.menu);
@@ -324,7 +325,7 @@ const systems = {
     await recorder.settle(0.5);
     await recorder.hold('Three local bookmarks, plus an export you can carry away.', 3);
     await recorder.shot('window', 'saves', 'Save slots');
-    recorder.record('windows', 'saves');
+    await recorder.recordWindow('saves', page.getByRole('dialog', { name: ui.saves.title }));
     await closeDialog(recorder);
     await dismissTutorials(recorder);
     await recorder.settle(0.3);
@@ -335,7 +336,7 @@ const systems = {
     assert.equal((await recorder.state()).settings.colorblind, true, 'Colorblind-safe patterns must be switched on.');
     await recorder.hold('Colorblind-safe patterns, interface scale, motion and pace all live in Settings.', 4);
     await recorder.shot('window', 'settings', 'Settings with colorblind patterns on');
-    recorder.record('windows', 'settings');
+    await recorder.recordWindow('settings', page.getByRole('dialog', { name: ui.settings.title }));
     await closeDialog(recorder);
     await recorder.hold('Charts and queue markers redraw with patterns as well as colour.', 3);
   },
@@ -367,7 +368,7 @@ const devtools = {
     assert(await panel.count(), 'Backquote must open the developer panel.');
     await recorder.hold('Every developer action is searchable; nothing here is hidden from the tour.', 3);
     await recorder.shot('window', 'devtools', 'Developer panel');
-    recorder.record('windows', 'devtools');
+    await recorder.recordWindow('devtools', panel);
 
     await panel.getByLabel('Find an action').fill('naive');
     await recorder.settle(0.3);
@@ -395,7 +396,7 @@ const devtools = {
     await recorder.settle(0.5);
     await recorder.hold('Wireframe, grid and the renderer statistics for budget checks.', 3);
     await recorder.shot('window', 'devtools-scene', 'Wireframe, grid and renderer statistics');
-    recorder.record('windows', 'devtools-scene');
+    await recorder.recordWindow('devtools-scene', panel.locator('output'));
     await panel.getByRole('button', { name: 'Wireframe', exact: true }).click({ force: true });
     await panel.getByRole('button', { name: 'Grid', exact: true }).click({ force: true });
 
@@ -403,13 +404,13 @@ const devtools = {
     await recorder.settle(0.3);
     await recorder.hold('The fixture inspector shows the shelves, the reference and the naive scripts.', 3);
     await recorder.shot('window', 'devtools-fixtures', 'Fixture inspector');
-    recorder.record('windows', 'devtools-fixtures');
+    await recorder.recordWindow('devtools-fixtures', panel.locator('details').filter({ hasText: 'Fixtures and solutions' }).locator('pre'));
     await panel.getByText('Fixtures and solutions').click({ force: true });
     await panel.getByText('Trace inspector').click({ force: true });
     await recorder.settle(0.3);
     await recorder.hold('The trace inspector shows the event the replay is drawing.', 3);
     await recorder.shot('window', 'devtools-trace', 'Trace inspector');
-    recorder.record('windows', 'devtools-trace');
+    await recorder.recordWindow('devtools-trace', panel.locator('details').filter({ hasText: 'Trace inspector' }).locator('pre'));
 
     const deep = captureUrl(href, { puzzle: puzzle.id, speed: '4' });
     await page.goto(deep.href);
@@ -421,7 +422,7 @@ const devtools = {
     assert.equal(linked.settings.replaySpeed, 4, 'The deep link must apply the replay speed.');
     await recorder.hold(`Deep link: ?dev=1&capture=1&puzzle=${puzzle.id}&speed=4 opens the request at speed.`, 4);
     await recorder.shot('window', 'deep-link', 'Deep link opened');
-    recorder.record('windows', 'deep-link');
+    await recorder.recordWindow('deep-link', editor(recorder));
   },
 };
 
@@ -455,8 +456,8 @@ const speedrun = {
       await recorder.shot('puzzle', puzzle.id, puzzle.title);
       recorder.record('puzzles', { id: puzzle.id, kind: puzzle.kind, chapter: puzzle.chapter, patrons: queue.length });
       recorder.record('chapters', puzzle.chapter);
-      recorder.record('windows', 'output');
-      recorder.record('windows', 'queue');
+      await recorder.recordWindow('output');
+      await recorder.recordWindow('queue');
     }
     const state = await recorder.state();
     const missing = puzzles.filter(puzzle => !state.completed.includes(puzzle.id));

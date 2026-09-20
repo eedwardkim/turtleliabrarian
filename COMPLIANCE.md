@@ -25,7 +25,7 @@ acceptance while the outstanding gates remain open. Play length (8–12 hours,
 | O01 | Code | `DECISIONS.md` records each ambiguity and its resolution in teaching → reference feel → reliability order. |
 | O02 | Pending | `make verify` is the gate and passes on the release branch (PROGRESS.md), but it has **not** been run from a clean clone; see X15. |
 | O03 | Code | `DECISIONS.md` "Correct campaign expectations" explains the five corrected obsolete assertions; no check was relaxed. This session weakened nothing. |
-| O04 | Automated | `scripts/check-release-text.mjs` scans the shipped build and player strings for TODO/FIXME/XXX/TBD, lorem ipsum, "coming soon", empty implementations, dead handlers and `href="#"`, and runs in `make verify`; `tests/content/release-text.test.ts` covers it. |
+| O04 | Automated | `scripts/check-release-text.mjs` scans shipped product sources and player strings for TODO/FIXME/XXX/TBD, lorem ipsum, "coming soon", empty implementations, dead handlers and `href="#"`, and runs in `make verify`; `tests/content/release-text.test.ts` covers it. |
 | O05 | Browser | M1 vertical slice accepted at `fb8120e` before content scaling (`REVIEW.md`, PROGRESS.md M1). |
 | O06 | Partial | `REVIEW.md` holds per-image review lines for the M1 evidence and the four asset contact sheets; the full 77-request/expanded-world image set has not been inspected image-by-image. |
 | O07 | Automated/Code | This ledger, `REQUIREMENTS.md`, `DECISIONS.md` and `PROGRESS.md` are maintained; commits are pushed per branch. |
@@ -156,7 +156,7 @@ acceptance while the outstanding gates remain open. Play length (8–12 hours,
 | --- | --- | --- |
 | N01 | Browser | Skippable intro, turtle naming and minimal prologue; the recorded V00 capture shows title → intro → naming → first solve. The "first solve under 3 minutes" target has not been timed with a real player. |
 | N02 | Automated | Short skippable tutorials with highlight rings, first-time-only display and Almanac replay; `tests/ui/onboarding.test.tsx`. |
-| N03 | Automated | 56 registry entries covering running/output/request/ghost/queue, loud/silent, Almanac/hints/scratch/imports/replay, shop/resources/wings/standing, each hazard, charts/archive/oil/hatchlings and saves/settings; unreachable triggers fail `tests/game/release-content.test.ts`. |
+| N03 | Automated | 54 registry entries covering running/output/request/ghost/queue, loud/silent, Almanac/hints/scratch/imports/replay, shop/resources/wings/standing, each hazard, charts/archive/oil/hatchlings and saves/settings; unreachable triggers fail `tests/game/release-content.test.ts`. |
 | N04 | Partial | Reachability is proven statically for every registry tutorial; the lead session's browser run observed all 54 registry tutorial ids firing across the campaign, but that pass lives only as interactive evidence on that machine. |
 | W01–W02 | Code | Voice and patron characterisation live in `content/strings` and the request files; tone is a subjective review item. |
 | W03 | Automated | No dialogue contains solutions, datasets are original with invented titles/authors and all player strings are in `content/strings`; `scripts/check-release-text.mjs` spell-checks every extracted player string (including short JSX labels, accessible names and interpolated sentences) with cspell in `make verify`. |
@@ -194,7 +194,7 @@ acceptance while the outstanding gates remain open. Play length (8–12 hours,
 | V06 | Code | Snapshot/restore/export/import/reset. |
 | V07 | Partial | `startTour` supports `first-10-minutes`, `chapter-N` and `full-campaign`, and `scripts/capture.mjs` captions deterministically; only the V00 opening tour has actually been captured. |
 | V08 | Code | Deep links `puzzle`, `speed`, `autosolve`, `tour` (`DEVTOOLS.md`). |
-| V09 | Automated | `window.__SHELF__` exposes getState/gotoPuzzle/setCode/run/serveQueue/waitForIdle/getTrace/setSpeed/startTour/stepClock; used by the capture script against the real UI. |
+| V09 | Automated | `window.__SHELF__` exposes getState/gotoPuzzle/getPuzzles/getTutorials/setResource/unlockAll/lockWingsFrom/grantCompleted/setSettings/playNaive/setCode/run/serveQueue/waitForIdle/getTrace/setSpeed/setCaptureMode/startTour/stepClock. Capture contract tests reject calls to nonexistent members; tours use these controls and real UI events. |
 | V10 | Code | Capture clock advances only by `stepClock`, with `page.clock` paused, full-page UI+canvas screenshots and ffmpeg captions (`scripts/capture.mjs`, `?capture=1`). Executed for V00; not re-executed at the current revision. |
 | V11 | Pending | Only V00 exists (97.3 s, 1920×1080, 30 fps, 2.39 MB, silent H.264, recorded at M1). V01–V13 wing/tutorial/Show/naive/fix/queue/order and capstone videos have not been produced. |
 | V12 | Pending | V14–V16 (systems, dev tools, ≤8-minute campaign) have not been produced. |

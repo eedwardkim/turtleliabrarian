@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 
 /** Every capture installs the same browser clock so frames and seeds repeat exactly. */
 export const EPOCH = new Date('2026-01-01T00:00:00Z');
@@ -117,8 +118,24 @@ export class Recorder {
 
   /** Waits for real Python and checker work, then captures settled animation frames. */
   async settle(seconds = 0.5) {
-    await this.page.evaluate(() => window.__SHELF__.waitForIdle());
+    const started = performance.now();
+    let previous = started;
+    while (await this.page.evaluate(() => {
+      const game = window.__SHELF__.getState();
+      return game.busy || game.backgroundBusy;
+    })) {
+      assert(performance.now() - started < 120_000, 'Python did not become idle within two minutes.');
+      await delay(25);
+      const now = performance.now();
+      await this.page.clock.runFor(Math.floor(now - previous));
+      previous = now;
+    }
     for (let count = 0; count < holdFrames(seconds, this.fps, this.smoke); count++) await this.frame();
+  }
+
+  async recordWindow(id, surface = this.page.locator(`[data-window="${id}"]`)) {
+    assert(await surface.isVisible(), `${id} must be visible before recording its coverage.`);
+    this.record('windows', id);
   }
 
   async click(name, scope = this.page) {

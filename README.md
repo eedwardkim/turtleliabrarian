@@ -134,8 +134,10 @@ and can be exported to and imported from JSON files.
 
 ## Known release gaps
 
-Deployment (blocked), clean-clone verification, the 1000-seed calibration
-target, the post-capstone Sandbox, one missing chapter-6 naive counterexample,
-cspell/unfinished-text scanning, the media set beyond V00, subjective audio
-acceptance, and direct measurement of both the 8–12 hour play length and
-MacBook Air frame times. `COMPLIANCE.md` lists each one with its requirement ID.
+Deployment is blocked without an authorized target. The final clean-clone gate,
+full V00–V16 captures and their visual review remain outstanding. Calibration
+passes the shipped patron-seed protocol but exposes an independent-stream
+acceptance limitation in 11 stochastic puzzles. External-speaker audibility,
+subjective audio mix, physical MacBook Air frame times and the target 8–12 hour
+play length have not been directly measured. `COMPLIANCE.md` records the evidence
+and remaining work for each requirement.

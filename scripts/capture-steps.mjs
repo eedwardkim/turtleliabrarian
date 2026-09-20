@@ -124,7 +124,7 @@ export async function playRequest(recorder, puzzle, { typed = false, naive = fal
     await recorder.hold(`${failures.length} of ${failedQueue.length} patrons came back. The shortcut does not generalise.`, 3);
     recorder.record('failures', { id: puzzle.id, failed: failures.length, total: failedQueue.length });
     await recorder.shot('failure', puzzle.id, `${failures.length} of ${failedQueue.length} patrons failed`);
-    recorder.record('windows', 'queue');
+    await recorder.recordWindow('queue');
   }
 
   if (typed) {
@@ -137,27 +137,29 @@ export async function playRequest(recorder, puzzle, { typed = false, naive = fal
   const afterRun = await recorder.state();
   assert.equal(afterRun.pass, true, `${puzzle.id}: the delivered value must satisfy the real checker.`);
   await recorder.hold('Real Python, real checker: the visible shelf is answered.', 2);
-  recorder.record('windows', 'output');
+  await recorder.recordWindow('output');
 
   const queue = await serveQueue(recorder);
   assert(queue.length > 0 && queue.every(entry => entry.status === 'passed'), `${puzzle.id}: every queue patron must pass.`);
   await recorder.hold(`All ${queue.length} patrons served.`, 2);
-  recorder.record('windows', 'queue');
+  await recorder.recordWindow('queue');
 
   const completed = await recorder.state();
   assert(completed.completed.includes(puzzle.id), `${puzzle.id}: the game must mark the request complete.`);
   recorder.record('puzzles', { id: puzzle.id, kind: puzzle.kind, chapter: puzzle.chapter, patrons: queue.length });
   recorder.record('chapters', puzzle.chapter);
+  await recorder.click('Close window: The waiting line');
 
   if (standingOrder && puzzle.standingOrder?.eligible && !completed.standingOrders.includes(puzzle.id)) {
     await recorder.click('File a standing order');
     await recorder.settle(0.3);
+    await dismissTutorials(recorder);
     const filed = await recorder.state();
     assert(filed.standingOrders.includes(puzzle.id), `${puzzle.id}: the standing order must be filed by the game.`);
     recorder.record('standingOrders', puzzle.id);
     await recorder.hold('The checked script is filed as a standing order and keeps earning.', 2);
     await recorder.shot('window', `standing-order-${puzzle.id}`, 'Standing order filed');
-    recorder.record('windows', 'request');
+    await recorder.recordWindow('request');
   }
 }
 
