@@ -84,6 +84,8 @@ export interface Puzzle {
   setPiece: string;
   hazards: string[];
   stochastic: boolean;
+  /** Chapter-0 lessons complete on a passing Run and hide extra UI. */
+  lesson?: boolean;
 }
 export interface CheckDiff {
   pass: boolean;

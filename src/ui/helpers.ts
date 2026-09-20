@@ -83,6 +83,7 @@ export function cellState(diff: CheckDiff | null | undefined, row: number, colum
 }
 
 export function canReveal(puzzle: Puzzle, completed: string[], feature: 'queue' | 'almanac' | 'scratch' | 'replay' | 'scripts'): boolean {
+  if (puzzle.lesson) return false;
   if (puzzle.chapter > 0 || puzzle.unlocks.includes(feature)) return true;
   const thresholds = { queue: 1, almanac: 1, replay: 1, scratch: 2, scripts: 3 };
   return completed.length >= thresholds[feature];

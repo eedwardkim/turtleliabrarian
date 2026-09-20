@@ -33,14 +33,14 @@ describe('release tutorial coverage', () => {
     for (const entry of tutorials) expect(raised).toContain(entry.trigger);
   });
   it('ships the full campaign in curriculum order', () => {
-    expect(puzzles).toHaveLength(77);
-    expect(new Set(puzzles.map((puzzle) => puzzle.id)).size).toBe(77);
+    expect(puzzles).toHaveLength(78);
+    expect(new Set(puzzles.map((puzzle) => puzzle.id)).size).toBe(78);
     const kinds = ['show', 'vary', 'break'] as const;
     for (let chapter = 1; chapter <= 12; chapter++) {
       const shelves = puzzles.filter((puzzle) => puzzle.chapter === chapter && puzzle.kind !== 'capstone');
       for (const kind of kinds) expect(shelves.filter((puzzle) => puzzle.kind === kind)).toHaveLength(chapter === 12 ? 1 : 2);
     }
-    expect(puzzles.filter((puzzle) => puzzle.chapter === 0)).toHaveLength(4);
+    expect(puzzles.filter((puzzle) => puzzle.chapter === 0)).toHaveLength(5);
     expect(puzzles.filter((puzzle) => puzzle.kind === 'capstone')).toHaveLength(4);
     const rank = (index: number): [number, number] => [
       puzzles[index].kind === 'capstone' ? Number.MAX_SAFE_INTEGER : puzzles[index].chapter,

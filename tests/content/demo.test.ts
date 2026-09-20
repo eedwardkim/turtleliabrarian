@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEMO_PUZZLE_IDS, acceptedAnswers, codeSatisfies, demoSteps, describeInputs, filledLine } from '../../content/tutorials/demo';
+import { DEMO_PUZZLE_IDS, blankAnswer, codeSatisfies, demoSteps, describeInputs } from '../../content/tutorials/demo';
 import { authoredPuzzles, shelvedRequestIds, withoutShelved } from '../../src/game/catalog';
 
 describe('guided demo', () => {
@@ -19,44 +19,34 @@ describe('guided demo', () => {
     expect(DEMO_PUZZLE_IDS.some((id) => shelvedRequestIds.has(id))).toBe(false);
   });
 
-  it('keeps the guided demo interactive and waits for each player action', () => {
+  it('is three steps: accept the ghost, run, done', () => {
     const steps = demoSteps(demoPuzzles);
-    expect(steps).toHaveLength(9);
-    expect(steps.filter((step) => step.action).map((step) => `${step.action}:${step.puzzleId ?? ''}`)).toEqual([
-      'goto:p0-01-stamp', 'next:',
-    ]);
-    expect(steps[2].waitFor).toEqual({ kind: 'code', accepted: acceptedAnswers(demoPuzzles[0]) });
-    expect(steps[2].ghost).toBe('days * rate');
-    expect(steps[2].line).toBe('fee = days * rate');
-    expect(steps[3].waitFor).toEqual({ kind: 'run-pass' });
-    expect(steps[4].waitFor).toEqual({ kind: 'serve-pass' });
-    expect(steps[5].waitFor).toEqual({ kind: 'scratch-pass', accepted: ['with_columns'] });
-    expect(steps[6].waitFor).toEqual({ kind: 'scratch-pass', accepted: ['sort('] });
-    expect(steps[7].waitFor).toEqual({ kind: 'scratch-pass', accepted: ['are.below(100)'] });
-    expect(acceptedAnswers(demoPuzzles[0])).toEqual(['days * rate', 'rate * days']);
-    expect(codeSatisfies('fee = days*rate\ndeliver(fee)', acceptedAnswers(demoPuzzles[0]))).toBe(true);
-    expect(codeSatisfies('fee = ___', acceptedAnswers(demoPuzzles[0]))).toBe(false);
-    expect(codeSatisfies("shelf = Table().with_columns('a', make_array(1))", ['with_columns'])).toBe(true);
+    expect(steps).toHaveLength(3);
+    expect(steps[0].waitFor).toEqual({ kind: 'code', accepted: ['3'] });
+    expect(steps[0].ghost).toBe('3');
+    expect(steps[0].target).toBe('editor');
+    expect(steps[0].done).toBe('The blank is filled.');
+    expect(steps[1].waitFor).toEqual({ kind: 'run-pass' });
+    expect(steps[1].done).toBe('Shelby delivered 3. That was your Python running.');
+    expect(steps[2].waitFor).toBeUndefined();
+    expect(steps[2].done).toBeUndefined();
+    expect(steps[2].target).toBe('request');
+    expect(codeSatisfies('deliver(3)', ['3'])).toBe(true);
+    expect(codeSatisfies('deliver(___)', ['3'])).toBe(false);
   });
+});
 
-  it('carries a ghost and a preset through the scratch steps', () => {
-    const steps = demoSteps(demoPuzzles);
-    for (const index of [5, 6, 7]) {
-      expect(steps[index].target).toBe('scratch');
-      expect(steps[index].ghost).toBeTruthy();
-      expect(steps[index].scratch?.code).toContain('___');
-      expect(filledLine(steps[index])).toBe(steps[index].scratch!.code.replace('___', steps[index].ghost!));
-      expect(filledLine(steps[index])).not.toContain('___');
-    }
-    expect(steps[5].scratch?.key).toBe('shelf');
-    expect(steps[6].scratch?.key).toBe('sort');
-    expect(steps[7].scratch?.key).toBe('thin');
-    expect(steps[6].ghost).toBe("'pages'");
-    expect(steps[7].ghost).toBe('are.below(100)');
-    expect(filledLine(steps[6])).toContain("by_pages = shelf.sort('pages')");
-    expect(filledLine(steps[7])).toContain("thin = shelf.where('pages', are.below(100))");
-    expect(filledLine(steps[2])).toBe('fee = days * rate');
-    expect(filledLine(steps[0])).toBeNull();
+describe('blankAnswer', () => {
+  it('reads the ghost off a single-line reference', () => {
+    expect(blankAnswer('deliver(___)', 'deliver(3)')).toBe('3');
+  });
+  it('matches the line by prefix and suffix in multi-line code', () => {
+    expect(blankAnswer('badge = prefix + ___\ndeliver(badge)', 'badge = prefix + str(number)\ndeliver(badge)')).toBe('str(number)');
+    expect(blankAnswer('share = ___\ndeliver(share)', 'share = weight / readers\ndeliver(share)')).toBe('weight / readers');
+  });
+  it('returns null when no reference line fits the blank', () => {
+    expect(blankAnswer('deliver(___)', 'fee = days * rate')).toBeNull();
+    expect(blankAnswer('deliver(x)', 'deliver(3)')).toBeNull();
   });
 });
 
@@ -66,8 +56,8 @@ describe('shelved requests', () => {
       'capstone-4', 'ch6-break-1', 'ch6-vary-1', 'ch6-vary-2', 'ch7-break-1', 'ch7-show-2', 'ch7-vary-1',
       'ch8-break-1', 'ch8-break-2', 'ch8-show-2', 'ch8-vary-1',
     ]);
-    expect(authoredPuzzles).toHaveLength(77);
-    expect(withoutShelved(authoredPuzzles)).toHaveLength(66);
+    expect(authoredPuzzles).toHaveLength(78);
+    expect(withoutShelved(authoredPuzzles)).toHaveLength(67);
     expect(withoutShelved(authoredPuzzles).every((puzzle) => !shelvedRequestIds.has(puzzle.id))).toBe(true);
   });
 });

@@ -325,6 +325,15 @@ details pre{padding:10px;background:#342d2409}
 .demo-dialog .button{font-size:13px}
 .demo-dialog .text-button{font-size:12px}
 .demo-dialog .demo-code{margin:10px 0 2px;padding:9px 12px;border:1px solid #d5c9ae;border-radius:5px;background:#fffdf7;font:600 15px 'IBM Plex Mono',monospace;color:#424d35;white-space:pre-wrap;word-break:break-word}
+.demo-done{display:flex;align-items:center;gap:7px;margin:0 0 8px;color:var(--green);font-size:14px;font-weight:600}
+.demo-done .icon{color:var(--green)}
+.solved-dialog{width:min(520px,calc(100vw - 32px));text-align:center;animation:solved-pop .22s cubic-bezier(.2,1.4,.4,1)}
+.solved-dialog .dialog-header h2{font-size:30px}
+.solved-dialog .solved-puzzle{margin:2px 0 10px;font-family:Fraunces,serif;font-size:21px;color:var(--ink)}
+.solved-dialog .dialog-content>p{font-size:15px;line-height:1.6}
+.solved-dialog .button-row{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:16px}
+.solved-dialog .button.primary{font-size:15px;padding:11px 22px}
+@keyframes solved-pop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
 .cm-ghost{opacity:.45;font-style:italic;cursor:pointer}
 .tutorial-count{font:10px 'IBM Plex Mono',monospace;color:var(--muted);margin-left:auto}
 .dock-button{display:flex;align-items:center;gap:6px}

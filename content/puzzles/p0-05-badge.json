@@ -1,0 +1,21 @@
+{
+  "id": "p0-05-badge", "chapter": 0, "kind": "show", "lesson": true,
+  "title": "Words too", "patron": "Fern",
+  "request": "Join my prefix and my number into one badge. Numbers must become text first: str(number).",
+  "objective": "Convert a number to text before joining it.",
+  "concepts": ["strings", "conversion", "deliver"],
+  "requiredApi": ["deliver"], "learnedApi": ["deliver", "print", "str"],
+  "starter": "badge = prefix + ___\ndeliver(badge)",
+  "hints": ["The badge is prefix followed by the number as text.", "str(number) turns a number into text.", "badge = prefix + str(number)"],
+  "inputCode": "import random\nprefix = random.choice(['Fern-', 'Moss-', 'Reed-'])\nnumber = random.randint(1, 20)",
+  "visibleSeed": 15, "visibleInputs": {"prefix": "Fern-", "number": 7},
+  "fixtures": [
+    {"name": "has_number", "inputs": {"prefix": "Fern-", "number": 7}, "predicate": "number > 0"}
+  ],
+  "queueSize": 6, "reference": "badge = prefix + str(number)\ndeliver(badge)",
+  "naive": [],
+  "checker": {"ordered": true, "absoluteTolerance": 1e-9, "relativeTolerance": 1e-9},
+  "unlocks": ["comparisons"],
+  "standingOrder": {"eligible": false, "ink": 0, "oil": 0}, "setPiece": "brass-nameplate",
+  "hazards": [], "stochastic": false
+}
