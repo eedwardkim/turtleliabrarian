@@ -315,6 +315,8 @@ class Trace:
             payload["dtype"] = {"i": "integer", "U": "unicode", "S": "bytes"}.get(
                 output.dtype.kind, str(output.dtype)
             )
+        elif isinstance(output, (list, tuple, range)):
+            payload["totalValues"] = len(output)
         event = {
             "version": 1,
             "seq": len(self.events),

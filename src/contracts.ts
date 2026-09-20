@@ -10,6 +10,7 @@ export interface TableValue {
 export interface ArrayValue {
   kind: 'array';
   values: Scalar[];
+  totalValues?: number;
   id?: string;
 }
 export type Value = Scalar | TableValue | ArrayValue;

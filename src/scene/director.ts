@@ -88,7 +88,10 @@ export function parseValue(value: Json | undefined): Value | undefined {
   if (isScalar(value)) return value;
   if (!isRecord(value)) return undefined;
   if (value.kind === 'array' && Array.isArray(value.values) && value.values.every(isScalar)) {
-    return { kind: 'array', values: [...value.values], ...(typeof value.id === 'string' ? { id: value.id } : {}) };
+    const totalValues = typeof value.totalValues === 'number' && Number.isSafeInteger(value.totalValues)
+      && value.totalValues >= value.values.length ? { totalValues: value.totalValues } : {};
+    return { kind: 'array', values: [...value.values], ...totalValues,
+      ...(typeof value.id === 'string' ? { id: value.id } : {}) };
   }
   if (value.kind === 'table' && Array.isArray(value.labels) && value.labels.every((label) => typeof label === 'string')
     && Array.isArray(value.rows) && value.rows.every((row) => Array.isArray(row) && row.every(isScalar))) {
@@ -115,7 +118,8 @@ export function isArray(value: Value | undefined): value is ArrayValue {
   return typeof value === 'object' && value !== null && value.kind === 'array';
 }
 export function valueCount(value: Value | undefined): number {
-  return isTable(value) ? value.totalRows : isArray(value) ? value.values.length : value === undefined || value === null ? 0 : 1;
+  return isTable(value) ? value.totalRows : isArray(value) ? value.totalValues ?? value.values.length
+    : value === undefined || value === null ? 0 : 1;
 }
 
 export function initialState(inputs: Record<string, Value> = {}): DirectorState {
@@ -157,6 +161,10 @@ export function reduceEvent(state: DirectorState, event: TraceEvent): DirectorSt
     loops: { ...state.loops }, lastSeq: event.seq };
   const type = eventType(event);
   const value = parseValue(event.payload.value);
+  if (isArray(value) && typeof event.payload.totalValues === 'number'
+    && Number.isSafeInteger(event.payload.totalValues) && event.payload.totalValues >= value.values.length) {
+    value.totalValues = event.payload.totalValues;
+  }
   const id = event.output ?? event.inputs[0] ?? null;
   if (event.output !== null && value !== undefined) {
     const previous = next.objects[event.output];

@@ -75,3 +75,16 @@ def test_disabled_instrumentation_does_not_emit_terminal_events():
     assert result["error"] is None
     assert result["delivered"] == 7
     assert result["trace"] == []
+
+
+@pytest.mark.parametrize(
+    "expression",
+    ["np.arange(250)", "list(range(250))", "tuple(range(250))", "range(250)"],
+)
+def test_terminal_array_counts_include_values_beyond_the_snapshot(expression):
+    result = run({"code": FILL_TRACE + f"deliver({expression})"})
+    assert result["error"] is None
+    delivery = next(event for event in result["trace"] if event["type"] == "deliver")
+    assert delivery["payload"]["totalValues"] == 250
+    assert len(delivery["payload"]["value"]["values"]) < 250
+    assert len(result["delivered"]["values"]) == 250
