@@ -23,7 +23,7 @@ export function RequestPanel({ game }: { game: GameStateForUI }) {
           ? <details className="request-input-table" key={name}><summary><code>{name}</code> · {format(text.request.inputValues, { count: value.totalValues ?? value.values.length })}</summary><ValueDisplay value={value} /></details>
           : <details className="request-input-table" key={name}><summary><code>{name}</code> · {format(text.request.inputTable, { rows: value.totalRows, columns: value.labels.length })}</summary><ValueDisplay value={value} /></details>)}</div>
     </div>}
-    {completed && <div className="completed-slip"><Icon name="check" /><h3>{text.request.complete}</h3><p>{text.request.completeNote}</p>
+    {completed && <div className="completed-slip"><Icon name="check" /><h3>{text.request.complete}</h3><p>{text.request.completeLessonNote}</p>
       <button className="button primary wide" onClick={game.nextPuzzle}>{text.request.next}<Icon name="arrow" /></button>
     </div>}
   </article>;
