@@ -1,4 +1,4 @@
-# Shelf Life
+# Reading Shells
 
 An original Python data-science game about a turtle librarian. Shelby runs a
 library on the back of the sky turtle Atlas: patrons hand her requests, she

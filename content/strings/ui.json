@@ -4,10 +4,10 @@
     "omitted": "{count} points are outside this trace preview."
   },
   "brand": {
-    "title": "Shelf Life",
+    "title": "Reading Shells",
     "titleLines": [
-      "Shelf",
-      "Life"
+      "Reading",
+      "Shells"
     ],
     "eyebrow": "A little library. An endless sky.",
     "tagline": "A cozy adventure in Python & possibility",
@@ -81,7 +81,7 @@
   },
   "desktop": {
     "title": "A little more room for the library",
-    "body": "Shelf Life is best on a desktop or laptop, with a keyboard and a window at least 1024 pixels wide.",
+    "body": "Reading Shells is best on a desktop or laptop, with a keyboard and a window at least 1024 pixels wide.",
     "note": "Atlas is large. Even by turtle standards."
   },
   "resources": {
@@ -256,7 +256,7 @@
     "load": "Load",
     "export": "Export library",
     "import": "Import library",
-    "importLabel": "Choose a Shelf Life save file",
+    "importLabel": "Choose a Reading Shells save file",
     "saved": "Bookmark saved.",
     "loaded": "Library loaded.",
     "imported": "Welcome back. Your library is unpacked.",
@@ -316,6 +316,7 @@
     "next": "Understood",
     "skip": "I’ll find my own way",
     "done": "Back to work",
+    "watching": "Shelby is working…",
     "count": "{current} / {total}",
     "steps": [
       {
@@ -361,7 +362,7 @@
   },
   "credits": {
     "title": "A library takes a village",
-    "body": "Shelf Life is an original game about learning to ask better questions with data.",
+    "body": "Reading Shells is an original game about learning to ask better questions with data.",
     "design": "Original characters, illustrations, puzzles, and library world.",
     "technology": "Built with React, Three.js, React Three Fiber, CodeMirror, Pyodide, NumPy, Zustand, and idb.",
     "api": "The table API follows the design of the open-source datascience package. Its implementation here is original.",

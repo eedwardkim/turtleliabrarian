@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import World from './scene/World';
 import { useGame } from './game/store';
 import { getTutorial } from '../content/tutorials';
+import { DEMO_PUZZLE_IDS, demoSteps } from '../content/tutorials/demo';
+import { puzzles } from './game/catalog';
 import { almanac as almanacCatalog, visibleAlmanac } from '../content/almanac';
 import { atlasWings, shop as shopCatalog } from './game/economy';
 import { useAudio } from './audio/useAudio';
@@ -52,6 +54,9 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   const [actionError, setActionError] = useState('');
   const [introBeat, setIntroBeat] = useState(0);
   const [tutorialPosition, setTutorialPosition] = useState({ id: '', step: 0 });
+  const [demoStep, setDemoStep] = useState<number | null>(null);
+  const demo = useMemo(() => demoSteps(DEMO_PUZZLE_IDS.flatMap(id => puzzles.filter(puzzle => puzzle.id === id))), []);
+  const demoCurrent = demoStep === null ? undefined : demo[demoStep];
   const [showDevtools, setShowDevtools] = useState(false);
   const [cameraPreset, setCameraPreset] = useState('default');
   const [wireframe, setWireframe] = useState(false);
@@ -85,7 +90,8 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   const totalEvents = result?.trace.length ?? 0;
   const event = result?.trace[Math.max(0, Math.min(replayIndex, totalEvents - 1))] ?? null;
   const visibleInputs = queueEntry?.inputs ?? result?.inputs ?? game.inputs;
-  const currentTour = game.activeTutorial ? getTutorial(game.activeTutorial) : undefined;
+  const currentTour = game.activeTutorial && demoStep === null ? getTutorial(game.activeTutorial) : undefined;
+  const tourTarget = demoCurrent?.target ?? currentTour?.target;
   const tutorialStep = tutorialPosition.id === currentTour?.id ? tutorialPosition.step : 0;
   const revealed = (feature: Parameters<typeof canReveal>[2]) => canReveal(game.puzzle, game.save.completed, feature) || (feature === 'queue' && !!game.diff?.pass);
   const canSandbox = sandboxUnlocked(game.save);
@@ -167,11 +173,16 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   function startTour() {
     setDialog(null);
     ['request', 'editor', 'output'].forEach(openWindow);
-    game.replayTutorial('request');
+    openDemoStep(0);
   }
   function finishTour() {
     game.dismissTutorial();
     setTutorialPosition({ id: '', step: 0 });
+  }
+  function finishDemo() {
+    setDemoStep(null);
+    [game.activeTutorial, ...game.tutorialQueue].forEach(id => { if (id) game.markTutorial(id); });
+    game.dismissTutorial();
   }
   async function run(file: string, queue = false) {
     if (game.busy) return;
@@ -181,6 +192,18 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
     if (queue) openWindow('queue');
     try { await (queue ? game.serveQueue() : game.run()); }
     catch (failure) { setActionError(failure instanceof Error ? failure.message : text.error.body); setDialog('alerts'); }
+  }
+  function openDemoStep(step: number) {
+    setDemoStep(step);
+    const entry = demo[step];
+    if (!entry?.action) return;
+    const current = state.puzzle.id;
+    if (entry.action === 'goto' && entry.puzzleId) { if (current !== entry.puzzleId) state.gotoPuzzle(entry.puzzleId); return; }
+    if (entry.action === 'next') { state.nextPuzzle(); openWindow('request'); return; }
+    if (entry.puzzleId && current !== entry.puzzleId) return;
+    if (entry.action === 'solve' && entry.code !== undefined) { state.setActiveFile('main.py'); state.setCode(entry.code); openWindow('editor'); }
+    else if (entry.action === 'run') void run('main.py');
+    else if (entry.action === 'serve') void run('main.py', true);
   }
   function setIndex(index: number) {
     if (queueEntry) setQueueTraceIndex(index);
@@ -202,7 +225,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
   }
   function floating(id: string, children: ReactNode, controls?: ReactNode, dark = false) {
     return <FloatingWindow key={id} id={id} title={titleFor(id)} layout={layoutFor(id)} viewport={deskViewport} scale={scale} dark={dark}
-      onLayout={layout => game.setLayout(id, layout)} onFocus={() => focus(id)} controls={controls} highlight={currentTour?.target === id}>
+      onLayout={layout => game.setLayout(id, layout)} onFocus={() => focus(id)} controls={controls} highlight={tourTarget === id}>
       {children}
     </FloatingWindow>;
   }
@@ -231,7 +254,7 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
         <div className="world-vignette" />
       </div>}
       {game.screen === 'title' && <TitleScreen game={game} openDialog={setDialog} onNew={() => game.setScreen('intro')} error={initError} retry={retry} />}
-      {game.screen === 'intro' && <IntroScreen onFinish={name => { game.newGame(name); game.setScreen('game'); setQueueIndex(null); }} onBeat={handleIntroBeat} reducedMotion={reducedMotion} />}
+      {game.screen === 'intro' && <IntroScreen onFinish={name => { game.newGame(name); game.setScreen('game'); setQueueIndex(null); startTour(); }} onBeat={handleIntroBeat} reducedMotion={reducedMotion} />}
       {game.screen === 'credits' && <CreditsScreen onBack={() => game.setScreen('title')} onSandbox={canSandbox ? () => { game.setScreen('game'); openWindow('sandbox'); } : undefined} />}
       {game.screen === 'game' && <main className="ui-stage" style={stageStyle} aria-label={text.brand.title}>
         <header className="game-hud">
@@ -288,6 +311,12 @@ export default function App({ almanac = EMPTY_ALMANAC, shop = EMPTY_SHOP, atlas 
         <p>{text.windows.help}</p>
         {windowIds.map(id => <div className="layout-row" key={id}><span>{titleFor(id)}</span><button className="button" onClick={() => layoutFor(id).closed || layoutFor(id).minimized ? openWindow(id) : game.setLayout(id, { ...layoutFor(id), closed: true })}>{layoutFor(id).closed || layoutFor(id).minimized ? text.windows.show : text.windows.hide}</button></div>)}
         <button className="text-button layout-reset" onClick={() => windowIds.forEach(id => game.setLayout(id, { ...defaultLayout(id, deskViewport), closed: !['editor', 'output', 'request'].includes(id) }))}><Icon name="rewind" />{text.windows.reset}</button>
+      </Dialog>}
+      {game.screen === 'game' && demoCurrent && demoStep !== null && !dialog && <Dialog title={demoCurrent.title} onClose={finishDemo} className="tutorial-dialog demo-dialog">
+        <span className="eyebrow">{text.tutorial.speaker}</span><p>{demoCurrent.body}</p><div className="button-row">
+          <button className="button primary" disabled={game.busy} onClick={() => { if (demoStep === demo.length - 1) finishDemo(); else openDemoStep(demoStep + 1); }}>{game.busy ? text.tutorial.watching : demoStep === demo.length - 1 ? text.tutorial.done : text.tutorial.next}</button>
+          <button className="text-button" onClick={finishDemo}>{text.tutorial.skip}</button><span className="tutorial-count">{format(text.tutorial.count, { current: demoStep + 1, total: demo.length })}</span>
+        </div>
       </Dialog>}
       {game.screen === 'game' && currentTour && !dialog && <Dialog title={currentTour.title} onClose={finishTour} className="tutorial-dialog">
         <span className="eyebrow">{text.tutorial.speaker}</span><p>{currentTour.steps[tutorialStep]}</p><div className="button-row">
