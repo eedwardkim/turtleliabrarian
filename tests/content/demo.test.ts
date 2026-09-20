@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEMO_PUZZLE_IDS, blankAnswer, codeSatisfies, demoSteps, describeInputs } from '../../content/tutorials/demo';
+import { DEMO_PUZZLE_IDS, applyMove, blankAnswer, codeSatisfies, demoSteps, describeInputs, nextMove } from '../../content/tutorials/demo';
 import { authoredPuzzles, shelvedRequestIds, withoutShelved } from '../../src/game/catalog';
 
 describe('guided demo', () => {
@@ -48,6 +48,22 @@ describe('blankAnswer', () => {
   it('returns null when no reference line fits the blank', () => {
     expect(blankAnswer('deliver(___)', 'fee = days * rate')).toBeNull();
     expect(blankAnswer('deliver(x)', 'deliver(3)')).toBeNull();
+  });
+});
+
+describe('nextMove', () => {
+  const reference = 'fees = days * 2\ndeliver(fees)';
+  it('finds the first reference line missing from the code', () => {
+    expect(nextMove('deliver(days)', reference)).toEqual({ index: 0, line: 'fees = days * 2' });
+    expect(nextMove(applyMove(reference, 0), reference)).toEqual({ index: 1, line: 'deliver(fees)' });
+    expect(nextMove(applyMove(reference, 1), reference)).toBeNull();
+  });
+  it('solves a lesson blank in one move', () => {
+    expect(nextMove('deliver(___)', 'deliver(3)')).toEqual({ index: 0, line: 'deliver(3)' });
+  });
+  it('matches on trimmed lines and skips blanks and comments', () => {
+    expect(nextMove('  deliver(3)', 'deliver(3)')).toBeNull();
+    expect(nextMove('', '# note\n\ndeliver(3)')).toEqual({ index: 2, line: 'deliver(3)' });
   });
 });
 

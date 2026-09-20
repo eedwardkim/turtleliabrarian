@@ -12,6 +12,7 @@ export interface GameStateForUI {
   save: SaveData;
   puzzle: Puzzle;
   activeFile: string;
+  code: string;
   result: RunResult | null;
   expected: Value;
   queue: QueueEntry[];
@@ -33,6 +34,7 @@ export interface GameStateForUI {
   gotoPuzzle: (id: string) => void;
   nextPuzzle: () => void;
   hint: () => void;
+  showMove: () => void;
   setSettings: (settings: Partial<Settings>) => void;
   setLayout: (id: string, layout: WindowLayout) => void;
   setReplay: (index: number) => void;

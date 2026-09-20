@@ -326,6 +326,8 @@ details pre{padding:10px;background:#342d2409}
 .demo-dialog .text-button{font-size:12px}
 .demo-dialog .demo-code{margin:10px 0 2px;padding:9px 12px;border:1px solid #d5c9ae;border-radius:5px;background:#fffdf7;font:600 15px 'IBM Plex Mono',monospace;color:#424d35;white-space:pre-wrap;word-break:break-word}
 .demo-done{display:flex;align-items:center;gap:7px;margin:0 0 8px;color:var(--green);font-size:14px;font-weight:600}
+.next-move{margin:10px 0}
+.next-move .demo-code{margin:6px 0 8px}
 .demo-done .icon{color:var(--green)}
 .solved-dialog{position:fixed;z-index:500;inset:9vh auto auto 50%;margin:0;width:min(520px,calc(100vw - 32px));text-align:center;transform:translateX(-50%);animation:solved-pop .22s cubic-bezier(.2,1.4,.4,1)}
 .solved-dialog::backdrop{background:transparent;backdrop-filter:none}

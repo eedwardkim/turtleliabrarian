@@ -69,6 +69,7 @@ export interface GameState {
   gotoPuzzle(id: string): void;
   nextPuzzle(): void;
   hint(): void;
+  showMove(): void;
   setSettings(partial: Partial<Settings>): void;
   setLayout(id: string, layout: WindowLayout): void;
   setReplay(index: number): void;
@@ -445,6 +446,12 @@ export function createGame(runtime: GameRuntime, persistence: SaveService = save
         const level = Math.min(3, get().hintLevel + 1);
         set({ hintLevel: level, status: puzzle.hints[level - 1] });
         persist({ ...save, progress: { ...save.progress, [puzzle.id]: { ...progressFor(save, puzzle), hints: level } } });
+        tutorial('hint');
+      },
+      showMove() {
+        const { puzzle, save } = get();
+        set({ hintLevel: 3, status: 'The next line is on the slip.' });
+        persist({ ...save, progress: { ...save.progress, [puzzle.id]: { ...progressFor(save, puzzle), hints: 3 } } });
         tutorial('hint');
       },
       setSettings(partial) {
