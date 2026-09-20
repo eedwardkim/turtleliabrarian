@@ -95,6 +95,7 @@ export async function serveQueue(recorder) {
 }
 
 export async function openTool(recorder, label) {
+  await dismissTutorials(recorder);
   await recorder.page.getByRole('button', { name: label, exact: true }).click({ force: true });
   await recorder.page.clock.runFor(34);
 }

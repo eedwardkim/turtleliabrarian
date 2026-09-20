@@ -41,6 +41,7 @@ async function openWing(recorder, chapter, puzzles) {
   await page.evaluate(value => window.__SHELF__.lockWingsFrom(value), chapter);
   await page.evaluate(() => window.__SHELF__.setResource('stars', 40));
   await recorder.settle(0.3);
+  await dismissTutorials(recorder);
   const before = await recorder.state();
   assert(!before.ownedItems.includes(`wing-${chapter}`), `Wing ${chapter} must still be closed before the tour opens it.`);
   await recorder.hold('Gold Stars are topped up by a developer control; the wing still charges its real price.', 2);
@@ -50,6 +51,7 @@ async function openWing(recorder, chapter, puzzles) {
   await recorder.shot('window', `atlas-locked-${chapter}`, 'Atlas with the next wing locked');
   await recorder.recordWindow('atlas', page.getByRole('dialog', { name: ui.atlas.title }));
   await closeDialog(recorder);
+  await dismissTutorials(recorder);
 
   await recorder.click('Next request');
   await recorder.settle();
@@ -178,6 +180,7 @@ const capstones = {
     const earlier = puzzles.filter(puzzle => puzzle.chapter !== 13).map(puzzle => puzzle.id);
     await page.evaluate(ids => window.__SHELF__.grantCompleted(ids), earlier);
     await recorder.settle(0.3);
+    await dismissTutorials(recorder);
     const granted = await recorder.state();
     assert.equal(granted.openStacks, false, 'Open Stacks must stay off so the campaign itself unlocks the Sandbox.');
     assert.equal(await page.locator('[data-window="sandbox"]').count(), 0, 'The Sandbox must be closed until the campaign is finished.');
@@ -190,6 +193,7 @@ const capstones = {
     await recorder.shot('window', 'atlas-complete', 'Atlas with the campaign finished');
     await recorder.recordWindow('atlas', page.getByRole('dialog', { name: ui.atlas.title }));
     await closeDialog(recorder);
+    await dismissTutorials(recorder);
 
     await recorder.click('Next request');
     await recorder.settle(0.5);
@@ -275,6 +279,7 @@ const systems = {
     await page.evaluate(() => window.__SHELF__.setResource('ink', 200));
     await page.evaluate(() => window.__SHELF__.setResource('eggs', 2));
     await recorder.settle(0.3);
+    await dismissTutorials(recorder);
     await recorder.hold('A developer control tops up ink and eggs so the shop can be shown in one sitting.', 2);
     await openTool(recorder, TOOL.shop);
     const before = await recorder.state();
