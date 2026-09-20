@@ -12,6 +12,7 @@
   border-radius: 18px;
   box-shadow: 0 10px 40px #503c2422;
 }
+.world-backdrop > .bookcase-world { height: auto; }
 .shelf-book-title {
   display: block;
   color: #fff3d6;
